@@ -1,0 +1,13 @@
+review_id,company,product,review_text,sentiment_label
+1,Acme,AcmePhone,"Battery life is outstanding and the camera works great.",positive
+2,Acme,AcmePhone,"Screen cracked easily and support never called back.",negative
+3,Acme,AcmePhone,"The phone is okay, nothing special but not terrible either.",neutral
+4,Acme,AcmeTablet,"Lightweight tablet with crisp display and fast performance.",positive
+5,Acme,AcmeTablet,"Speakers distort at high volume and accessories are overpriced.",negative
+6,Acme,AcmeTablet,"Average device that meets expectations without surprises.",neutral
+7,BetaCorp,BetaWatch,"Stylish watch with intuitive interface and solid battery.",positive
+8,BetaCorp,BetaWatch,"Straps irritated my skin and the app constantly crashes.",negative
+9,BetaCorp,BetaWatch,"Comfortable fit yet feature updates feel incremental.",neutral
+10,BetaCorp,BetaSpeaker,"Rich sound quality but setup instructions confusing.",neutral
+11,BetaCorp,BetaSpeaker,"Audio distorts and the device overheats quickly.",negative
+12,BetaCorp,BetaSpeaker,"Superb bass response and seamless Bluetooth pairing.",positive
