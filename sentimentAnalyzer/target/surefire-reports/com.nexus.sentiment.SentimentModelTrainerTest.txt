@@ -1,0 +1,18 @@
+-------------------------------------------------------------------------------
+Test set: com.nexus.sentiment.SentimentModelTrainerTest
+-------------------------------------------------------------------------------
+Tests run: 14, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 0.115 s <<< FAILURE! -- in com.nexus.sentiment.SentimentModelTrainerTest
+com.nexus.sentiment.SentimentModelTrainerTest.testModelPersistenceFromFile(Path) -- Time elapsed: 0.035 s <<< ERROR!
+weka.core.UnsupportedAttributeTypeException: weka.classifiers.bayes.NaiveBayesMultinomial: Cannot handle multi-valued nominal attributes!
+	at weka.core.Capabilities.test(Capabilities.java:1053)
+	at weka.core.Capabilities.test(Capabilities.java:974)
+	at weka.core.Capabilities.test(Capabilities.java:1221)
+	at weka.core.Capabilities.test(Capabilities.java:1138)
+	at weka.core.Capabilities.testWithFail(Capabilities.java:1468)
+	at weka.classifiers.meta.FilteredClassifier.buildClassifier(FilteredClassifier.java:803)
+	at com.nexus.sentiment.SentimentModelTrainer.train(SentimentModelTrainer.java:42)
+	at com.nexus.sentiment.SentimentModelTrainerTest.testModelPersistenceFromFile(SentimentModelTrainerTest.java:282)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+
