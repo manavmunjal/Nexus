@@ -7,6 +7,7 @@ com/nexus/sentiment/PredictionResult.class
 com/nexus/sentiment/SentimentStatistics.class
 com/nexus/sentiment/SentimentStatistics$GroupStatistics.class
 com/nexus/sentiment/ReportPrinter.class
+com/nexus/sentiment/Main$Config.class
 com/nexus/sentiment/DataSplitter.class
 com/nexus/sentiment/Main.class
 com/nexus/sentiment/DistributionUtils.class

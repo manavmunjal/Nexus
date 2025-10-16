@@ -1,121 +1,116 @@
-# Sentiment Analyzer - Multi-Class Sentiment Analysis with Weka and Naive Bayes
+# Sentiment Analyzer - Multi-Class Sentiment Analysis Product Review Service
 
-## 📋 Project Overview
+## 📋 Service Overview
 
-A comprehensive Java-based sentiment analysis system using Weka's machine learning library and Naive Bayes classifier with TF-IDF feature extraction. The system performs multi-class sentiment classification (positive, negative, neutral) on review text data.
+A Java-based sentiment analysis service using Weka's machine learning library. The system performs multi-class sentiment classification on review text data. This service that provides review analysis based on the reviews. It further supports sentiment and statistical analysis on reviews for a product, and provides these results to a client (i.e. a company) or a customer (a shopper considering buying the product). 
 
-## ✨ Key Features
+Clients, such as product-based websites, can use our service to predict their potential customers’ future shopping decisions based on the past reviews, or use the data generated to compare their promoted similar products with their competitors. Optionally, the service may also take into account images attached in reviews and compare them with the company-provided image of the product in order to report whether the portrayal of the product is accurate. This review analysis can be provided as an analytics dashboard, which displays user sentiment towards the product.
 
-### 1. **NLP Text Processing**
-- **TF-IDF Vectorization**: Converts review text into numerical features weighted by term importance
-- **Tokenization**: Breaks text into individual words with proper handling of punctuation and special characters
-- **Stop Word Removal**: Filters common words (the, a, is, etc.) using Rainbow stop word list
-- **Stemming**: Reduces words to their root form (running→run) using Snowball stemmer
-- **Case Normalization**: Converts all text to lowercase for consistency
+This README outlines the part of the service functionality that is closely related to the sentiment analysis. Please refer to other parts of the Nexus project for details on the full service, including the database storage, API usages, etc.
 
-### 2. **Machine Learning**
-- **Naive Bayes Multinomial Classifier**: Probabilistic model optimized for text classification
-- **FilteredClassifier**: Combines preprocessing (TF-IDF) with classification in a pipeline
-- **Multi-class Support**: Handles positive, negative, and neutral sentiments
-- **Probability Distributions**: Provides confidence scores for each sentiment class
+# Nexus — Sentiment & Review Analytics (Java / Weka)
 
-### 3. **Statistical Analysis**
-- **Sentiment Scores**: Maps categorical labels to numeric scores (-1.0 to 1.0)
-- **Expected Score Calculation**: Weighted average based on probability distributions
-- **Variance & Standard Deviation**: Measures sentiment dispersion
-- **Skewness Analysis**: Detects bias in sentiment distributions
-- **KL-Divergence**: Compares sentiment distributions between products/companies
+## Part 1 — Team
 
-### 4. **Comparison Capabilities**
-- **Product Comparison**: Analyze sentiment distributions across different products
-- **Company Comparison**: Compare sentiment between competing companies
-- **Statistical Summary**: Comprehensive metrics for each group (product/company)
-- **Distribution Smoothing**: Handles zero probabilities for robust KL-divergence
+- Team Name: Nexus
+- GitHub Repo: https://github.com/manavmunjal/Nexus
 
-## 📁 Project Structure
+Team members:
 
-```
-sentimentAnalyzer/
-├── src/
-│   ├── main/
-│   │   ├── java/com/nexus/sentiment/
-│   │   │   ├── Main.java                      # Entry point
-│   │   │   ├── DatasetLoader.java             # CSV data loading
-│   │   │   ├── DataSplitter.java              # Train/test splitting
-│   │   │   ├── SentimentModelTrainer.java     # TF-IDF + Naive Bayes training
-│   │   │   ├── SentimentPredictor.java        # Generate predictions
-│   │   │   ├── ScoreMapper.java               # Label→score mapping
-│   │   │   ├── SentimentStatistics.java       # Statistical computations
-│   │   │   ├── DistributionUtils.java         # KL-divergence, smoothing
-│   │   │   ├── PredictionResult.java          # Prediction data class
-│   │   │   └── ReportPrinter.java             # Console output formatting
-│   │   └── resources/data/
-│   │       └── sample_reviews.csv             # Sample dataset
-│   └── test/
-│       ├── java/com/nexus/sentiment/
-│       │   ├── DatasetLoaderTest.java         # 4 tests
-│       │   ├── DataSplitterTest.java          # 6 tests
-│       │   ├── SentimentModelTrainerTest.java # 14 NLP-focused tests ⭐
-│       │   ├── ScoreMapperTest.java           # 7 tests
-│       │   ├── DistributionUtilsTest.java     # 11 tests
-│       │   ├── SentimentStatisticsTest.java   # 11 tests
-│       │   └── SentimentPredictorTest.java    # 12 tests
-│       └── resources/data/
-│           └── test_reviews.csv               # Test dataset
-├── pom.xml                                    # Maven configuration
-└── TEST_DOCUMENTATION.md                      # Detailed test documentation
+- Song Li — GitHub: `SongTonyLi`
+- Manav Munjal — GitHub: `manavmunjal`
+- Sindhu Krishnamurthy — GitHub: `sk4699`
+- Sreenivas Karthik Bandi — GitHub: `sreeni-kar`
 
-## 🔧 Technologies Used
+## Part 2 — Project Vision & Service Description
 
-- **Java 17**: Modern Java with records and text blocks
-- **Weka 3.8.6**: Machine learning library for NLP and classification
-- **Apache Commons Math3 3.6.1**: Statistical calculations (skewness, etc.)
-- **JUnit Jupiter 5.10.1**: Testing framework
-- **AssertJ 3.24.2**: Fluent assertion library
-- **Maven**: Build and dependency management
+We are building a review analytics service that performs NLP-driven sentiment and statistical analysis on product reviews. The service ingests review text (and optionally review images), vectorizes the reviews (TF-IDF) and runs a multi-class Naive Bayes classifier to assign sentiment labels and numeric sentiment scores.
 
-## 🚀 Getting Started
+Core capabilities:
 
-### Prerequisites
-- Java 17 or higher
-- Maven 3.6 or higher
+- Assign sentiment labels and compute an expected numeric sentiment score per review
+- Aggregate results by product and company and compare distributions (proportions of positive/neutral/negative)
+- Compute statistical metrics per group: mean, variance, standard deviation, skewness
+- Compare distributions between products/companies using symmetric KL-divergence (with smoothing)
+- Optionally compare review images against company-provided product images (future/optional)
 
-### Installation
+Deliverables for clients:
 
-1. **Clone and navigate to project**:
+- Programmatic API and/or analytics dashboard that shows sentiment distributions, statistical summaries, and similarity comparisons between competing products
+- Per-review outputs (label, probability distribution over classes, expected sentiment score)
+
+Typical workflow:
+
+1. Ingest labeled or unlabeled reviews (CSV / database / scraped)
+2. Preprocess and vectorize text (TF-IDF)
+3. Train or load a Naive Bayes model
+4. Produce per-review predictions and aggregate statistics
+5. Offer visualizations and numeric comparisons for decision-making
+
+## Part 3 — Potential Clients & Use Cases
+
+1. Company Analytics Tools — e.g., product teams at brands (Nike, Samsung) can import sentiment summaries to inform marketing and product decisions.
+2. Consumer Review Aggregators — third-party platforms or shoppers: scrape reviews (Amazon, Walmart, eBay) and provide an aggregated sentiment score to help shoppers decide.
+3. Public Dashboard (optional) — a hosted analytics dashboard that surfaces trending sentiment, comparative KL-divergence, and product summaries.
+
+## Part 4 — Technologies / Tools (end-to-end)
+
+Primary stack used for this repository and the planned service:
+
+- Java 17 — core language
+- Weka — TF-IDF, Naive Bayes pipeline
+- Spring Boot — backend services (suggested / planned)
+- MongoDB — data storage (suggested)
+- Maven — build and dependency management
+- JUnit (JUnit Jupiter) — unit testing
+- Mockito — mocking in tests (planned)
+- JaCoCo — coverage
+- CheckStyle / PMD — static analysis
+- Postman — API testing
+- GitHub Actions — CI workflows
+- Trello — project management
+
+## Project layout (summary)
+
+The repository under `sentimentAnalyzer/` contains a small Weka-based pipeline and tests. Key files include:
+
+- `src/main/java/com/nexus/sentiment/` — core Java classes (see code for details)
+- `src/main/resources/data/sample_reviews.csv` — small sample dataset
+- `src/test/java/com/nexus/sentiment/` — unit tests (NLP-heavy tests included)
+- `pom.xml` — Maven configuration and dependencies
+
+## Getting started — quick commands
+
+Prerequisites: Java 17+, Maven
+
+Install dependencies and compile:
+
 ```bash
 cd sentimentAnalyzer
-```
-
-2. **Install dependencies**:
-```bash
 mvn dependency:resolve
-```
-
-3. **Compile the project**:
-```bash
 mvn clean compile
 ```
 
-### Running the Application
+Run the application (uses `src/main/resources/data/sample_reviews.csv` by default):
 
-**Option 1: Using Maven exec plugin**
 ```bash
 mvn exec:java
 ```
 
-**Option 2: With custom dataset**
+Run with a custom CSV file (first arg):
+
 ```bash
 mvn exec:java -Dexec.args="path/to/your/reviews.csv"
 ```
 
-**Option 3: Build JAR and run**
+Build a runnable jar:
+
 ```bash
 mvn package
 java -cp target/sentiment-analyzer-1.0.0.jar com.nexus.sentiment.Main
 ```
 
-### Expected CSV Format
+CSV format expected (example):
 
 ```csv
 review_id,company,product,review_text,sentiment_label
@@ -124,167 +119,24 @@ review_id,company,product,review_text,sentiment_label
 3,Acme,AcmeTablet,"Average device overall.",neutral
 ```
 
-**Required Columns**:
-- `review_text`: The text to analyze
-- `sentiment_label`: Ground truth labels (positive/negative/neutral)
+## Tests
 
-**Optional Columns** (for grouping):
-- `review_id`: Unique identifier
-- `company`: For company-level aggregation
-- `product`: For product-level aggregation
+Run full test suite:
 
-## 📊 Sample Output
-
-```
-==== Evaluation Metrics ====
-
-Accuracy: 85.23%
-Class 'positive' -> Precision: 0.867, Recall: 0.842, F1: 0.854
-Class 'negative' -> Precision: 0.823, Recall: 0.858, F1: 0.840
-Class 'neutral' -> Precision: 0.876, Recall: 0.857, F1: 0.866
-Weighted AUC: 0.912
-
-==== Product Summaries ====
-
-AcmePhone -> total=45, meanScore=0.234, variance=0.856, stdDev=0.925, skewness=0.123
-    Distribution: negative=0.244, neutral=0.333, positive=0.422
-AcmeTablet -> total=38, meanScore=-0.156, variance=0.723, stdDev=0.850, skewness=-0.234
-    Distribution: negative=0.421, neutral=0.316, positive=0.263
-
-==== Symmetric KL Divergence ====
-
-AcmePhone vs AcmeTablet -> KL=0.0856
-```
-
-## 🧪 Running Tests
-
-### Run all tests:
 ```bash
 mvn test
 ```
 
-### Run specific test class:
+Run an individual test class:
+
+```bash
+mvn test -Dtest=SentimentModelTrainerTest
+```
 ```bash
 mvn test -Dtest=SentimentModelTrainerTest
 ```
 
-### Run with coverage:
-```bash
-mvn clean test
-```
+Notes about tests:
 
-## 📈 Test Suite
-
-### Test Coverage: **65 Unit Tests**
-
-- ✅ **26 tests passed** (DatasetLoader, DataSplitter, ScoreMapper, DistributionUtils, SentimentStatistics)
-- ⚠️ **39 tests with known issues** (NLP tests - require larger training datasets)
-
-### Heavy NLP Testing in `SentimentModelTrainerTest`:
-
-1. **Tokenization Tests**
-   - Mixed case handling (GREAT → great)
-   - Punctuation (!!!, ???, ...)
-   - Numbers (5 stars, 100%)
-   - Special characters (@, #, &)
-
-2. **Text Preprocessing**
-   - Stop word removal
-   - Stemming (running→run, breaks→break)
-   - Empty text handling
-   - Long text (100+ sentences)
-   - Unicode characters (★, café, ☹)
-
-3. **TF-IDF Features**
-   - Rare word weighting
-   - Common word downweighting
-   - Document frequency impact
-
-4. **Classification**
-   - Multi-class predictions
-   - Probability distributions
-   - Confidence scores
-
-## 🎯 Use Cases
-
-1. **Product Review Analysis**: Analyze customer sentiment for products
-2. **Brand Monitoring**: Compare sentiment across competing brands
-3. **Customer Feedback**: Identify areas of strength and weakness
-4. **Trend Analysis**: Track sentiment changes over time
-5. **Quality Assurance**: Flag overwhelmingly negative reviews for investigation
-
-## 🔍 Core Classes Explained
-
-### `SentimentModelTrainer`
-- Configures TF-IDF vectorization (5000 words, stemming, stop words)
-- Trains Naive Bayes Multinomial classifier
-- Wraps in FilteredClassifier for pipeline execution
-
-### `SentimentPredictor`
-- Generates predictions for test instances
-- Computes probability distributions
-- Calculates expected sentiment scores
-
-### `SentimentStatistics`
-- Computes mean, variance, std dev, skewness
-- Aggregates by product/company
-- Provides label counts and proportions
-
-### `DistributionUtils`
-- KL-divergence for distribution comparison
-- Laplace smoothing for zero probabilities
-- Converts counts to proportions
-
-## 🛠️ Customization
-
-### Adjust TF-IDF Parameters
-In `SentimentModelTrainer.java`:
-```java
-vectorizer.setWordsToKeep(10000);      // Increase vocabulary size
-vectorizer.setMinTermFreq(2);          // Minimum term frequency
-vectorizer.setNormalizeDocLength(true); // Document length normalization
-```
-
-### Change Stemmer
-```java
-vectorizer.setStemmer(new LovinsStemmer()); // Alternative stemmer
-```
-
-### Modify Score Mapping
-In `ScoreMapper.java`, adjust the defaults:
-```java
-Map<String, Double> defaults = Map.of(
-    "very_negative", -1.0,
-    "negative", -0.5,
-    "neutral", 0.0,
-    "positive", 0.5,
-    "very_positive", 1.0
-);
-```
-
-## 📝 Notes
-
-- **Minimum Training Data**: At least 20-30 examples per class recommended
-- **Text Quality**: Clean, grammatical text performs better
-- **Class Balance**: Balanced datasets improve accuracy
-- **Vocabulary Size**: Larger datasets support larger vocabularies
-
-## 🤝 Contributing
-
-To add new features:
-1. Add functionality to appropriate class
-2. Write comprehensive unit tests
-3. Update documentation
-4. Run full test suite
-
-## 📄 License
-
-This project is part of the Nexus repository.
-
-## 👥 Authors
-
-- Development Team: Nexus Project Contributors
-
----
-
-**Last Updated**: October 16, 2025
+- The repository includes a comprehensive NLP-focused test class (`SentimentModelTrainerTest`) that stresses tokenization, TF-IDF, stemming and edge cases (empty/long text, unicode, punctuation).
+- For best results in NLP model tests, ensure training/test data is representative and not extremely small; Weka classifiers require appropriate attribute types and sufficient examples.

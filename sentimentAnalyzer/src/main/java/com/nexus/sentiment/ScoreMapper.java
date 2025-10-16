@@ -18,11 +18,16 @@ public final class ScoreMapper {
     }
 
     public static ScoreMapper fromAttribute(Attribute classAttribute) {
-        Map<String, Double> defaults = Map.of(
-                "negative", -1.0,
-                "neutral", 0.0,
-                "positive", 1.0
-        );
+        Map<String, Double> defaults = new HashMap<>();
+        // 3-class common mapping
+        defaults.put("negative", -1.0);
+        defaults.put("neutral", 0.0);
+        defaults.put("positive", 1.0);
+        // 5-degree mapping
+        defaults.put("very negative", -1.0);
+        defaults.put("somewhat negative", -0.5);
+        defaults.put("somewhat positive", 0.5);
+        defaults.put("very positive", 1.0);
         Map<String, Double> result = new HashMap<>();
         for (int i = 0; i < classAttribute.numValues(); i++) {
             String label = classAttribute.value(i);

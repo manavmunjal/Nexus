@@ -3,7 +3,6 @@ package com.nexus.sentiment;
 import weka.core.Instances;
 import weka.core.converters.CSVLoader;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 

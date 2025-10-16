@@ -40,6 +40,26 @@ class ScoreMapperTest {
     }
 
     @Test
+    void testFiveDegreeSentimentLabels() {
+        ArrayList<String> classValues = new ArrayList<>();
+        classValues.add("very positive");
+        classValues.add("somewhat positive");
+        classValues.add("neutral");
+        classValues.add("somewhat negative");
+        classValues.add("very negative");
+        Attribute classAttribute = new Attribute("sentiment", classValues);
+
+        ScoreMapper mapper = ScoreMapper.fromAttribute(classAttribute);
+
+        assertThat(mapper.scoreFor("very positive")).isEqualTo(1.0);
+        assertThat(mapper.scoreFor("somewhat positive")).isEqualTo(0.5);
+        assertThat(mapper.scoreFor("neutral")).isEqualTo(0.0);
+        assertThat(mapper.scoreFor("somewhat negative")).isEqualTo(-0.5);
+        assertThat(mapper.scoreFor("very negative")).isEqualTo(-1.0);
+        assertThat(mapper.allScores()).hasSize(5);
+    }
+
+    @Test
     void testCustomLabels() {
         ArrayList<String> classValues = new ArrayList<>();
         classValues.add("happy");

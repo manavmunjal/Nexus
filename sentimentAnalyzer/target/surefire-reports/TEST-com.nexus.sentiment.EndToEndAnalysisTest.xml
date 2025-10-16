@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="com.nexus.sentiment.SentimentModelTrainerTest" time="0.037" tests="14" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="com.nexus.sentiment.EndToEndAnalysisTest" time="0.12" tests="1" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.specification.version" value="24"/>
     <property name="sun.jnu.encoding" value="UTF-8"/>
@@ -57,62 +57,17 @@
     <property name="sun.io.unicode.encoding" value="UnicodeBig"/>
     <property name="java.class.version" value="68.0"/>
   </properties>
-  <testcase name="testMultiClassPrediction" classname="com.nexus.sentiment.SentimentModelTrainerTest" time="0.001">
-    <system-err><![CDATA[Stemmer 'porter' unknown!
+  <testcase name="endToEndPipelineCoversServiceGoals" classname="com.nexus.sentiment.EndToEndAnalysisTest" time="0.111">
+    <system-err><![CDATA[Oct 16, 2025 10:08:33 AM com.github.fommil.jni.JniNamer arch
+WARNING: unrecognised architecture: aarch64
+Oct 16, 2025 10:08:33 AM com.github.fommil.netlib.ARPACK <clinit>
+WARNING: Failed to load implementation from: com.github.fommil.netlib.NativeSystemARPACK
+Oct 16, 2025 10:08:33 AM com.github.fommil.jni.JniNamer arch
+WARNING: unrecognised architecture: aarch64
+Oct 16, 2025 10:08:33 AM com.github.fommil.netlib.ARPACK <clinit>
+WARNING: Failed to load implementation from: com.github.fommil.netlib.NativeRefARPACK
+Stemmer 'porter' unknown!
 Stemmer 'english' unknown!
 ]]></system-err>
   </testcase>
-  <testcase name="testTfIdfWeighting" classname="com.nexus.sentiment.SentimentModelTrainerTest" time="0.002">
-    <system-err><![CDATA[Stemmer 'porter' unknown!
-Stemmer 'english' unknown!
-]]></system-err>
-  </testcase>
-  <testcase name="testEmptyTextHandling" classname="com.nexus.sentiment.SentimentModelTrainerTest" time="0.001">
-    <system-err><![CDATA[Stemmer 'porter' unknown!
-Stemmer 'english' unknown!
-]]></system-err>
-  </testcase>
-  <testcase name="testMinimalTrainingData" classname="com.nexus.sentiment.SentimentModelTrainerTest" time="0.0">
-    <system-err><![CDATA[Stemmer 'porter' unknown!
-Stemmer 'english' unknown!
-]]></system-err>
-  </testcase>
-  <testcase name="testNlpStopWordRemoval" classname="com.nexus.sentiment.SentimentModelTrainerTest" time="0.0">
-    <system-err><![CDATA[Stemmer 'porter' unknown!
-Stemmer 'english' unknown!
-]]></system-err>
-  </testcase>
-  <testcase name="testModelPersistenceFromFile(Path)" classname="com.nexus.sentiment.SentimentModelTrainerTest" time="0.011">
-    <system-err><![CDATA[Stemmer 'porter' unknown!
-Stemmer 'english' unknown!
-]]></system-err>
-  </testcase>
-  <testcase name="testLongTextHandling" classname="com.nexus.sentiment.SentimentModelTrainerTest" time="0.007">
-    <system-err><![CDATA[Stemmer 'porter' unknown!
-Stemmer 'english' unknown!
-]]></system-err>
-  </testcase>
-  <testcase name="testNlpTokenization" classname="com.nexus.sentiment.SentimentModelTrainerTest" time="0.002">
-    <system-err><![CDATA[Stemmer 'porter' unknown!
-Stemmer 'english' unknown!
-]]></system-err>
-  </testcase>
-  <testcase name="testNlpStemming" classname="com.nexus.sentiment.SentimentModelTrainerTest" time="0.001">
-    <system-err><![CDATA[Stemmer 'porter' unknown!
-Stemmer 'english' unknown!
-]]></system-err>
-  </testcase>
-  <testcase name="testTrainWithValidData" classname="com.nexus.sentiment.SentimentModelTrainerTest" time="0.004">
-    <system-err><![CDATA[Stemmer 'porter' unknown!
-Stemmer 'english' unknown!
-]]></system-err>
-  </testcase>
-  <testcase name="testGetClassifierBeforeTraining" classname="com.nexus.sentiment.SentimentModelTrainerTest" time="0.001"/>
-  <testcase name="testSpecialCharactersAndUnicode" classname="com.nexus.sentiment.SentimentModelTrainerTest" time="0.001">
-    <system-err><![CDATA[Stemmer 'porter' unknown!
-Stemmer 'english' unknown!
-]]></system-err>
-  </testcase>
-  <testcase name="testTrainerInitialization" classname="com.nexus.sentiment.SentimentModelTrainerTest" time="0.0"/>
-  <testcase name="testTrainWithMissingTextAttribute" classname="com.nexus.sentiment.SentimentModelTrainerTest" time="0.0"/>
 </testsuite>

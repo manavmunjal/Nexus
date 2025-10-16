@@ -17,16 +17,18 @@ class DatasetLoaderTest {
         Path csvFile = tempDir.resolve("test.csv");
         String content = """
                 review_id,review_text,sentiment_label
-                1,"Great product",positive
-                2,"Bad quality",negative
+                1,"Great product",very positive
+                2,"Bad quality",very negative
                 3,"Okay item",neutral
+                4,"Pretty good",somewhat positive
+                5,"Not great",somewhat negative
                 """;
         Files.writeString(csvFile, content);
 
         Instances data = DatasetLoader.load(csvFile, "sentiment_label");
 
         assertThat(data).isNotNull();
-        assertThat(data.numInstances()).isEqualTo(3);
+        assertThat(data.numInstances()).isEqualTo(5);
         assertThat(data.classIndex()).isGreaterThanOrEqualTo(0);
         assertThat(data.classAttribute().name()).isEqualTo("sentiment_label");
     }

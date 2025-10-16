@@ -22,26 +22,27 @@ class SentimentPredictorTest {
     @BeforeEach
     void setUp() throws Exception {
         ArrayList<Attribute> attributes = new ArrayList<>();
-        attributes.add(new Attribute("review_id", (ArrayList<String>) null));
-        attributes.add(new Attribute("company", (ArrayList<String>) null));
-        attributes.add(new Attribute("product", (ArrayList<String>) null));
         attributes.add(new Attribute("review_text", (ArrayList<String>) null));
 
         ArrayList<String> classValues = new ArrayList<>();
-        classValues.add("positive");
-        classValues.add("negative");
+        classValues.add("very positive");
+        classValues.add("somewhat positive");
         classValues.add("neutral");
+        classValues.add("somewhat negative");
+        classValues.add("very negative");
         attributes.add(new Attribute("sentiment", classValues));
 
         testData = new Instances("TestData", attributes, 0);
-        testData.setClassIndex(4);
+        testData.setClassIndex(1);
 
         // Add training instances
-        addInstance(testData, "1", "CompanyA", "ItemX", "This is excellent and amazing!", "positive");
-        addInstance(testData, "2", "CompanyA", "ItemX", "Terrible and awful quality!", "negative");
-        addInstance(testData, "3", "CompanyA", "ItemY", "Average experience, nothing special.", "neutral");
-        addInstance(testData, "4", "CompanyB", "ItemZ", "Great quality, highly recommend!", "positive");
-        addInstance(testData, "5", "CompanyB", "ItemZ", "Poor quality, very disappointed.", "negative");
+        addInstance(testData, "This is excellent and amazing!", "very positive");
+        addInstance(testData, "Terrible and awful quality!", "very negative");
+        addInstance(testData, "Average experience, nothing special.", "neutral");
+        addInstance(testData, "Great quality, highly recommend!", "very positive");
+        addInstance(testData, "Poor quality, very disappointed.", "very negative");
+        addInstance(testData, "Good product, works fine.", "somewhat positive");
+        addInstance(testData, "Not great, could be better.", "somewhat negative");
 
         // Train a simple classifier
         SentimentModelTrainer trainer = new SentimentModelTrainer("review_text");
@@ -50,14 +51,11 @@ class SentimentPredictorTest {
         scoreMapper = ScoreMapper.fromAttribute(testData.classAttribute());
     }
 
-    private void addInstance(Instances data, String id, String company, String product, String text, String label) {
-        DenseInstance instance = new DenseInstance(5);
+    private void addInstance(Instances data, String text, String label) {
+        DenseInstance instance = new DenseInstance(2);
         instance.setDataset(data);
-        instance.setValue(0, id);
-        instance.setValue(1, company);
-        instance.setValue(2, product);
-        instance.setValue(3, text);
-        instance.setValue(4, label);
+        instance.setValue(0, text);
+        instance.setValue(1, label);
         data.add(instance);
     }
 
@@ -74,12 +72,12 @@ class SentimentPredictorTest {
         List<PredictionResult> results = SentimentPredictor.predict(classifier, testData, scoreMapper);
 
         PredictionResult result = results.get(0);
-        assertThat(result.reviewId()).isNotBlank();
-        assertThat(result.company()).isNotBlank();
-        assertThat(result.product()).isNotBlank();
+        assertThat(result.reviewId()).isEmpty();
+        assertThat(result.company()).isEmpty();
+        assertThat(result.product()).isEmpty();
         assertThat(result.actualLabel()).isNotBlank();
         assertThat(result.predictedLabel()).isNotBlank();
-        assertThat(result.labelDistribution()).hasSize(3);
+        assertThat(result.labelDistribution()).hasSize(5);
         assertThat(result.labelScores()).isNotEmpty();
     }
 
@@ -119,22 +117,26 @@ class SentimentPredictorTest {
     @Test
     void testProbabilityForMethod() throws Exception {
         List<PredictionResult> results = SentimentPredictor.predict(classifier, testData, scoreMapper);
-        String[] classValues = new String[]{"positive", "negative", "neutral"};
+        String[] classValues = new String[]{"very positive", "somewhat positive", "neutral", "somewhat negative", "very negative"};
 
         PredictionResult result = results.get(0);
-        double posProb = result.probabilityFor("positive", classValues);
-        double negProb = result.probabilityFor("negative", classValues);
+        double veryPosProb = result.probabilityFor("very positive", classValues);
+        double somewhatPosProb = result.probabilityFor("somewhat positive", classValues);
         double neuProb = result.probabilityFor("neutral", classValues);
+        double somewhatNegProb = result.probabilityFor("somewhat negative", classValues);
+        double veryNegProb = result.probabilityFor("very negative", classValues);
 
-        assertThat(posProb).isBetween(0.0, 1.0);
-        assertThat(negProb).isBetween(0.0, 1.0);
+        assertThat(veryPosProb).isBetween(0.0, 1.0);
+        assertThat(somewhatPosProb).isBetween(0.0, 1.0);
         assertThat(neuProb).isBetween(0.0, 1.0);
+        assertThat(somewhatNegProb).isBetween(0.0, 1.0);
+        assertThat(veryNegProb).isBetween(0.0, 1.0);
     }
 
     @Test
     void testProbabilityForUnknownLabel() throws Exception {
         List<PredictionResult> results = SentimentPredictor.predict(classifier, testData, scoreMapper);
-        String[] classValues = new String[]{"positive", "negative", "neutral"};
+        String[] classValues = new String[]{"very positive", "somewhat positive", "neutral", "somewhat negative", "very negative"};
 
         PredictionResult result = results.get(0);
         double unknownProb = result.probabilityFor("unknown_label", classValues);
@@ -145,12 +147,12 @@ class SentimentPredictorTest {
     @Test
     void testFormatProbabilities() throws Exception {
         List<PredictionResult> results = SentimentPredictor.predict(classifier, testData, scoreMapper);
-        String[] classValues = new String[]{"positive", "negative", "neutral"};
+        String[] classValues = new String[]{"very positive", "somewhat positive", "neutral", "somewhat negative", "very negative"};
 
         PredictionResult result = results.get(0);
         String[] formatted = result.formatProbabilities(classValues);
 
-        assertThat(formatted).hasSize(3);
+        assertThat(formatted).hasSize(5);
         for (String format : formatted) {
             assertThat(format).contains("=");
         }
@@ -159,7 +161,7 @@ class SentimentPredictorTest {
     @Test
     void testDebugSummary() throws Exception {
         List<PredictionResult> results = SentimentPredictor.predict(classifier, testData, scoreMapper);
-        String[] classValues = new String[]{"positive", "negative", "neutral"};
+        String[] classValues = new String[]{"very positive", "somewhat positive", "neutral", "somewhat negative", "very negative"};
 
         PredictionResult result = results.get(0);
         String summary = result.debugSummary(classValues);
@@ -178,17 +180,20 @@ class SentimentPredictorTest {
         minimalAttributes.add(new Attribute("review_text", (ArrayList<String>) null));
 
         ArrayList<String> classValues = new ArrayList<>();
-        classValues.add("positive");
-        classValues.add("negative");
+        classValues.add("very positive");
+        classValues.add("somewhat positive");
         classValues.add("neutral");
+        classValues.add("somewhat negative");
+        classValues.add("very negative");
         minimalAttributes.add(new Attribute("sentiment", classValues));
 
         Instances minimalData = new Instances("MinimalData", minimalAttributes, 0);
         minimalData.setClassIndex(1);
 
         DenseInstance instance = new DenseInstance(2);
+        instance.setDataset(minimalData);
         instance.setValue(0, "Great product!");
-        instance.setValue(1, "positive");
+        instance.setValue(1, "very positive");
         minimalData.add(instance);
 
         SentimentModelTrainer trainer = new SentimentModelTrainer("review_text");
@@ -205,7 +210,7 @@ class SentimentPredictorTest {
     @Test
     void testPredictedLabelMatchesHighestProbability() throws Exception {
         List<PredictionResult> results = SentimentPredictor.predict(classifier, testData, scoreMapper);
-        String[] classValues = new String[]{"positive", "negative", "neutral"};
+        String[] classValues = new String[]{"very positive", "somewhat positive", "neutral", "somewhat negative", "very negative"};
 
         for (PredictionResult result : results) {
             double maxProb = -1;
@@ -230,7 +235,7 @@ class SentimentPredictorTest {
             // Manually calculate expected score
             double[] dist = result.labelDistribution();
             Map<String, Double> scores = result.labelScores();
-            String[] classValues = new String[]{"positive", "negative", "neutral"};
+            String[] classValues = new String[]{"very positive", "somewhat positive", "neutral", "somewhat negative", "very negative"};
             
             double expectedScore = 0.0;
             for (int i = 0; i < dist.length; i++) {

@@ -17,8 +17,16 @@ public final class DataSplitter {
         }
         Instances shuffled = new Instances(data);
         shuffled.randomize(new Random(seed));
-        int trainSize = (int) Math.round(shuffled.numInstances() * trainRatio);
-        int testSize = shuffled.numInstances() - trainSize;
+        int numInstances = shuffled.numInstances();
+        int trainSize = (int) Math.round(numInstances * trainRatio);
+        // Ensure at least 1 instance in each set if possible
+        if (trainSize == 0 && numInstances > 0) {
+            trainSize = 1;
+        }
+        if (trainSize == numInstances && numInstances > 1) {
+            trainSize = numInstances - 1;
+        }
+        int testSize = numInstances - trainSize;
         Instances train = new Instances(shuffled, 0, trainSize);
         Instances test = new Instances(shuffled, trainSize, testSize);
         return new Split(train, test);
