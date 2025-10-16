@@ -19,11 +19,9 @@ public final class ScoreMapper {
 
     public static ScoreMapper fromAttribute(Attribute classAttribute) {
         Map<String, Double> defaults = Map.of(
-                "very negative", -1.0,
-                "somewhat negative", -0.5,
+                "negative", -1.0,
                 "neutral", 0.0,
-                "somewhat positive", 0.5,
-                "very positive", 1.0
+                "positive", 1.0
         );
         Map<String, Double> result = new HashMap<>();
         for (int i = 0; i < classAttribute.numValues(); i++) {
