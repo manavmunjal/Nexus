@@ -8,18 +8,14 @@ import weka.core.Instances;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class Main {
     private static final String DEFAULT_DATASET = "src/main/resources/data/sample_reviews.csv";
     private static final String DEFAULT_TEXT_ATTR = "review_text";
     private static final String DEFAULT_CLASS_ATTR = "sentiment_label";
 
-    private Main() {
-    }
+    private Main() {}
 
     public static void main(String[] args) throws Exception {
         Config cfg = parseArgs(args);
@@ -28,13 +24,29 @@ public final class Main {
             return;
         }
 
+        // Check if dataset exists
         Path datasetPath = Paths.get(cfg.datasetPath);
         if (!Files.exists(datasetPath)) {
             throw new IllegalArgumentException("Dataset not found: " + datasetPath.toAbsolutePath());
         }
 
+        // Load dataset from CSV
         Instances data = DatasetLoader.load(datasetPath, cfg.classAttribute);
-        Attribute classAttribute = data.classAttribute();
+
+        System.out.println("Attributes after loading:");
+        for (int i = 0; i < data.numAttributes(); i++) {
+            System.out.printf("  %d: %s (%s)%n", i, data.attribute(i).name(), data.attribute(i).type());
+        }
+
+
+        // Set class attribute index
+        Attribute classAttribute = data.attribute(cfg.classAttribute);
+        if (classAttribute == null) {
+            throw new IllegalArgumentException("Class attribute not found: " + cfg.classAttribute);
+        }
+        data.setClass(classAttribute);
+
+        // Extract class values
         String[] classValues = new String[classAttribute.numValues()];
         for (int i = 0; i < classAttribute.numValues(); i++) {
             classValues[i] = classAttribute.value(i);
@@ -42,35 +54,33 @@ public final class Main {
 
         ScoreMapper scoreMapper = ScoreMapper.fromAttribute(classAttribute);
 
+        // Split train/test
         DataSplitter.Split split = DataSplitter.split(data, cfg.trainRatio, cfg.seed);
-        SentimentModelTrainer trainer = new SentimentModelTrainer(cfg.textAttribute);
-        FilteredClassifier classifier = trainer.train(split.train());
 
-        Evaluation evaluation = new Evaluation(split.train());
-        evaluation.evaluateModel(classifier, split.test());
+        // Train model
+        SentimentModelTrainer trainer = new SentimentModelTrainer();
+        FilteredClassifier classifier = trainer.train(split.train(), cfg.textAttribute);
 
+        // Evaluate
+        Evaluation eval = new Evaluation(split.train());
+        eval.evaluateModel(classifier, split.test());
+
+        // Predict
         List<PredictionResult> predictions = SentimentPredictor.predict(classifier, split.test(), scoreMapper);
 
-        ReportPrinter.printEvaluation(evaluation, classValues);
+        // Print results
+        ReportPrinter.printEvaluation(eval, classValues);
         ReportPrinter.printPredictions(predictions, classValues, Math.min(cfg.sampleLimit, predictions.size()));
 
+        // Group predictions
         Map<String, List<PredictionResult>> byProduct = groupBy(predictions, PredictionResult::product, "UNKNOWN_PRODUCT");
         Map<String, List<PredictionResult>> byCompany = groupBy(predictions, PredictionResult::company, "UNKNOWN_COMPANY");
 
-        Map<String, SentimentStatistics.GroupStatistics> productSummaries = ReportPrinter.printGroupSummaries(
-                "Product Summaries",
-                byProduct,
-                classValues
-        );
+        Map<String, SentimentStatistics.GroupStatistics> productSummaries = ReportPrinter.printGroupSummaries("Product Summaries", byProduct, classValues);
+        Map<String, SentimentStatistics.GroupStatistics> companySummaries = ReportPrinter.printGroupSummaries("Company Summaries", byCompany, classValues);
 
-        Map<String, SentimentStatistics.GroupStatistics> companySummaries = ReportPrinter.printGroupSummaries(
-                "Company Summaries",
-                byCompany,
-                classValues
-        );
-
-    ReportPrinter.printKlDivergence(productSummaries, cfg.epsilon);
-    ReportPrinter.printKlDivergence(companySummaries, cfg.epsilon);
+        ReportPrinter.printKlDivergence(productSummaries, cfg.epsilon);
+        ReportPrinter.printKlDivergence(companySummaries, cfg.epsilon);
     }
 
     private static Map<String, List<PredictionResult>> groupBy(
@@ -122,7 +132,6 @@ public final class Main {
             } else if (arg.startsWith("--limit=")) {
                 try { cfg.sampleLimit = Integer.parseInt(arg.substring("--limit=".length())); } catch (Exception ignored) {}
             } else {
-                // Backward compatible: first positional arg as dataset path
                 if (cfg.datasetPath.equals(DEFAULT_DATASET)) {
                     cfg.datasetPath = arg;
                 }

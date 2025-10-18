@@ -3,98 +3,85 @@ package com.nexus.sentiment;
 import weka.classifiers.bayes.NaiveBayesMultinomial;
 import weka.classifiers.meta.FilteredClassifier;
 import weka.core.Instances;
-import weka.core.stemmers.SnowballStemmer;
-import weka.core.stopwords.Rainbow;
-import weka.filters.Filter;
+import weka.filters.MultiFilter;
 import weka.filters.unsupervised.attribute.Remove;
-import weka.filters.unsupervised.attribute.NominalToString;
 import weka.filters.unsupervised.attribute.StringToWordVector;
+import weka.core.stemmers.SnowballStemmer;
+import weka.filters.Filter;
 
-/**
- * Builds a Naive Bayes pipeline with TF-IDF features for sentiment analysis.
- */
-public final class SentimentModelTrainer {
-    private final String textAttributeName;
+public class SentimentModelTrainer {
+
     private FilteredClassifier classifier;
 
-    public SentimentModelTrainer(String textAttributeName) {
-        this.textAttributeName = textAttributeName;
-    }
+    /**
+     * Trains a NaiveBayesMultinomial model on the dataset with text preprocessing.
+     *
+     * @param trainData          Original dataset containing review text and sentiment label.
+     * @param textAttributeName  Name of the text attribute (e.g., "review_text").
+     * @return FilteredClassifier trained classifier
+     * @throws Exception if training or filtering fails.
+     */
+    public FilteredClassifier train(Instances trainData, String textAttributeName) throws Exception {
+        System.out.println("Starting training with text attribute: " + textAttributeName);
 
-    public FilteredClassifier train(Instances trainData) throws Exception {
-        if (trainData.attribute(textAttributeName) == null) {
-            throw new IllegalArgumentException("Missing text attribute: " + textAttributeName);
-        }
-        
-        // First, filter out non-target string and nominal attributes
-        Instances filtered = removeNonTargetStringAndNominalAttributes(trainData);
-
-        // Ensure the text attribute is String type (CSV may load it as nominal)
-        if (filtered.attribute(textAttributeName).isNominal()) {
-            NominalToString nominalToString = new NominalToString();
-            nominalToString.setAttributeIndexes(Integer.toString(filtered.attribute(textAttributeName).index() + 1));
-            nominalToString.setInputFormat(filtered);
-            filtered = Filter.useFilter(filtered, nominalToString);
+        // Ensure class index set
+        if (trainData.classIndex() == -1) {
+            throw new IllegalArgumentException("Class attribute not set");
         }
 
-        int attributeIndex = filtered.attribute(textAttributeName).index() + 1; // StringToWordVector uses 1-based indexes
+        int classIndex = trainData.classIndex();
 
-        StringToWordVector vectorizer = new StringToWordVector();
-        vectorizer.setAttributeIndices(Integer.toString(attributeIndex));
-        vectorizer.setTFTransform(true);
-        vectorizer.setIDFTransform(true);
-        vectorizer.setLowerCaseTokens(true);
-        vectorizer.setWordsToKeep(5000);
-        vectorizer.setOutputWordCounts(true);
-    SnowballStemmer stemmer = new SnowballStemmer();
-    stemmer.setStemmer("english");
-    vectorizer.setStemmer(stemmer);
-        vectorizer.setStopwordsHandler(new Rainbow());
+        // Remove all except textAttribute and class attribute
+        StringBuilder indicesToRemove = new StringBuilder();
+        for (int i = 0; i < trainData.numAttributes(); i++) {
+            if (i != classIndex && !trainData.attribute(i).name().equals(textAttributeName)) {
+                indicesToRemove.append(i + 1).append(",");
+            }
+        }
 
+        Remove removeFilter = new Remove();
+        if (indicesToRemove.length() > 0) {
+            indicesToRemove.deleteCharAt(indicesToRemove.length() - 1);
+            removeFilter.setAttributeIndices(indicesToRemove.toString());
+        } else {
+            removeFilter.setAttributeIndices("");
+        }
+        removeFilter.setInvertSelection(false);
+
+        // StringToWordVector setup
+        StringToWordVector stringToWordVector = new StringToWordVector();
+        int textAttrIndex = trainData.attribute(textAttributeName).index() + 1; // 1-based indexing
+        stringToWordVector.setAttributeIndices("first-last");  // Apply to all string attributes
+        stringToWordVector.setTFTransform(true);
+        stringToWordVector.setIDFTransform(true);
+        stringToWordVector.setLowerCaseTokens(true);
+        stringToWordVector.setWordsToKeep(5000);
+        stringToWordVector.setOutputWordCounts(true);
+
+        // Stemmer setup - lowercase "porter"
+        SnowballStemmer stemmer = new SnowballStemmer();
+        stemmer.setStemmer("porter"); // still broken here
+        stringToWordVector.setStemmer(stemmer);
+
+        // Chain Remove and StringToWordVector filters with MultiFilter
+        MultiFilter multiFilter = new MultiFilter();
+        multiFilter.setFilters(new Filter[]{removeFilter, stringToWordVector});
+
+        // Build FilteredClassifier with NaiveBayesMultinomial
         NaiveBayesMultinomial nb = new NaiveBayesMultinomial();
-
-        classifier = new FilteredClassifier();
-        classifier.setFilter(vectorizer);
+        FilteredClassifier classifier = new FilteredClassifier();
+        classifier.setFilter(multiFilter);
         classifier.setClassifier(nb);
-        classifier.buildClassifier(filtered);
+
+        // Build classifier on raw training data
+        classifier.buildClassifier(trainData);
+
+        System.out.println("Model trained successfully!");
         return classifier;
     }
 
-    private Instances removeNonTargetStringAndNominalAttributes(Instances data) throws Exception {
-        StringBuilder indicesToRemove = new StringBuilder();
-        boolean first = true;
-        
-        for (int i = 0; i < data.numAttributes(); i++) {
-            // Skip the text attribute and the class attribute
-            boolean isTextAttribute = data.attribute(i).name().equals(textAttributeName);
-            boolean isClassAttribute = i == data.classIndex();
-            boolean isStringAttribute = data.attribute(i).isString();
-            boolean isNominalAttribute = data.attribute(i).isNominal();
-            
-            if (!isTextAttribute && !isClassAttribute && (isStringAttribute || isNominalAttribute)) {
-                if (!first) {
-                    indicesToRemove.append(",");
-                }
-                indicesToRemove.append(i + 1); // 1-based index for Remove filter
-                first = false;
-            }
-        }
-        
-        if (indicesToRemove.length() == 0) {
-            // No attributes to remove
-            return data;
-        }
-        
-        Remove removeFilter = new Remove();
-        removeFilter.setAttributeIndices(indicesToRemove.toString());
-        removeFilter.setInputFormat(data);
-        return Filter.useFilter(data, removeFilter);
-    }
 
     public FilteredClassifier getClassifier() {
-        if (classifier == null) {
-            throw new IllegalStateException("Classifier has not been trained yet");
-        }
         return classifier;
     }
 }
