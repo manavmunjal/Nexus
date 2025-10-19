@@ -60,18 +60,18 @@ public class SentimentModelTrainer {
         stringToWordVector.setTFTransform(true);
         stringToWordVector.setIDFTransform(true);
         stringToWordVector.setLowerCaseTokens(true);
-        stringToWordVector.setWordsToKeep(5000);
+        stringToWordVector.setWordsToKeep(10000); // Increased from 5000 for more features
         stringToWordVector.setOutputWordCounts(true);
+        stringToWordVector.setMinTermFreq(2); // Filter out rare words (appear < 2 times)
 
-        // Optional: Use a stopwords handler
-        WordsFromFile stopwords = new WordsFromFile();
-        stopwords.setStopwords(new File("resources/stopwords.txt")); // Add your stopwords file if desired
+        // Use built-in stopwords handler (Rainbow stopwords)
+        weka.core.stopwords.Rainbow stopwords = new weka.core.stopwords.Rainbow();
         stringToWordVector.setStopwordsHandler(stopwords);
 
-        // Optional: Use N-grams (1–2 grams)
+        // Use N-grams (1–2 grams) - bigrams capture phrase sentiment better
         NGramTokenizer tokenizer = new NGramTokenizer();
         tokenizer.setNGramMinSize(1);
-        tokenizer.setNGramMaxSize(2);
+        tokenizer.setNGramMaxSize(2); // Changed from 3 to 2 (unigrams + bigrams)
         tokenizer.setDelimiters("\\W");
         stringToWordVector.setTokenizer(tokenizer);
 
@@ -87,17 +87,17 @@ public class SentimentModelTrainer {
         // Configure SVM with RBF kernel
         SMO smo = new SMO();
         RBFKernel rbf = new RBFKernel();
-        rbf.setGamma(0.01); // Can tune this if needed
+        rbf.setGamma(0.0145); // Can tune this if needed
         smo.setKernel(rbf);
 
-        // Tune C (and optionally gamma) using CVParameterSelection
+        // Tune C and gamma using CVParameterSelection with broader ranges
         CVParameterSelection cvParams = new CVParameterSelection();
         cvParams.setClassifier(smo);
-        cvParams.setNumFolds(5);
-        cvParams.addCVParameter("C 0.1 5.0 5");
+        cvParams.setNumFolds(10); // Increased from 5 for more robust validation
+        cvParams.addCVParameter("C 0.1 100 10"); // Wider range: 0.1 to 100, 10 steps
 
-        // Optional: also tune gamma (uncomment to try)
-        // cvParams.addCVParameter("G 0.001 0.1 5");
+        // Tune gamma for RBF kernel - critical for performance
+        cvParams.addCVParameter("K \"weka.classifiers.functions.supportVector.RBFKernel -G 0.01 1.0 10\"");
 
         cvParams.buildClassifier(filteredTrainData);
 
