@@ -21,8 +21,7 @@ public class SentimentModelTrainer {
     private FilteredClassifier classifier;
 
     /**
-     * Trains an SVM (SMO) model with RBF kernel on the dataset,
-     * including text preprocessing and parameter tuning (C).
+     * Trains a NaiveBayesMultinomial model on the dataset with text preprocessing.
      *
      * @param trainData         Raw dataset with text and class label.
      * @param textAttributeName Name of the text attribute (e.g. "review_text").
