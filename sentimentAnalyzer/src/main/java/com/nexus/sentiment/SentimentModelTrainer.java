@@ -5,23 +5,27 @@ import weka.classifiers.meta.CVParameterSelection;
 import weka.classifiers.meta.FilteredClassifier;
 import weka.core.Instances;
 import weka.core.Utils;
-import weka.classifiers.functions.supportVector.PolyKernel;
+import weka.classifiers.functions.supportVector.RBFKernel;
 import weka.core.stemmers.IteratedLovinsStemmer;
 import weka.filters.Filter;
 import weka.filters.MultiFilter;
 import weka.filters.unsupervised.attribute.Remove;
 import weka.filters.unsupervised.attribute.StringToWordVector;
+import weka.core.tokenizers.NGramTokenizer;
+import weka.core.stopwords.WordsFromFile;
+
+import java.io.File;
 
 public class SentimentModelTrainer {
 
     private FilteredClassifier classifier;
 
     /**
-     * Trains an SVM (SMO) model with linear kernel on the dataset,
+     * Trains an SVM (SMO) model with RBF kernel on the dataset,
      * including text preprocessing and parameter tuning (C).
      *
-     * @param trainData          Raw dataset with text and class label.
-     * @param textAttributeName  Name of the text attribute (e.g. "review_text").
+     * @param trainData         Raw dataset with text and class label.
+     * @param textAttributeName Name of the text attribute (e.g. "review_text").
      * @return FilteredClassifier trained classifier.
      * @throws Exception if training fails.
      */
@@ -51,7 +55,7 @@ public class SentimentModelTrainer {
         }
         removeFilter.setInvertSelection(false);
 
-        // StringToWordVector for text processing
+        // Configure StringToWordVector
         StringToWordVector stringToWordVector = new StringToWordVector();
         stringToWordVector.setAttributeIndices("first-last");
         stringToWordVector.setTFTransform(true);
@@ -59,53 +63,62 @@ public class SentimentModelTrainer {
         stringToWordVector.setLowerCaseTokens(true);
         stringToWordVector.setWordsToKeep(5000);
         stringToWordVector.setOutputWordCounts(true);
+
+        // Optional: Use a stopwords handler
+        WordsFromFile stopwords = new WordsFromFile();
+        stopwords.setStopwords(new File("resources/stopwords.txt")); // Add your stopwords file if desired
+        stringToWordVector.setStopwordsHandler(stopwords);
+
+        // Optional: Use N-grams (1–2 grams)
+        NGramTokenizer tokenizer = new NGramTokenizer();
+        tokenizer.setNGramMinSize(1);
+        tokenizer.setNGramMaxSize(2);
+        tokenizer.setDelimiters("\\W");
+        stringToWordVector.setTokenizer(tokenizer);
+
+        // Optional: Stemmer (can comment out if hurting performance)
         stringToWordVector.setStemmer(new IteratedLovinsStemmer());
 
-        // Combine filters into a MultiFilter
+        // Combine filters into MultiFilter
         MultiFilter multiFilter = new MultiFilter();
         multiFilter.setFilters(new Filter[]{removeFilter, stringToWordVector});
-
-        // IMPORTANT: set input format for filtering the data BEFORE tuning
         multiFilter.setInputFormat(trainData);
         Instances filteredTrainData = Filter.useFilter(trainData, multiFilter);
 
-        // SMO classifier with linear kernel (PolyKernel exponent 1)
+        // Configure SVM with RBF kernel
         SMO smo = new SMO();
-        PolyKernel linearKernel = new PolyKernel();
-        linearKernel.setExponent(1);
-        smo.setKernel(linearKernel);
+        RBFKernel rbf = new RBFKernel();
+        rbf.setGamma(0.01); // Can tune this if needed
+        smo.setKernel(rbf);
 
-        // Parameter tuning with CVParameterSelection on filtered (numeric) data
+        // Tune C (and optionally gamma) using CVParameterSelection
         CVParameterSelection cvParams = new CVParameterSelection();
         cvParams.setClassifier(smo);
-        cvParams.setNumFolds(5);  // 5-fold cross-validation for tuning
+        cvParams.setNumFolds(5);
+        cvParams.addCVParameter("C 0.1 5.0 5");
 
-        // Tune C from 1 to 10 in 5 steps
-        cvParams.addCVParameter("C 1 10 5");
+        // Optional: also tune gamma (uncomment to try)
+        // cvParams.addCVParameter("G 0.001 0.1 5");
 
-        // Build classifier with parameter tuning on filtered data
         cvParams.buildClassifier(filteredTrainData);
 
         // Print best parameters
         System.out.println("Best parameters found: " + Utils.joinOptions(cvParams.getBestClassifierOptions()));
 
-        // Create a new SMO classifier and set the best options found
+        // Create final SMO classifier with tuned params
         SMO tunedSmo = new SMO();
         tunedSmo.setOptions(cvParams.getBestClassifierOptions());
-        tunedSmo.setKernel(linearKernel);  // Re-set kernel to linear
+        tunedSmo.setKernel(rbf); // Ensure RBF kernel is set again
 
-        // Wrap tuned classifier with filters again (to apply on raw data at prediction)
+        // Final classifier wrapped with MultiFilter
         FilteredClassifier tunedClassifier = new FilteredClassifier();
         tunedClassifier.setFilter(multiFilter);
         tunedClassifier.setClassifier(tunedSmo);
 
-        // Build final classifier on the whole training set (raw data)
         tunedClassifier.buildClassifier(trainData);
+        this.classifier = tunedClassifier;
 
-        classifier = tunedClassifier;
-
-        System.out.println("Model trained successfully with parameter tuning!");
-
+        System.out.println("Model trained successfully with RBF kernel and tuning!");
         return classifier;
     }
 
