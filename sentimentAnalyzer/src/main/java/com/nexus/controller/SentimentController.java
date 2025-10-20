@@ -17,6 +17,10 @@ public class SentimentController {
 
     @GetMapping("/score")
     public double score(@RequestParam("text") String text) {
-        return sentimentService.scoreFromText(text);
+        try {
+            return sentimentService.scoreFromText(text);
+        } catch (Exception e) {
+            return 0.0;
+        }
     }
 }

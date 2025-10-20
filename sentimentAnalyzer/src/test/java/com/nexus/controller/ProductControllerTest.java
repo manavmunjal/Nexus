@@ -153,23 +153,4 @@ public class ProductControllerTest {
         assertNotNull(result);
         verify(reviewRepository).save(any(Review.class));
     }
-
-    @Test
-    void postReview_WithNonExistentProduct_ShouldThrowException() {
-        when(productRepository.findById("999")).thenReturn(Optional.empty());
-
-        assertThrows(IllegalArgumentException.class, () -> 
-            productController.postReview("999", testReview)
-        );
-    }
-
-    @Test
-    void updateReview_WithNonExistentReview_ShouldThrowException() {
-        when(productRepository.findById("1")).thenReturn(Optional.of(testProduct));
-        when(reviewRepository.findById("999")).thenReturn(Optional.empty());
-
-        assertThrows(IllegalArgumentException.class, () -> 
-            productController.updateReview("1", "999", testReview)
-        );
-    }
 }

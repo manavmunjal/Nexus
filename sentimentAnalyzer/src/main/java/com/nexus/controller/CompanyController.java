@@ -18,6 +18,10 @@ public class CompanyController {
 
     @PostMapping
     public Company createCompany(@RequestBody Company company) {
-        return companyRepository.save(company);
+        try {
+            return companyRepository.save(company);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

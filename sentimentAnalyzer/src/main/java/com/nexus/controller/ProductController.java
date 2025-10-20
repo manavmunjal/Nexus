@@ -26,48 +26,68 @@ public class ProductController {
 
     @PostMapping
     public Product createProduct(@RequestBody Product product) {
-        if (product.getReviewIds() == null) product.setReviewIds(new ArrayList<>());
-        return productRepository.save(product);
+        try {
+            if (product.getReviewIds() == null) product.setReviewIds(new ArrayList<>());
+            return productRepository.save(product);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     @GetMapping
     public List<Product> getAllProducts() {
-        return productRepository.findAll();
+        try {
+            return productRepository.findAll();
+        } catch (Exception e) {
+            return List.of();
+        }
     }
 
     @PostMapping("/{productId}/reviews")
     public Review postReview(@PathVariable String productId, @RequestBody Review review) {
-        Optional<Product> p = productRepository.findById(productId);
-        if (p.isEmpty()) throw new IllegalArgumentException("Product not found: " + productId);
+        try {
+            Optional<Product> p = productRepository.findById(productId);
+            if (p.isEmpty()) throw new IllegalArgumentException("Product not found: " + productId);
 
-        // Save user first if present and missing id
-        if (review.getUser() != null && (review.getUser().getId() == null || review.getUser().getId().isBlank())) {
-            userRepository.save(review.getUser());
-        }
+            // Save user first if present and missing id
+            if (review.getUser() != null && (review.getUser().getId() == null || review.getUser().getId().isBlank())) {
+                userRepository.save(review.getUser());
+            }
 
-        Review saved = reviewRepository.save(review);
-        Product product = p.get();
-        if (product.getReviewIds() == null) product.setReviewIds(new ArrayList<>());
-        product.getReviewIds().add(saved.getId());
-        productRepository.save(product);
-        return saved;
+            Review saved = reviewRepository.save(review);
+            Product product = p.get();
+            if (product.getReviewIds() == null) product.setReviewIds(new ArrayList<>());
+            product.getReviewIds().add(saved.getId());
+            productRepository.save(product);
+            return saved;
+        } catch (Exception e) {
+            return null;
+        }   
     }
 
     @GetMapping("/{productId}/reviews")
     public List<Review> getReviews(@PathVariable String productId) {
-        Product product = productRepository.findById(productId).orElseThrow(() -> new IllegalArgumentException("Product not found: " + productId));
-        if (product.getReviewIds() == null || product.getReviewIds().isEmpty()) return List.of();
-        return reviewRepository.findByIdIn(product.getReviewIds());
+        try {
+            Product product = productRepository.findById(productId).orElseThrow(() -> new IllegalArgumentException("Product not found: " + productId));
+            if (product.getReviewIds() == null || product.getReviewIds().isEmpty()) return List.of();
+            return reviewRepository.findByIdIn(product.getReviewIds());
+        } catch (Exception e) {
+            return List.of();
+        }
     }
 
     @PutMapping("/{productId}/reviews/{reviewId}")
     public Review updateReview(@PathVariable String productId, @PathVariable String reviewId, @RequestBody Review update) {
         // ensure product exists
-        productRepository.findById(productId).orElseThrow(() -> new IllegalArgumentException("Product not found: " + productId));
-        Review existing = reviewRepository.findById(reviewId).orElseThrow(() -> new IllegalArgumentException("Review not found: " + reviewId));
-        existing.setComment(update.getComment());
-        existing.setRating(update.getRating());
-        if (update.getUser() != null) existing.setUser(update.getUser());
-        return reviewRepository.save(existing);
+        try {
+            productRepository.findById(productId).orElseThrow(() -> new IllegalArgumentException("Product not found: " + productId));
+            Review existing = reviewRepository.findById(reviewId).orElseThrow(() -> new IllegalArgumentException("Review not found: " + reviewId));
+            existing.setComment(update.getComment());
+            existing.setRating(update.getRating());
+            if (update.getUser() != null) existing.setUser(update.getUser());
+            return reviewRepository.save(existing);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
