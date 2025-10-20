@@ -1,6 +1,10 @@
 package com.nexus.repository;
 
-import com.nexus.model.Product;
+import com.nexus.model.Review;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-public interface ReviewRepository extends MongoRepository<Product, String> {}
+import java.util.List;
+
+public interface ReviewRepository extends MongoRepository<Review, String> {
+	List<Review> findByIdIn(List<String> ids);
+}

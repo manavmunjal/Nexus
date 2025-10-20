@@ -16,8 +16,12 @@ public class TestDBController {
 
   @GetMapping
   public String testConnection() {
-    mongoTemplate.getDb().listCollectionNames().first();
-    return "MongoDB connection successful!";
+    try {
+      mongoTemplate.getDb().listCollectionNames().first();
+      return "MongoDB connection successful!";
+    } catch (Exception e) {
+      return "MongoDB connection failed: " + e.getMessage();
+    }
   }
 }
 
