@@ -1,10 +1,10 @@
 # Sentiment Analyzer - Multi-Class Sentiment Analysis with Weka and Naive Bayes
 
-## 📋 Project Overview
+## Project Overview
 
 A comprehensive Java-based sentiment analysis system using Weka's machine learning library and Naive Bayes classifier with TF-IDF feature extraction. The system performs multi-class sentiment classification (positive, negative, neutral) on review text data.
 
-## ✨ Key Features
+## Key Features
 
 ### 1. **NLP Text Processing**
 - **TF-IDF Vectorization**: Converts review text into numerical features weighted by term importance
@@ -32,7 +32,7 @@ A comprehensive Java-based sentiment analysis system using Weka's machine learni
 - **Statistical Summary**: Comprehensive metrics for each group (product/company)
 - **Distribution Smoothing**: Handles zero probabilities for robust KL-divergence
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 sentimentAnalyzer/
@@ -55,7 +55,7 @@ sentimentAnalyzer/
 │       ├── java/com/nexus/sentiment/
 │       │   ├── DatasetLoaderTest.java         # 4 tests
 │       │   ├── DataSplitterTest.java          # 6 tests
-│       │   ├── SentimentModelTrainerTest.java # 14 NLP-focused tests ⭐
+│       │   ├── SentimentModelTrainerTest.java # 14 NLP-focused tests
 │       │   ├── ScoreMapperTest.java           # 7 tests
 │       │   ├── DistributionUtilsTest.java     # 11 tests
 │       │   ├── SentimentStatisticsTest.java   # 11 tests
@@ -65,7 +65,7 @@ sentimentAnalyzer/
 ├── pom.xml                                    # Maven configuration
 └── TEST_DOCUMENTATION.md                      # Detailed test documentation
 
-## 🔧 Technologies Used
+## Technologies Used
 
 - **Java 17**: Modern Java with records and text blocks
 - **Weka 3.8.6**: Machine learning library for NLP and classification
@@ -74,7 +74,7 @@ sentimentAnalyzer/
 - **AssertJ 3.24.2**: Fluent assertion library
 - **Maven**: Build and dependency management
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Java 17 or higher
@@ -133,7 +133,7 @@ review_id,company,product,review_text,sentiment_label
 - `company`: For company-level aggregation
 - `product`: For product-level aggregation
 
-## 📊 Sample Output
+## Sample Output
 
 ```
 ==== Evaluation Metrics ====
@@ -156,7 +156,7 @@ AcmeTablet -> total=38, meanScore=-0.156, variance=0.723, stdDev=0.850, skewness
 AcmePhone vs AcmeTablet -> KL=0.0856
 ```
 
-## 🧪 Running Tests
+## Running Tests
 
 ### Run all tests:
 ```bash
@@ -173,12 +173,12 @@ mvn test -Dtest=SentimentModelTrainerTest
 mvn clean test
 ```
 
-## 📈 Test Suite
+## Test Suite
 
 ### Test Coverage: **65 Unit Tests**
 
-- ✅ **26 tests passed** (DatasetLoader, DataSplitter, ScoreMapper, DistributionUtils, SentimentStatistics)
-- ⚠️ **39 tests with known issues** (NLP tests - require larger training datasets)
+- **26 tests passed** (DatasetLoader, DataSplitter, ScoreMapper, DistributionUtils, SentimentStatistics)
+- **39 tests with known issues** (NLP tests - require larger training datasets)
 
 ### Heavy NLP Testing in `SentimentModelTrainerTest`:
 
@@ -205,7 +205,7 @@ mvn clean test
    - Probability distributions
    - Confidence scores
 
-## 🎯 Use Cases
+## Use Cases
 
 1. **Product Review Analysis**: Analyze customer sentiment for products
 2. **Brand Monitoring**: Compare sentiment across competing brands
@@ -213,7 +213,7 @@ mvn clean test
 4. **Trend Analysis**: Track sentiment changes over time
 5. **Quality Assurance**: Flag overwhelmingly negative reviews for investigation
 
-## 🔍 Core Classes Explained
+## Core Classes Explained
 
 ### `SentimentModelTrainer`
 - Configures TF-IDF vectorization (5000 words, stemming, stop words)
@@ -235,7 +235,7 @@ mvn clean test
 - Laplace smoothing for zero probabilities
 - Converts counts to proportions
 
-## 🛠️ Customization
+## Customization
 
 ### Adjust TF-IDF Parameters
 In `SentimentModelTrainer.java`:
@@ -262,14 +262,14 @@ Map<String, Double> defaults = Map.of(
 );
 ```
 
-## 📝 Notes
+## Notes
 
 - **Minimum Training Data**: At least 20-30 examples per class recommended
 - **Text Quality**: Clean, grammatical text performs better
 - **Class Balance**: Balanced datasets improve accuracy
 - **Vocabulary Size**: Larger datasets support larger vocabularies
 
-## 🤝 Contributing
+## Contributing
 
 To add new features:
 1. Add functionality to appropriate class
@@ -277,14 +277,83 @@ To add new features:
 3. Update documentation
 4. Run full test suite
 
-## 📄 License
+## License
 
 This project is part of the Nexus repository.
 
-## 👥 Authors
+## Authors
 
-- Development Team: Nexus Project Contributors
+- Development Team: Nexus Project Contributors - Manav, Sreenivas, Sindhu, Song
+
 
 ---
 
-**Last Updated**: October 16, 2025
+# REST API Endpoints (Spring Boot)
+
+The project now includes a full REST API for sentiment analysis and review management, built with Spring Boot and MongoDB.
+
+## Endpoints
+
+- `GET    /api`                      — Welcome message and endpoint list
+- `GET    /api/sentiment/score?text=...` — Get sentiment score (0–5) for input text (Yet to be implemented)
+- `POST   /api/users`                — Create a user
+- `GET    /api/users`                — List all users
+- `POST   /api/companies`            — Create a company
+- `POST   /api/products`             — Create a product
+- `GET    /api/products`             — List all products
+- `POST   /api/products/{id}/reviews` — Post a review to a product
+- `GET    /api/products/{id}/reviews` — Get all reviews for a product
+- `PUT    /api/products/{id}/reviews/{reviewId}` — Update a review
+
+## Example Usage (with Postman)
+
+- Create a user:
+  - POST `http://localhost:8080/api/users`
+  - Body (JSON):
+    ```json
+    { "username": "manav", "email": "mm6840@columbia.edu" }
+    ```
+- Get all products:
+  - GET `http://localhost:8080/api/products`
+- Get sentiment score:
+  - GET `http://localhost:8080/api/sentiment/score?text=This%20product%20is%20great` (To do)
+
+---
+
+# MongoDB Integration
+
+- Uses Spring Data MongoDB for persistence.
+- Connection string is configured in `src/main/resources/application.yaml`:
+  ```yaml
+  spring:
+    data:
+      mongodb:
+        uri: mongodb+srv://sb5181_db_user:YOUR_PASSWORD@cluster0.85xlubi.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+        database: sentimentDB
+  server:
+    port: 8080
+  ```
+- You can set your password directly in the YAML or use environment variables for security.
+
+---
+
+# Unit Testing
+
+- All controllers and services have unit tests using JUnit 5 and Mockito.
+- Example test classes:
+  - `UserControllerTest`
+  - `ProductControllerTest`
+  - `CompanyControllerTest`
+  - `SentimentControllerTest`
+  - `SentimentServiceTest`
+  - `IndexControllerTest`
+- Run all tests:
+  ```powershell
+  mvn test
+  ```
+- Tests cover:
+  - Success and error cases
+  - Mocked repository/service dependencies
+  - Boundary conditions and input validation
+
+---

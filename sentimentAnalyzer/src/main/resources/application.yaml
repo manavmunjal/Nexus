@@ -1,0 +1,8 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb+srv://sb5181_db_user:password@cluster0.85xlubi.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+      database: sentimentDB
+
+server:
+  port: 8080
