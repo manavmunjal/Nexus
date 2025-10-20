@@ -1,6 +1,7 @@
 package com.nexus.repository;
 
-import com.nexus.model.Product;
+import com.nexus.model.User;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-public interface UserRepository extends MongoRepository<Product, String> {}
+public interface UserRepository extends MongoRepository<User, String> {}
+
