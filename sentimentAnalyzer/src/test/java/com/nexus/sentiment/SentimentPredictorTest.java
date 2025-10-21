@@ -62,6 +62,10 @@ class SentimentPredictorTest {
     }
 
     @Test
+    /**
+     * Test that predictions are returned for all instances.
+     * @throws Exception
+     */
     void testPredictReturnsResults() throws Exception {
         List<PredictionResult> results = SentimentPredictor.predict(classifier, testData, scoreMapper);
 
@@ -70,6 +74,10 @@ class SentimentPredictorTest {
     }
 
     @Test
+    /**
+     * Test that each PredictionResult contains all expected fields.
+     * @throws Exception
+     */
     void testPredictionContainsAllFields() throws Exception {
         List<PredictionResult> results = SentimentPredictor.predict(classifier, testData, scoreMapper);
 
@@ -84,6 +92,10 @@ class SentimentPredictorTest {
     }
 
     @Test
+    /**
+     * Test that expected scores are within valid range.
+     * @throws Exception
+     */
     void testExpectedScoreInRange() throws Exception {
         List<PredictionResult> results = SentimentPredictor.predict(classifier, testData, scoreMapper);
 
@@ -93,6 +105,10 @@ class SentimentPredictorTest {
     }
 
     @Test
+    /**
+     * Test that label distributions sum to 1.0.
+     * @throws Exception
+     */
     void testDistributionSumsToOne() throws Exception {
         List<PredictionResult> results = SentimentPredictor.predict(classifier, testData, scoreMapper);
 
@@ -106,6 +122,10 @@ class SentimentPredictorTest {
     }
 
     @Test
+    /**
+     * Test that label distribution probabilities are between 0.0 and 1.0.
+     * @throws Exception
+     */
     void testDistributionProbabilitiesValid() throws Exception {
         List<PredictionResult> results = SentimentPredictor.predict(classifier, testData, scoreMapper);
 
@@ -117,6 +137,10 @@ class SentimentPredictorTest {
     }
 
     @Test
+    /**
+     * Test that probabilityFor method returns correct probabilities.
+     * @throws Exception
+     */
     void testProbabilityForMethod() throws Exception {
         List<PredictionResult> results = SentimentPredictor.predict(classifier, testData, scoreMapper);
         String[] classValues = new String[]{"positive", "negative", "neutral"};
@@ -132,6 +156,10 @@ class SentimentPredictorTest {
     }
 
     @Test
+    /**
+     * Test that probabilityFor method returns 0.0 for unknown label.
+     * @throws Exception
+     */
     void testProbabilityForUnknownLabel() throws Exception {
         List<PredictionResult> results = SentimentPredictor.predict(classifier, testData, scoreMapper);
         String[] classValues = new String[]{"positive", "negative", "neutral"};
@@ -143,6 +171,10 @@ class SentimentPredictorTest {
     }
 
     @Test
+    /**
+     * Test formatProbabilities method.
+     * @throws Exception
+     */
     void testFormatProbabilities() throws Exception {
         List<PredictionResult> results = SentimentPredictor.predict(classifier, testData, scoreMapper);
         String[] classValues = new String[]{"positive", "negative", "neutral"};
@@ -157,6 +189,10 @@ class SentimentPredictorTest {
     }
 
     @Test
+    /**
+     * Test debug summary output.
+     * @throws Exception
+     */
     void testDebugSummary() throws Exception {
         List<PredictionResult> results = SentimentPredictor.predict(classifier, testData, scoreMapper);
         String[] classValues = new String[]{"positive", "negative", "neutral"};
@@ -172,6 +208,10 @@ class SentimentPredictorTest {
     }
 
     @Test
+    /**
+     * Test that missing optional attributes are handled gracefully.
+     * @throws Exception
+     */
     void testMissingAttributes() throws Exception {
         // Create instances without review_id, company, product
         ArrayList<Attribute> minimalAttributes = new ArrayList<>();
@@ -232,6 +272,10 @@ class SentimentPredictorTest {
     }
 
     @Test
+    /**
+     * Test that predicted label matches highest probability in distribution.
+     * @throws Exception
+     */
     void testPredictedLabelMatchesHighestProbability() throws Exception {
         List<PredictionResult> results = SentimentPredictor.predict(classifier, testData, scoreMapper);
         String[] classValues = new String[]{"positive", "negative", "neutral"};
@@ -252,6 +296,10 @@ class SentimentPredictorTest {
     }
 
     @Test
+    /**
+     * Test expected score calculation correctness.
+     * @throws Exception
+     */
     void testExpectedScoreCalculation() throws Exception {
         List<PredictionResult> results = SentimentPredictor.predict(classifier, testData, scoreMapper);
 
