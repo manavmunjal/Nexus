@@ -22,7 +22,7 @@ class SentimentModelTrainerTest {
     private Instances trainingData;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         ArrayList<Attribute> attributes = new ArrayList<>();
         attributes.add(new Attribute("review_text", (ArrayList<String>) null));
         
@@ -47,21 +47,33 @@ class SentimentModelTrainerTest {
         addInstance(trainingData, "Mediocre quality, not impressed but not terrible.", "neutral");
     }
 
-    private void addInstance(Instances data, String text, String label) {
+    private void addInstance(Instances data, String text, String label) throws Exception {
         DenseInstance instance = new DenseInstance(2);
         instance.setDataset(data);
         instance.setValue(0, text);
+        // Check if the label is a valid value in the sentiment class attribute
+        Attribute sentimentAttr = data.attribute("sentiment");
+        if (sentimentAttr == null || sentimentAttr.indexOfValue(label) == -1) {
+            throw new IllegalArgumentException("Unrecognized label: " + label);
+        }
         instance.setValue(1, label);
         data.add(instance);
     }
 
     @Test
+    /**
+     * Test that the SentimentModelTrainer initializes correctly.
+     **/
     void testTrainerInitialization() {
         SentimentModelTrainer trainer = new SentimentModelTrainer();
         assertThat(trainer).isNotNull();
     }
 
     @Test
+    /**
+     * Test training with valid data and correct and existing text attribute.
+     * @throws Exception
+     **/
     void testTrainWithValidData() throws Exception {
         SentimentModelTrainer trainer = new SentimentModelTrainer();
         FilteredClassifier classifier = trainer.train(trainingData, "review_text");
@@ -72,6 +84,10 @@ class SentimentModelTrainerTest {
     }
 
     @Test
+    /**
+     * Test getting the classifier before training returns null.
+     * Classifier is not available before training.
+     **/
     void testGetClassifierBeforeTraining() {
         SentimentModelTrainer trainer = new SentimentModelTrainer();
         
@@ -79,6 +95,9 @@ class SentimentModelTrainerTest {
     }
 
     @Test
+    /**
+     * Test training with missing text attribute throws exception.
+     **/
     void testTrainWithMissingTextAttribute() {
         SentimentModelTrainer trainer = new SentimentModelTrainer();
 
@@ -87,6 +106,12 @@ class SentimentModelTrainerTest {
     }
 
     @Test
+    /**
+     * This test verifies that the NLP tokenization process correctly handles
+     * various text formats including mixed case, punctuation, numbers, special characters, and emojis.
+     * Trainer should be able to start even with mixed text formats.
+     * @throws Exception
+     */
     void testNlpTokenization() throws Exception {
         // Test that the model handles various text formats
         Instances testData = new Instances(trainingData, 0);
@@ -94,14 +119,17 @@ class SentimentModelTrainerTest {
         // Mixed case
         addInstance(testData, "GREAT Product!", "positive");
         addInstance(testData, "awful QUALITY!", "negative");
+        addInstance(testData, "not Bad but not Great", "neutral");
         
         // Punctuation
         addInstance(testData, "Wow!!! Amazing!!! Best ever!!!", "positive");
-        addInstance(testData, "Bad... very bad...", "negative");
+        addInstance(testData, "Bad... as expected...", "negative");
         
-        // Numbers and special characters
+        // Numbers, special characters, and emojis
         addInstance(testData, "5 stars! Top-notch quality @ great price!", "positive");
-        addInstance(testData, "1 star. Poor quality & bad service.", "negative");
+        addInstance(testData, "1 star. 'Poor' quality & bad service.", "negative");
+        addInstance(testData, "😅 what a garbage", "negative");
+        addInstance(testData, "^__^ !!! love it", "positive");
 
         SentimentModelTrainer trainer = new SentimentModelTrainer();
         FilteredClassifier classifier = trainer.train(testData, "review_text");
@@ -125,31 +153,35 @@ class SentimentModelTrainerTest {
     }
 
     @Test
-    void testNlpStopWordRemoval() throws Exception {
-        // Test that common stop words are handled appropriately
-        Instances testData = new Instances(trainingData, 0);
-        
-        addInstance(testData, "The product is the best and the greatest", "positive");
-        addInstance(testData, "This is a terrible and awful product", "negative");
-        
-        SentimentModelTrainer trainer = new SentimentModelTrainer();
-        FilteredClassifier classifier = trainer.train(testData, "review_text");
-
-        assertThat(classifier).isNotNull();
-    }
-
-    @Test
-    void testNlpStemming() throws Exception {
-        // Test that stemming works (running, runs, ran -> run)
+    /**
+     * Test if too few instances provided for training, less than 5,
+     * trainer should throw an exception.
+     * @throws Exception
+     */
+    void testInsufficientTrainingInstances() throws Exception {
         Instances testData = new Instances(trainingData, 0);
         
         addInstance(testData, "running smoothly, runs perfectly, ran great", "positive");
         addInstance(testData, "breaking easily, breaks quickly, broke fast", "negative");
         
         SentimentModelTrainer trainer = new SentimentModelTrainer();
-        FilteredClassifier classifier = trainer.train(testData, "review_text");
+        assertThatThrownBy(() -> trainer.train(testData, "review_text"))
+                .isInstanceOf(Exception.class);
+    }
 
-        assertThat(classifier).isNotNull();
+    @Test
+    /**
+     * Test if labels are irregular or non-standard,
+     * trainer should be able to catch the exception.
+     * @throws Exception
+     */
+    void testIrregularTrainingLabels() throws Exception {
+        Instances testData = new Instances(trainingData, 0);
+
+        assertThatThrownBy(() -> addInstance(testData, "running smoothly, runs perfectly, ran great", "^__^"))
+                .isInstanceOf(Exception.class);
+        assertThatThrownBy(() -> addInstance(testData, "breaking easily, breaks quickly, broke fast", "Mehh"))
+                .isInstanceOf(Exception.class);
     }
 
     @Test

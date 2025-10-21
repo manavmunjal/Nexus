@@ -18,7 +18,7 @@ public class SentimentModelTrainer {
     private FilteredClassifier classifier;
 
     /**
-     * Trains a NaiveBayesMultinomial model on the dataset with text preprocessing.
+     * Trains a Support Vector Machine model on the dataset with text preprocessing.
      *
      * @param trainData Raw dataset with text and class label.
      * @param textAttributeName Name of the text attribute (e.g. "review_text").
@@ -26,6 +26,16 @@ public class SentimentModelTrainer {
      * @throws Exception if training fails.
      */
     public FilteredClassifier train(Instances trainData, String textAttributeName) throws Exception {
+        // if text attribute does not exist, throw exception
+        if (trainData.attribute(textAttributeName) == null) {
+            throw new IllegalArgumentException("Unrecognized Text attribute: " + textAttributeName);
+        }
+
+        // if instances less than 5, throw exception
+        if (trainData.numInstances() < 5) {
+            throw new IllegalArgumentException("Insufficient training instances: " + trainData.numInstances());
+        }
+        
         System.out.println("Starting training with text attribute: " + textAttributeName);
 
         if (trainData.classIndex() == -1) {
