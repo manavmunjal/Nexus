@@ -15,12 +15,22 @@ public final class DataSplitter {
         if (trainRatio <= 0 || trainRatio >= 1) {
             throw new IllegalArgumentException("Train ratio must be within (0,1)");
         }
+
         Instances shuffled = new Instances(data);
         shuffled.randomize(new Random(seed));
-        int trainSize = (int) Math.round(shuffled.numInstances() * trainRatio);
-        int testSize = shuffled.numInstances() - trainSize;
+        int numInstances = shuffled.numInstances();
+        int trainSize = (int) Math.round(numInstances * trainRatio);
+        if (trainSize == 0 && numInstances > 0) {
+            trainSize = 1;
+        }
+        if (trainSize == numInstances && numInstances > 1) {
+            trainSize = numInstances - 1;
+        }
+        int testSize = numInstances - trainSize;
+
         Instances train = new Instances(shuffled, 0, trainSize);
         Instances test = new Instances(shuffled, trainSize, testSize);
+
         return new Split(train, test);
     }
 
