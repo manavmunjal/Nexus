@@ -186,20 +186,49 @@ class SentimentPredictorTest {
         Instances minimalData = new Instances("MinimalData", minimalAttributes, 0);
         minimalData.setClassIndex(1);
 
-        DenseInstance instance = new DenseInstance(2);
-        instance.setValue(0, "Great product!");
-        instance.setValue(1, "positive");
-        minimalData.add(instance);
+        // Add minimum 5 instances required for training
+        DenseInstance instance1 = new DenseInstance(2);
+        instance1.setDataset(minimalData);
+        instance1.setValue(0, "Great product!");
+        instance1.setValue(1, "positive");
+        minimalData.add(instance1);
+
+        DenseInstance instance2 = new DenseInstance(2);
+        instance2.setDataset(minimalData);
+        instance2.setValue(0, "Terrible quality!");
+        instance2.setValue(1, "negative");
+        minimalData.add(instance2);
+
+        DenseInstance instance3 = new DenseInstance(2);
+        instance3.setDataset(minimalData);
+        instance3.setValue(0, "It's okay");
+        instance3.setValue(1, "neutral");
+        minimalData.add(instance3);
+
+        DenseInstance instance4 = new DenseInstance(2);
+        instance4.setDataset(minimalData);
+        instance4.setValue(0, "Excellent product!");
+        instance4.setValue(1, "positive");
+        minimalData.add(instance4);
+
+        DenseInstance instance5 = new DenseInstance(2);
+        instance5.setDataset(minimalData);
+        instance5.setValue(0, "Not good!");
+        instance5.setValue(1, "negative");
+        minimalData.add(instance5);
 
         SentimentModelTrainer trainer = new SentimentModelTrainer();
         FilteredClassifier minimalClassifier = trainer.train(minimalData, "review_text");
 
         List<PredictionResult> results = SentimentPredictor.predict(minimalClassifier, minimalData, scoreMapper);
 
-        assertThat(results).hasSize(1);
-        assertThat(results.get(0).reviewId()).isEmpty();
-        assertThat(results.get(0).company()).isEmpty();
-        assertThat(results.get(0).product()).isEmpty();
+        assertThat(results).hasSize(5);
+        // All results should have empty optional fields (review_id, company, product)
+        for (PredictionResult result : results) {
+            assertThat(result.reviewId()).isEmpty();
+            assertThat(result.company()).isEmpty();
+            assertThat(result.product()).isEmpty();
+        }
     }
 
     @Test
