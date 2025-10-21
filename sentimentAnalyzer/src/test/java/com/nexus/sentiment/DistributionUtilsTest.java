@@ -10,15 +10,19 @@ import static org.assertj.core.api.Assertions.*;
 class DistributionUtilsTest {
 
     @Test
+    /** 
+     * Test the smoothing function with a standard distribution.
+     **/
     void testSmooth() {
         Map<String, Double> distribution = new HashMap<>();
         distribution.put("positive", 0.5);
         distribution.put("negative", 0.3);
         distribution.put("neutral", 0.2);
+        distribution.put("useless", 0.0);
 
-        Map<String, Double> smoothed = DistributionUtils.smooth(distribution, 0.1);
+        Map<String, Double> smoothed = DistributionUtils.smooth(distribution, 0.01);
 
-        assertThat(smoothed).hasSize(3);
+        assertThat(smoothed).hasSize(distribution.size());
         
         // Check that sum is still 1.0
         double sum = smoothed.values().stream().mapToDouble(Double::doubleValue).sum();
@@ -29,6 +33,7 @@ class DistributionUtilsTest {
     }
 
     @Test
+    /* Test smoothing when some categories have multiple zero counts. */
     void testSmoothWithZeros() {
         Map<String, Double> distribution = new HashMap<>();
         distribution.put("positive", 0.0);
@@ -45,6 +50,9 @@ class DistributionUtilsTest {
     }
 
     @Test
+    /**
+     * Test the KL divergence calculation for simple distributions.
+     **/
     void testKlDivergence() {
         Map<String, Double> p = new HashMap<>();
         p.put("positive", 0.5);
@@ -62,6 +70,10 @@ class DistributionUtilsTest {
     }
 
     @Test
+    /** 
+     * Test the KL divergence calculation for identical distributions.
+     * Should be able to get the same answer.
+     **/
     void testKlDivergenceIdenticalDistributions() {
         Map<String, Double> p = new HashMap<>();
         p.put("positive", 0.333);
@@ -74,6 +86,9 @@ class DistributionUtilsTest {
     }
 
     @Test
+    /**
+     * KL divergence should throw an exception if distributions have different keys.
+     **/
     void testKlDivergenceMissingKeys() {
         Map<String, Double> p = new HashMap<>();
         p.put("positive", 0.5);
@@ -89,6 +104,9 @@ class DistributionUtilsTest {
     }
 
     @Test
+    /**
+     * Test the KL divergence calculation for symmetric distributions.
+     **/
     void testSymmetricKlDivergence() {
         Map<String, Double> p = new HashMap<>();
         p.put("positive", 0.6);
@@ -108,6 +126,9 @@ class DistributionUtilsTest {
     }
 
     @Test
+    /**
+     * Symmetric KL divergence of identical distributions should be zero.
+     **/
     void testSymmetricKlDivergenceIdentical() {
         Map<String, Double> p = new HashMap<>();
         p.put("positive", 0.5);
@@ -120,6 +141,9 @@ class DistributionUtilsTest {
     }
 
     @Test
+    /**
+     * Test the calculation of proportions from counts.
+     **/
     void testProportionsFromCounts() {
         Map<String, Long> counts = new HashMap<>();
         counts.put("positive", 50L);
@@ -135,6 +159,9 @@ class DistributionUtilsTest {
     }
 
     @Test
+    /**
+     * Test the calculation of proportions from counts.
+     **/
     void testProportionsFromCountsZeroTotal() {
         Map<String, Long> counts = new HashMap<>();
         counts.put("positive", 0L);
@@ -148,6 +175,9 @@ class DistributionUtilsTest {
     }
 
     @Test
+    /**
+     * Test that proportions sum to 1.0.
+     **/
     void testProportionsFromCountsSumToOne() {
         Map<String, Long> counts = new HashMap<>();
         counts.put("positive", 100L);
@@ -161,6 +191,9 @@ class DistributionUtilsTest {
     }
 
     @Test
+    /**
+     * Test that smoothing does not modify the original distribution.
+     **/
     void testSmoothPreservesOriginal() {
         Map<String, Double> original = new HashMap<>();
         original.put("positive", 0.5);

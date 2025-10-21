@@ -25,9 +25,9 @@ public final class ScoreMapper {
 
         Map<String, Double> result = new HashMap<>();
         for (int i = 0; i < classAttribute.numValues(); i++) {
-            String label = classAttribute.value(i);
-            if (defaults.containsKey(label.toLowerCase())) {
-                result.put(label, defaults.get(label.toLowerCase()));
+            String label = classAttribute.value(i).toLowerCase();
+            if (defaults.containsKey(label)) {
+                result.put(label, defaults.get(label));
             }
         }
 
@@ -37,7 +37,7 @@ public final class ScoreMapper {
 
         List<String> missing = new ArrayList<>();
         for (int i = 0; i < classAttribute.numValues(); i++) {
-            String label = classAttribute.value(i);
+            String label = classAttribute.value(i).toLowerCase();
             if (!result.containsKey(label)) {
                 missing.add(label);
             }
@@ -56,7 +56,7 @@ public final class ScoreMapper {
     }
 
     public double scoreFor(String label) {
-        return scoreByLabel.getOrDefault(label, 0.0);
+        return scoreByLabel.getOrDefault(label.toLowerCase(), 0.0);
     }
 
     public Map<String, Double> allScores() {
