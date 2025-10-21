@@ -24,6 +24,15 @@ public final class Main {
             return;
         }
 
+        runAnalysis(cfg);
+    }
+
+    public static void runAnalysis(Config cfg) throws Exception {
+        if (cfg.showHelp) {
+            printHelp();
+            return;
+        }
+
         Path datasetPath = Paths.get(cfg.datasetPath);
         if (!Files.exists(datasetPath)) {
             throw new IllegalArgumentException("Dataset not found: " + datasetPath.toAbsolutePath());
@@ -31,10 +40,7 @@ public final class Main {
 
         Instances data = DatasetLoader.load(datasetPath, cfg.classAttribute);
 
-        System.out.println("Attributes after loading:");
-        for (int i = 0; i < data.numAttributes(); i++) {
-            System.out.printf(" %d: %s (%s)%n", i, data.attribute(i).name(), data.attribute(i).type());
-        }
+        printAttributes(data);
 
         System.out.println("\nConverting to 3-class labels...");
         data = SentimentLabelConverter.convertTo3Class(data, cfg.classAttribute);
@@ -45,10 +51,7 @@ public final class Main {
         }
         data.setClass(classAttribute);
 
-        String[] classValues = new String[classAttribute.numValues()];
-        for (int i = 0; i < classAttribute.numValues(); i++) {
-            classValues[i] = classAttribute.value(i);
-        }
+        String[] classValues = extractClassValues(classAttribute);
 
         ScoreMapper scoreMapper = ScoreMapper.fromAttribute(classAttribute);
 
@@ -75,7 +78,7 @@ public final class Main {
         ReportPrinter.printKlDivergence(companySummaries, cfg.epsilon);
     }
 
-    private static Map<String, List<PredictionResult>> groupBy(
+    static Map<String, List<PredictionResult>> groupBy(
             List<PredictionResult> predictions,
             java.util.function.Function<PredictionResult, String> classifier,
             String fallback
@@ -91,7 +94,22 @@ public final class Main {
         return grouped;
     }
 
-    private static void printHelp() {
+    static void printAttributes(Instances data) {
+        System.out.println("Attributes after loading:");
+        for (int i = 0; i < data.numAttributes(); i++) {
+            System.out.printf(" %d: %s (%s)%n", i, data.attribute(i).name(), data.attribute(i).type());
+        }
+    }
+
+    static String[] extractClassValues(Attribute classAttribute) {
+        String[] classValues = new String[classAttribute.numValues()];
+        for (int i = 0; i < classAttribute.numValues(); i++) {
+            classValues[i] = classAttribute.value(i);
+        }
+        return classValues;
+    }
+
+    static void printHelp() {
         System.out.println("Sentiment Analyzer - Options:\n" +
                 " --dataset=<path>     Path to CSV dataset (default: " + DEFAULT_DATASET + ")\n" +
                 " --text-attr=<name>   Name of the text attribute (default: " + DEFAULT_TEXT_ATTR + ")\n" +
@@ -104,7 +122,7 @@ public final class Main {
         );
     }
 
-    private static Config parseArgs(String[] args) {
+    public static Config parseArgs(String[] args) {
         Config cfg = new Config();
         for (String arg : args) {
             if (arg == null) continue;
@@ -141,7 +159,7 @@ public final class Main {
         return cfg;
     }
 
-    private static final class Config {
+    static final class Config {
         String datasetPath = DEFAULT_DATASET;
         String textAttribute = DEFAULT_TEXT_ATTR;
         String classAttribute = DEFAULT_CLASS_ATTR;
