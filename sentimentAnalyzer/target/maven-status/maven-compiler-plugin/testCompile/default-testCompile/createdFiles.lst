@@ -1,7 +1,0 @@
-com/nexus/sentiment/DataSplitterTest.class
-com/nexus/sentiment/SentimentStatisticsTest.class
-com/nexus/sentiment/DistributionUtilsTest.class
-com/nexus/sentiment/ScoreMapperTest.class
-com/nexus/sentiment/SentimentPredictorTest.class
-com/nexus/sentiment/DatasetLoaderTest.class
-com/nexus/sentiment/SentimentModelTrainerTest.class

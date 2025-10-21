@@ -12,8 +12,6 @@ import weka.filters.MultiFilter;
 import weka.filters.unsupervised.attribute.Remove;
 import weka.filters.unsupervised.attribute.StringToWordVector;
 import weka.core.tokenizers.NGramTokenizer;
-import weka.core.stopwords.WordsFromFile;
-import java.io.File;
 
 public class SentimentModelTrainer {
 
