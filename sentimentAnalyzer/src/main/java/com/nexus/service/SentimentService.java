@@ -27,9 +27,10 @@ public class SentimentService {
         try {
             Instances data = DatasetLoader.load(Paths.get("src/main/resources/data/sample_reviews.csv"), "sentiment_label");
             scoreMapper = ScoreMapper.fromAttribute(data.classAttribute());
-            SentimentModelTrainer trainer = new SentimentModelTrainer("review_text");
-            // train on all data for a quick model used by API
-            classifier = trainer.train(data);
+
+            SentimentModelTrainer trainer = new SentimentModelTrainer();
+
+            classifier = trainer.train(data, "review_text");
         } catch (Exception e) {
             throw new RuntimeException("Failed to load/train sentiment model", e);
         }
