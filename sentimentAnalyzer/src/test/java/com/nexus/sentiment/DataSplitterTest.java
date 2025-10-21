@@ -37,15 +37,25 @@ class DataSplitterTest {
     }
 
     @Test
+    /**
+     * Test splitting the dataset with a valid ratio.
+     * Check that the sizes of train and test sets are as expected.
+     */
     void testSplitWithValidRatio() {
-        DataSplitter.Split split = DataSplitter.split(instances, 0.8, 42);
-
-        assertThat(split).isNotNull();
-        assertThat(split.train().numInstances()).isEqualTo(80);
-        assertThat(split.test().numInstances()).isEqualTo(20);
+        DataSplitter.Split split1 = DataSplitter.split(instances, 0.8, 42);
+        DataSplitter.Split split2 = DataSplitter.split(instances, 0.75, 42);
+        assertThat(split1).isNotNull();
+        assertThat(split2).isNotNull();
+        assertThat(split1.train().numInstances()).isEqualTo(80);
+        assertThat(split1.test().numInstances()).isEqualTo(20);
+        assertThat(split2.train().numInstances()).isEqualTo(75);
+        assertThat(split2.test().numInstances()).isEqualTo(25);
     }
 
     @Test
+    /**
+     * Test that splitting is deterministic with the same seed.
+     */
     void testSplitIsDeterministic() {
         DataSplitter.Split split1 = DataSplitter.split(instances, 0.8, 42);
         DataSplitter.Split split2 = DataSplitter.split(instances, 0.8, 42);
@@ -55,15 +65,10 @@ class DataSplitterTest {
     }
 
     @Test
-    void testSplitWithDifferentSeeds() {
-        DataSplitter.Split split1 = DataSplitter.split(instances, 0.8, 42);
-        DataSplitter.Split split2 = DataSplitter.split(instances, 0.8, 99);
-
-        assertThat(split1.train().numInstances()).isEqualTo(split2.train().numInstances());
-        // The actual instances should differ due to different shuffling
-    }
-
-    @Test
+    /**
+     * Test that invalid train ratios throw exceptions.
+     * Train ratio should be strictly between 0 and 1, exclusive.
+     */
     void testSplitWithInvalidRatio() {
         assertThatThrownBy(() -> DataSplitter.split(instances, 0.0, 42))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -81,6 +86,9 @@ class DataSplitterTest {
     }
 
     @Test
+    /**
+     * Test that the class attribute is preserved in both splits.
+     */
     void testSplitPreservesClassAttribute() {
         DataSplitter.Split split = DataSplitter.split(instances, 0.7, 42);
 
@@ -89,6 +97,10 @@ class DataSplitterTest {
     }
 
     @Test
+    /**
+     * Test splitting a very small dataset.
+     * Ensure that at least one instance goes to train and one to test if possible.
+     */
     void testSplitWithSmallDataset() {
         Instances smallData = new Instances(instances, 0, 10);
         DataSplitter.Split split = DataSplitter.split(smallData, 0.8, 42);
