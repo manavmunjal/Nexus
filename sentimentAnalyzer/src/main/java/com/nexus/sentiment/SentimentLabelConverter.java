@@ -109,7 +109,7 @@ public class SentimentLabelConverter {
     /**
      * Converts a 5-class label to 3-class label.
      */
-    private static String convertLabel(String label) {
+    private static String convertLabel(String label) throws Exception {
         switch (label) {
             case "very negative":
             case "somewhat negative":
@@ -120,10 +120,8 @@ public class SentimentLabelConverter {
             case "very positive":
                 return "positive";
             default:
-                // Fallback: try to infer from label text
-                if (label.contains("negative")) return "negative";
-                if (label.contains("positive")) return "positive";
-                return "neutral";
+                // throw exception for unrecognized labels
+                throw new IllegalArgumentException("Unrecognized sentiment label: " + label);
         }
     }
 }
