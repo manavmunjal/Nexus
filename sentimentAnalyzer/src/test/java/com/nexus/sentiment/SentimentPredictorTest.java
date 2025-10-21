@@ -44,8 +44,8 @@ class SentimentPredictorTest {
         addInstance(testData, "5", "CompanyB", "ItemZ", "Poor quality, very disappointed.", "negative");
 
         // Train a simple classifier
-        SentimentModelTrainer trainer = new SentimentModelTrainer("review_text");
-        classifier = trainer.train(testData);
+        SentimentModelTrainer trainer = new SentimentModelTrainer();
+        classifier = trainer.train(testData, "review_text");
 
         scoreMapper = ScoreMapper.fromAttribute(testData.classAttribute());
     }
@@ -191,8 +191,8 @@ class SentimentPredictorTest {
         instance.setValue(1, "positive");
         minimalData.add(instance);
 
-        SentimentModelTrainer trainer = new SentimentModelTrainer("review_text");
-        FilteredClassifier minimalClassifier = trainer.train(minimalData);
+        SentimentModelTrainer trainer = new SentimentModelTrainer();
+        FilteredClassifier minimalClassifier = trainer.train(minimalData, "review_text");
 
         List<PredictionResult> results = SentimentPredictor.predict(minimalClassifier, minimalData, scoreMapper);
 

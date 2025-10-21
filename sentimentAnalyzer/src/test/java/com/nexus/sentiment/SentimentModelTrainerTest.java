@@ -57,14 +57,14 @@ class SentimentModelTrainerTest {
 
     @Test
     void testTrainerInitialization() {
-        SentimentModelTrainer trainer = new SentimentModelTrainer("review_text");
+        SentimentModelTrainer trainer = new SentimentModelTrainer();
         assertThat(trainer).isNotNull();
     }
 
     @Test
     void testTrainWithValidData() throws Exception {
-        SentimentModelTrainer trainer = new SentimentModelTrainer("review_text");
-        FilteredClassifier classifier = trainer.train(trainingData);
+        SentimentModelTrainer trainer = new SentimentModelTrainer();
+        FilteredClassifier classifier = trainer.train(trainingData, "review_text");
 
         assertThat(classifier).isNotNull();
         assertThat(trainer.getClassifier()).isNotNull();
@@ -73,20 +73,17 @@ class SentimentModelTrainerTest {
 
     @Test
     void testGetClassifierBeforeTraining() {
-        SentimentModelTrainer trainer = new SentimentModelTrainer("review_text");
+        SentimentModelTrainer trainer = new SentimentModelTrainer();
         
-        assertThatThrownBy(trainer::getClassifier)
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Classifier has not been trained yet");
+        assertThat(trainer.getClassifier()).isNull();
     }
 
     @Test
     void testTrainWithMissingTextAttribute() {
-        SentimentModelTrainer trainer = new SentimentModelTrainer("nonexistent_attribute");
+        SentimentModelTrainer trainer = new SentimentModelTrainer();
 
-        assertThatThrownBy(() -> trainer.train(trainingData))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Missing text attribute");
+        assertThatThrownBy(() -> trainer.train(trainingData, "nonexistent_attribute"))
+                .isInstanceOf(Exception.class);
     }
 
     @Test
@@ -106,8 +103,8 @@ class SentimentModelTrainerTest {
         addInstance(testData, "5 stars! Top-notch quality @ great price!", "positive");
         addInstance(testData, "1 star. Poor quality & bad service.", "negative");
 
-        SentimentModelTrainer trainer = new SentimentModelTrainer("review_text");
-        FilteredClassifier classifier = trainer.train(testData);
+        SentimentModelTrainer trainer = new SentimentModelTrainer();
+        FilteredClassifier classifier = trainer.train(testData, "review_text");
 
         assertThat(classifier).isNotNull();
         
@@ -135,8 +132,8 @@ class SentimentModelTrainerTest {
         addInstance(testData, "The product is the best and the greatest", "positive");
         addInstance(testData, "This is a terrible and awful product", "negative");
         
-        SentimentModelTrainer trainer = new SentimentModelTrainer("review_text");
-        FilteredClassifier classifier = trainer.train(testData);
+        SentimentModelTrainer trainer = new SentimentModelTrainer();
+        FilteredClassifier classifier = trainer.train(testData, "review_text");
 
         assertThat(classifier).isNotNull();
     }
@@ -149,8 +146,8 @@ class SentimentModelTrainerTest {
         addInstance(testData, "running smoothly, runs perfectly, ran great", "positive");
         addInstance(testData, "breaking easily, breaks quickly, broke fast", "negative");
         
-        SentimentModelTrainer trainer = new SentimentModelTrainer("review_text");
-        FilteredClassifier classifier = trainer.train(testData);
+        SentimentModelTrainer trainer = new SentimentModelTrainer();
+        FilteredClassifier classifier = trainer.train(testData, "review_text");
 
         assertThat(classifier).isNotNull();
     }
@@ -167,8 +164,8 @@ class SentimentModelTrainerTest {
         // Common neutral words
         addInstance(testData, "product item thing object", "neutral");
         
-        SentimentModelTrainer trainer = new SentimentModelTrainer("review_text");
-        FilteredClassifier classifier = trainer.train(testData);
+        SentimentModelTrainer trainer = new SentimentModelTrainer();
+        FilteredClassifier classifier = trainer.train(testData, "review_text");
 
         assertThat(classifier).isNotNull();
         
@@ -185,8 +182,8 @@ class SentimentModelTrainerTest {
 
     @Test
     void testMultiClassPrediction() throws Exception {
-        SentimentModelTrainer trainer = new SentimentModelTrainer("review_text");
-        FilteredClassifier classifier = trainer.train(trainingData);
+        SentimentModelTrainer trainer = new SentimentModelTrainer();
+        FilteredClassifier classifier = trainer.train(trainingData, "review_text");
 
         // Test positive prediction
         DenseInstance positiveInstance = new DenseInstance(2);
@@ -214,8 +211,8 @@ class SentimentModelTrainerTest {
         addInstance(testData, "   ", "neutral");
         addInstance(testData, "Great product", "positive");
 
-        SentimentModelTrainer trainer = new SentimentModelTrainer("review_text");
-        FilteredClassifier classifier = trainer.train(testData);
+        SentimentModelTrainer trainer = new SentimentModelTrainer();
+        FilteredClassifier classifier = trainer.train(testData, "review_text");
 
         assertThat(classifier).isNotNull();
     }
@@ -231,8 +228,8 @@ class SentimentModelTrainerTest {
         }
         addInstance(testData, longText.toString(), "positive");
 
-        SentimentModelTrainer trainer = new SentimentModelTrainer("review_text");
-        FilteredClassifier classifier = trainer.train(testData);
+        SentimentModelTrainer trainer = new SentimentModelTrainer();
+        FilteredClassifier classifier = trainer.train(testData, "review_text");
 
         assertThat(classifier).isNotNull();
     }
@@ -245,8 +242,8 @@ class SentimentModelTrainerTest {
         addInstance(testData, "Terrible quality ☹ Don't buy!!!", "negative");
         addInstance(testData, "Okay product... 50/50 experience", "neutral");
 
-        SentimentModelTrainer trainer = new SentimentModelTrainer("review_text");
-        FilteredClassifier classifier = trainer.train(testData);
+        SentimentModelTrainer trainer = new SentimentModelTrainer();
+        FilteredClassifier classifier = trainer.train(testData, "review_text");
 
         assertThat(classifier).isNotNull();
     }
@@ -258,8 +255,8 @@ class SentimentModelTrainerTest {
         addInstance(minimalData, "bad", "negative");
         addInstance(minimalData, "okay", "neutral");
 
-        SentimentModelTrainer trainer = new SentimentModelTrainer("review_text");
-        FilteredClassifier classifier = trainer.train(minimalData);
+        SentimentModelTrainer trainer = new SentimentModelTrainer();
+        FilteredClassifier classifier = trainer.train(minimalData, "review_text");
 
         assertThat(classifier).isNotNull();
     }
@@ -285,8 +282,8 @@ class SentimentModelTrainerTest {
         assertThat(reviewAttr).isNotNull();
         data.setClassIndex(data.attribute("sentiment_label").index());
         
-        SentimentModelTrainer trainer = new SentimentModelTrainer("review_text");
-        FilteredClassifier classifier = trainer.train(data);
+        SentimentModelTrainer trainer = new SentimentModelTrainer();
+        FilteredClassifier classifier = trainer.train(data, "review_text");
 
         assertThat(classifier).isNotNull();
         

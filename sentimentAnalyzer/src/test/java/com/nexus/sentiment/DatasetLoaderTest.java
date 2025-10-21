@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.*;
 class DatasetLoaderTest {
 
     @Test
-    void testLoadValidDataset(@TempDir Path tempDir) throws IOException {
+    void testLoadValidDataset(@TempDir Path tempDir) throws Exception {
         Path csvFile = tempDir.resolve("test.csv");
         String content = """
                 review_id,review_text,sentiment_label
@@ -54,7 +54,7 @@ class DatasetLoaderTest {
     }
 
     @Test
-    void testLoadEmptyDataset(@TempDir Path tempDir) throws IOException {
+    void testLoadEmptyDataset(@TempDir Path tempDir) throws Exception {
         Path csvFile = tempDir.resolve("empty.csv");
         String content = "review_id,review_text,sentiment_label\n";
         Files.writeString(csvFile, content);
