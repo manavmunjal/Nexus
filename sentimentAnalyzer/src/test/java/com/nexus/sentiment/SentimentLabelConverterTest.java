@@ -7,6 +7,7 @@ import weka.core.DenseInstance;
 import weka.core.Instances;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -25,7 +26,7 @@ class SentimentLabelConverterTest {
         ArrayList<Attribute> attributes = new ArrayList<>();
         attributes.add(new Attribute("review_text", (ArrayList<String>) null));
 
-        ArrayList<String> fiveClassValues = new ArrayList<>();
+        List<String> fiveClassValues = new ArrayList<>();
         fiveClassValues.add("very negative");
         fiveClassValues.add("somewhat negative");
         fiveClassValues.add("neutral");
@@ -40,7 +41,7 @@ class SentimentLabelConverterTest {
         ArrayList<Attribute> threeClassAttr = new ArrayList<>();
         threeClassAttr.add(new Attribute("review_text", (ArrayList<String>) null));
 
-        ArrayList<String> threeClassValues = new ArrayList<>();
+        List<String> threeClassValues = new ArrayList<>();
         threeClassValues.add("negative");
         threeClassValues.add("neutral");
         threeClassValues.add("positive");

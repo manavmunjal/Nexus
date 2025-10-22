@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import weka.core.Attribute;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -14,7 +15,7 @@ class ScoreMapperTest {
      * Test standard sentiment labels mapping.
      */
     void testStandardSentimentLabels() {
-        ArrayList<String> classValues = new ArrayList<>();
+        List<String> classValues = new ArrayList<>();
         classValues.add("positive");
         classValues.add("negative");
         classValues.add("neutral");
@@ -28,11 +29,11 @@ class ScoreMapperTest {
     }
 
     @Test
-    /** 
+    /**
      * Test case insensitive mapping.
      */
     void testCaseInsensitiveMapping() {
-        ArrayList<String> classValues = new ArrayList<>();
+        List<String> classValues = new ArrayList<>();
         classValues.add("PosiTive");
         classValues.add("NegAtive");
         classValues.add("NeutraL");
@@ -48,13 +49,13 @@ class ScoreMapperTest {
     @Test
     /**
      * Default labels for sentiments are very positive, somewhat positive, neutral,
-     * somewhat negative, very negative. If custom labels are provided, they would be 
-     * ranked mapped from -1.0 to 1.0 in equal intervals. 
+     * somewhat negative, very negative. If custom labels are provided, they would be
+     * ranked mapped from -1.0 to 1.0 in equal intervals.
      * Note: the custom labels should be added in the order of sentiment from negative
      * to positive. The score mapper DOES NOT sort the added custom labels.
      */
     void testCustomLabels() {
-        ArrayList<String> classValues = new ArrayList<>();
+        List<String> classValues = new ArrayList<>();
         classValues.add("happy");
         classValues.add("sad");
         Attribute classAttribute = new Attribute("emotion", classValues);
@@ -68,12 +69,12 @@ class ScoreMapperTest {
     }
 
     @Test
-    /** 
+    /**
      * Test any unrecognized string input argument for scoreMapper methods, such as unknown label.
      * Unknown labels should return a default score of 0.0.
      **/
     void testUnknownLabelReturnsDefault() {
-        ArrayList<String> classValues = new ArrayList<>();
+        List<String> classValues = new ArrayList<>();
         classValues.add("positive");
         classValues.add("negative");
         Attribute classAttribute = new Attribute("sentiment", classValues);
@@ -89,7 +90,7 @@ class ScoreMapperTest {
      * This ensures that the external code can not modify the model inferenced scores.
      */
     void testAllScoresReturnsImmutableCopy() {
-        ArrayList<String> classValues = new ArrayList<>();
+        List<String> classValues = new ArrayList<>();
         classValues.add("positive");
         classValues.add("negative");
         classValues.add("neutral");
@@ -100,7 +101,7 @@ class ScoreMapperTest {
 
         assertThat(scores).hasSize(3);
         assertThat(scores).containsKeys("positive", "negative", "neutral");
-        
+
         // Verify immutability
         assertThatThrownBy(() -> scores.put("new", 0.5))
                 .isInstanceOf(UnsupportedOperationException.class);

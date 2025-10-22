@@ -28,7 +28,7 @@ public final class DatasetLoader {
         if (!lines.isEmpty()) {
             String header = lines.get(0).trim();
             boolean singleColumn = !header.contains(",");
-            if (singleColumn && header.equals("review_text")) {
+            if ("review_text".equals(header) && singleColumn) {
                 List<String> cleaned = new ArrayList<>(lines.size());
                 cleaned.add(header);
                 for (int i = 1; i < lines.size(); i++) {
@@ -52,7 +52,12 @@ public final class DatasetLoader {
 
         // Clean up temp file if created
         if (createdTemp) {
-            try { Files.deleteIfExists(sourcePath); } catch (Exception ignore) {}
+            try {
+                Files.deleteIfExists(sourcePath);
+            } catch (Exception e) {
+                System.err.println("Failed to delete temp file: " + sourcePath);
+                e.printStackTrace();
+            }
         }
 
         if (data.attribute(classAttributeName) == null) {

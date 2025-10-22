@@ -4,6 +4,7 @@ import weka.core.Attribute;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public final class ScoreMapper {
@@ -56,7 +57,7 @@ public final class ScoreMapper {
     }
 
     public double scoreFor(String label) {
-        return scoreByLabel.getOrDefault(label.toLowerCase(), 0.0);
+        return scoreByLabel.getOrDefault(label.toLowerCase(Locale.ROOT), 0.0);
     }
 
     public Map<String, Double> allScores() {

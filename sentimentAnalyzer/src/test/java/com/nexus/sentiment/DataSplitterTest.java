@@ -6,6 +6,7 @@ import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instances;
 
+import java.util.List;
 import java.util.ArrayList;
 
 import static org.assertj.core.api.Assertions.*;
@@ -17,14 +18,14 @@ class DataSplitterTest {
     @BeforeEach
     void setUp() {
         ArrayList<Attribute> attributes = new ArrayList<>();
-        attributes.add(new Attribute("text", (ArrayList<String>) null));
-        ArrayList<String> classValues = new ArrayList<>();
+        attributes.add(new Attribute("text", (List<String>) null));
+        List<String> classValues = new ArrayList<>();
         classValues.add("positive");
         classValues.add("negative");
         classValues.add("neutral");
         attributes.add(new Attribute("sentiment", classValues));
 
-        instances = new Instances("TestData", attributes, 0);
+        instances = new Instances("TestData", new ArrayList<>(attributes), 0);
         instances.setClassIndex(1);
 
         for (int i = 0; i < 100; i++) {

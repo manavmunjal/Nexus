@@ -27,7 +27,7 @@ class SentimentPredictorTest {
         attributes.add(new Attribute("product", (ArrayList<String>) null));
         attributes.add(new Attribute("review_text", (ArrayList<String>) null));
 
-        ArrayList<String> classValues = new ArrayList<>();
+        List<String> classValues = new ArrayList<>();
         classValues.add("positive");
         classValues.add("negative");
         classValues.add("neutral");
@@ -217,7 +217,7 @@ class SentimentPredictorTest {
         ArrayList<Attribute> minimalAttributes = new ArrayList<>();
         minimalAttributes.add(new Attribute("review_text", (ArrayList<String>) null));
 
-        ArrayList<String> classValues = new ArrayList<>();
+        List<String> classValues = new ArrayList<>();
         classValues.add("positive");
         classValues.add("negative");
         classValues.add("neutral");

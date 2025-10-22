@@ -11,6 +11,7 @@ import weka.core.Instances;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -26,7 +27,7 @@ class SentimentModelTrainerTest {
         ArrayList<Attribute> attributes = new ArrayList<>();
         attributes.add(new Attribute("review_text", (ArrayList<String>) null));
         
-        ArrayList<String> classValues = new ArrayList<>();
+        List<String> classValues = new ArrayList<>();
         classValues.add("positive");
         classValues.add("negative");
         classValues.add("neutral");
@@ -150,7 +151,9 @@ class SentimentModelTrainerTest {
             assertThat(prob).isBetween(0.0, 1.0);
         }
         double sum = 0;
-        for (double d : distribution) sum += d;
+        for (double d : distribution) {
+            sum += d;
+        }
         assertThat(sum).isCloseTo(1.0, within(0.01));
     }
 

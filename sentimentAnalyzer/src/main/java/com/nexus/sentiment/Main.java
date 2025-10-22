@@ -125,8 +125,10 @@ public final class Main {
     public static Config parseArgs(String[] args) {
         Config cfg = new Config();
         for (String arg : args) {
-            if (arg == null) continue;
-            if (arg.equals("--help") || arg.equals("-h")) {
+            if (arg == null) {
+                continue;
+            }
+            if ("--help".equals(arg) || "-h".equals(arg)) {
                 cfg.showHelp = true;
             } else if (arg.startsWith("--dataset=")) {
                 cfg.datasetPath = arg.substring("--dataset=".length());
@@ -151,7 +153,7 @@ public final class Main {
                     cfg.sampleLimit = Integer.parseInt(arg.substring("--limit=".length()));
                 } catch (Exception ignored) {}
             } else {
-                if (cfg.datasetPath.equals(DEFAULT_DATASET)) {
+                if (DEFAULT_DATASET.equals(cfg.datasetPath)) {
                     cfg.datasetPath = arg;
                 }
             }

@@ -4,12 +4,18 @@ import weka.core.Instances;
 import weka.core.Attribute;
 import weka.core.Instance;
 import weka.core.DenseInstance;
+import java.util.List;
 import java.util.ArrayList;
+import java.util.Locale;
 
 /**
  * Converts 5-class sentiment labels to 3-class (positive/neutral/negative).
  */
-public class SentimentLabelConverter {
+public final class SentimentLabelConverter {
+
+    private SentimentLabelConverter() {
+        throw new UnsupportedOperationException("Utility class");
+    }
 
     /**
      * Converts 5-class sentiment labels to 3-class labels.
@@ -43,7 +49,7 @@ public class SentimentLabelConverter {
         }
 
         // Create new class attribute with 3 values
-        ArrayList<String> classValues = new ArrayList<>();
+        List<String> classValues = new ArrayList<>();
         classValues.add("negative");
         classValues.add("neutral");
         classValues.add("positive");
@@ -59,7 +65,7 @@ public class SentimentLabelConverter {
         attributes.add(newClassAttr);
 
         // Create new dataset
-        Instances newData = new Instances("3ClassSentiment", attributes, data.numInstances());
+        Instances newData = new Instances("3ClassSentiment", new ArrayList<>(attributes), data.numInstances());
         newData.setClassIndex(newData.numAttributes() - 1);
 
         // Convert each instance
@@ -84,7 +90,7 @@ public class SentimentLabelConverter {
             }
 
             // Convert class value
-            String oldLabel = oldInst.stringValue(data.classIndex()).toLowerCase();
+            String oldLabel = oldInst.stringValue(data.classIndex()).toLowerCase(Locale.ROOT);
             String newLabel = convertLabel(oldLabel);
             newInst.setValue(newData.classIndex(), newLabel);
             newData.add(newInst);
@@ -95,9 +101,13 @@ public class SentimentLabelConverter {
         int[] counts = new int[3];
         for (int i = 0; i < newData.numInstances(); i++) {
             String label = newData.instance(i).stringValue(newData.classIndex());
-            if (label.equals("negative")) counts[0]++;
-            else if (label.equals("neutral")) counts[1]++;
-            else if (label.equals("positive")) counts[2]++;
+            if ("negative".equals(label)) {
+                counts[0]++;
+            } else if ("neutral".equals(label)) {
+                counts[1]++;
+            } else if ("positive".equals(label)) {
+                counts[2]++;
+            }
         }
         System.out.println(" Negative: " + counts[0]);
         System.out.println(" Neutral: " + counts[1]);
@@ -112,16 +122,20 @@ public class SentimentLabelConverter {
     private static String convertLabel(String label) throws Exception {
         switch (label) {
             case "very negative":
-            case "somewhat negative":
+            case "somewhat negative": {
                 return "negative";
-            case "neutral":
+            }
+            case "neutral": {
                 return "neutral";
+            }
             case "somewhat positive":
-            case "very positive":
+            case "very positive": {
                 return "positive";
-            default:
+            }
+            default: {
                 // throw exception for unrecognized labels
                 throw new IllegalArgumentException("Unrecognized sentiment label: " + label);
+            }
         }
     }
 }
