@@ -17,7 +17,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class MainMockitoTest {
+class MainTest {
 
     private Main.Config config;
 
@@ -25,20 +25,20 @@ class MainMockitoTest {
     void setup() {
         // Initialize default config before each test
         config = new Main.Config();
-        config.datasetPath = "dummy/path.csv";
-        config.textAttribute = "review_text";
-        config.classAttribute = "sentiment_label";
-        config.trainRatio = 0.8;
-        config.seed = 42L;
-        config.epsilon = 1e-6;
-        config.sampleLimit = 5;
-        config.showHelp = false;
+        config.setDatasetPath("dummy/path.csv");
+        config.setTextAttribute("review_text");
+        config.setClassAttribute("sentiment_label");
+        config.setTrainRatio(0.8);
+        config.setSeed(42L);
+        config.setEpsilon(1e-6);
+        config.setSampleLimit(5);
+        config.setShowHelp(false);
     }
 
     @Test
     void runAnalysisFileNotExistsThrows() {
         try (MockedStatic<Files> filesMock = mockStatic(Files.class)) {
-            filesMock.when(() -> Files.exists(Path.of(config.datasetPath))).thenReturn(false);
+            filesMock.when(() -> Files.exists(Path.of(config.getDatasetPath()))).thenReturn(false);
 
             IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> {
                 Main.runAnalysis(config);
@@ -53,10 +53,10 @@ class MainMockitoTest {
              MockedStatic<DatasetLoader> datasetLoaderMock = mockStatic(DatasetLoader.class);
              MockedStatic<SentimentLabelConverter> converterMock = mockStatic(SentimentLabelConverter.class)) {
 
-            filesMock.when(() -> Files.exists(Path.of(config.datasetPath))).thenReturn(true);
+            filesMock.when(() -> Files.exists(Path.of(config.getDatasetPath()))).thenReturn(true);
 
             Instances mockedInstances = mock(Instances.class);
-            when(mockedInstances.attribute(config.classAttribute)).thenReturn(null);
+            when(mockedInstances.attribute(config.getClassAttribute())).thenReturn(null);
 
             datasetLoaderMock.when(() -> DatasetLoader.load(any(Path.class), anyString())).thenReturn(mockedInstances);
             converterMock.when(() -> SentimentLabelConverter.convertTo3Class(any(), anyString())).thenReturn(mockedInstances);
@@ -81,23 +81,23 @@ class MainMockitoTest {
         };
         Main.Config parsedConfig = Main.parseArgs(args);
 
-        assertEquals("path/to/data.csv", parsedConfig.datasetPath);
-        assertEquals("my_text", parsedConfig.textAttribute);
-        assertEquals("my_class", parsedConfig.classAttribute);
-        assertEquals(0.75, parsedConfig.trainRatio);
-        assertEquals(12345L, parsedConfig.seed);
-        assertEquals(0.0001, parsedConfig.epsilon);
-        assertEquals(7, parsedConfig.sampleLimit);
-        assertFalse(parsedConfig.showHelp);
+        assertEquals("path/to/data.csv", parsedConfig.getDatasetPath());
+        assertEquals("my_text", parsedConfig.getTextAttribute());
+        assertEquals("my_class", parsedConfig.getClassAttribute());
+        assertEquals(0.75, parsedConfig.getTrainRatio());
+        assertEquals(12345L, parsedConfig.getSeed());
+        assertEquals(0.0001, parsedConfig.getEpsilon());
+        assertEquals(7, parsedConfig.getSampleLimit());
+        assertFalse(parsedConfig.isShowHelp());
     }
 
     @Test
     void parseArgsHelpFlagSetsShowHelp() {
         Main.Config parsedConfig = Main.parseArgs(new String[]{"--help"});
-        assertTrue(parsedConfig.showHelp);
+        assertTrue(parsedConfig.isShowHelp());
 
         parsedConfig = Main.parseArgs(new String[]{"-h"});
-        assertTrue(parsedConfig.showHelp);
+        assertTrue(parsedConfig.isShowHelp());
     }
 
     @Test
@@ -145,7 +145,7 @@ class MainMockitoTest {
     @Test
     void runAnalysisShowHelpOnlyPrintsHelp() throws Exception {
         Main.Config helpConfig = new Main.Config();
-        helpConfig.showHelp = true;
+        helpConfig.setShowHelp(true);
 
         Main.runAnalysis(helpConfig);  // No exception expected
     }

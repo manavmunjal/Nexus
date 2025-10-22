@@ -13,30 +13,63 @@ import weka.filters.unsupervised.attribute.Remove;
 import weka.filters.unsupervised.attribute.StringToWordVector;
 import weka.core.tokenizers.NGramTokenizer;
 
-public class SentimentModelTrainer {
+/**
+ * Trains an SVM model using text data and preprocessing filters.
+ */
+public final class SentimentModelTrainer {
 
+    /**
+     * The final trained classifier.
+     */
     private FilteredClassifier classifier;
 
     /**
-     * Trains a Support Vector Machine model on the dataset with text preprocessing.
-     *
-     * @param trainData Raw dataset with text and class label.
-     * @param textAttributeName Name of the text attribute (e.g. "review_text").
-     * @return FilteredClassifier trained classifier.
-     * @throws Exception if training fails.
+     * Minimum number of training instances required.
      */
-    public FilteredClassifier train(Instances trainData, String textAttributeName) throws Exception {
-        // if text attribute does not exist, throw exception
+    private static final int MIN_INSTANCES = 5;
+
+    /**
+     * Maximum number of words to keep in the vocabulary.
+     */
+    private static final int WORDS_TO_KEEP = 5000;
+
+    /**
+     * Gamma value for the RBF kernel in the SVM.
+     */
+    private static final double DEFAULT_GAMMA = 0.0145;
+
+    /**
+     * Number of folds used for cross-validation tuning.
+     */
+    private static final int CV_FOLDS = 5;
+
+    /**
+     * Trains a Support Vector Machine model on the dataset
+     * with text preprocessing.
+     *
+     * @param trainData The raw dataset with text and class label
+     * @param textAttributeName The name of the text attribute
+     * @return Trained FilteredClassifier model
+     * @throws Exception if training fails
+     */
+    public FilteredClassifier train(
+            final Instances trainData,
+            final String textAttributeName
+    ) throws Exception {
+
         if (trainData.attribute(textAttributeName) == null) {
-            throw new IllegalArgumentException("Unrecognized Text attribute: " + textAttributeName);
+            throw new IllegalArgumentException(
+                    "Unrecognized Text attribute: " + textAttributeName);
         }
 
-        // if instances less than 5, throw exception
-        if (trainData.numInstances() < 5) {
-            throw new IllegalArgumentException("Insufficient training instances: " + trainData.numInstances());
+        if (trainData.numInstances() < MIN_INSTANCES) {
+            throw new IllegalArgumentException(
+                    "Insufficient training instances: "
+                            + trainData.numInstances());
         }
-        
-        System.out.println("Starting training with text attribute: " + textAttributeName);
+
+        System.out.println("Starting training with text attribute: "
+                + textAttributeName);
 
         if (trainData.classIndex() == -1) {
             throw new IllegalArgumentException("Class attribute not set");
@@ -44,17 +77,19 @@ public class SentimentModelTrainer {
 
         int classIndex = trainData.classIndex();
 
-        // Build Remove filter to keep only textAttribute and class attribute
+        // Remove non-text and non-class attributes
         StringBuilder indicesToRemove = new StringBuilder();
         for (int i = 0; i < trainData.numAttributes(); i++) {
-            if (i != classIndex && !trainData.attribute(i).name().equals(textAttributeName)) {
+            if (i != classIndex
+                    && !trainData.attribute(i).name()
+                    .equals(textAttributeName)) {
                 indicesToRemove.append(i + 1).append(",");
             }
         }
 
         Remove removeFilter = new Remove();
         if (indicesToRemove.length() > 0) {
-            indicesToRemove.deleteCharAt(indicesToRemove.length() - 1); // Remove trailing comma
+            indicesToRemove.deleteCharAt(indicesToRemove.length() - 1);
             removeFilter.setAttributeIndices(indicesToRemove.toString());
         } else {
             removeFilter.setAttributeIndices("");
@@ -67,63 +102,58 @@ public class SentimentModelTrainer {
         stringToWordVector.setTFTransform(true);
         stringToWordVector.setIDFTransform(true);
         stringToWordVector.setLowerCaseTokens(true);
-        stringToWordVector.setWordsToKeep(5000);
+        stringToWordVector.setWordsToKeep(WORDS_TO_KEEP);
         stringToWordVector.setOutputWordCounts(true);
 
-        // Use a stopwords handler
-        // WordsFromFile stopwords = new WordsFromFile();
-        // stopwords.setStopwords(new File("resources/stopwords.txt"));
-        // stringToWordVector.setStopwordsHandler(stopwords);
-
-        // Optional: Use N-grams (1–2 grams)
         NGramTokenizer tokenizer = new NGramTokenizer();
         tokenizer.setNGramMinSize(1);
         tokenizer.setNGramMaxSize(2);
         tokenizer.setDelimiters("\\W");
         stringToWordVector.setTokenizer(tokenizer);
 
-        // Stemmer
         stringToWordVector.setStemmer(new IteratedLovinsStemmer());
 
-        // Combine filters into MultiFilter
         MultiFilter multiFilter = new MultiFilter();
         multiFilter.setFilters(new Filter[]{removeFilter, stringToWordVector});
         multiFilter.setInputFormat(trainData);
-        Instances filteredTrainData = Filter.useFilter(trainData, multiFilter);
+        Instances filteredTrainData =
+                Filter.useFilter(trainData, multiFilter);
 
-        // Configure SVM with RBF kernel
         SMO smo = new SMO();
         RBFKernel rbf = new RBFKernel();
-        rbf.setGamma(0.0145); // Can tune this if needed
+        rbf.setGamma(DEFAULT_GAMMA);
         smo.setKernel(rbf);
 
-        // Tune C and/or gamma using CVParameterSelection
         CVParameterSelection cvParams = new CVParameterSelection();
         cvParams.setClassifier(smo);
-        cvParams.setNumFolds(5);
+        cvParams.setNumFolds(CV_FOLDS);
         cvParams.addCVParameter("C 0.1 5.0 5");
-        // cvParams.addCVParameter("G 0.001 0.1 5");
         cvParams.buildClassifier(filteredTrainData);
 
-        // Print best parameters
-        System.out.println("Best parameters found: " + Utils.joinOptions(cvParams.getBestClassifierOptions()));
+        System.out.println("Best parameters found: "
+                + Utils.joinOptions(cvParams.getBestClassifierOptions()));
 
-        // Create final SMO classifier with tuned params
         SMO tunedSmo = new SMO();
         tunedSmo.setOptions(cvParams.getBestClassifierOptions());
-        tunedSmo.setKernel(rbf); // Ensure RBF kernel is set again
+        tunedSmo.setKernel(rbf);
 
-        // Final classifier wrapped with MultiFilter
         FilteredClassifier tunedClassifier = new FilteredClassifier();
         tunedClassifier.setFilter(multiFilter);
         tunedClassifier.setClassifier(tunedSmo);
         tunedClassifier.buildClassifier(trainData);
 
         this.classifier = tunedClassifier;
-        System.out.println("Model trained successfully with RBF kernel and tuning!");
+
+        System.out.println("Model trained successfully with RBF kernel "
+                + "and tuning!");
         return classifier;
     }
 
+    /**
+     * Gets the trained FilteredClassifier instance.
+     *
+     * @return The trained classifier
+     */
     public FilteredClassifier getClassifier() {
         return classifier;
     }
