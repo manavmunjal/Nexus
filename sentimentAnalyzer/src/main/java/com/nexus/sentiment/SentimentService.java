@@ -1,4 +1,4 @@
-package com.nexus.service;
+package com.nexus.sentiment;
 
 import com.nexus.sentiment.DatasetLoader;
 import com.nexus.sentiment.ScoreMapper;
@@ -27,10 +27,9 @@ public class SentimentService {
         try {
             Instances data = DatasetLoader.load(Paths.get("src/main/resources/data/sample_reviews.csv"), "sentiment_label");
             scoreMapper = ScoreMapper.fromAttribute(data.classAttribute());
-
             SentimentModelTrainer trainer = new SentimentModelTrainer();
-
-            classifier = trainer.train(data, "review_text");
+            // train on all data for a quick model used by API
+            classifier = trainer.train(data, "review_test");
         } catch (Exception e) {
             throw new RuntimeException("Failed to load/train sentiment model", e);
         }
