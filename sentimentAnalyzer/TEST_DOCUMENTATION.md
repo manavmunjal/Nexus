@@ -1,19 +1,24 @@
 # Sentiment Analyzer Test Suite
 
 ## Overview
+
 Comprehensive unit tests for the multi-class sentiment analysis system using Java, Weka, and Naive Bayes classifier.
 
 ## Test Coverage
 
 ### 1. DatasetLoaderTest
+
 Tests CSV dataset loading and validation:
+
 - Valid dataset loading
 - Missing class attribute handling
 - Non-existent file handling
 - Empty dataset handling
 
 ### 2. DataSplitterTest
+
 Tests train/test data splitting:
+
 - Valid ratio splitting (80/20, 70/30, etc.)
 - Deterministic splitting with seeds
 - Invalid ratio handling
@@ -21,7 +26,9 @@ Tests train/test data splitting:
 - Small dataset handling
 
 ### 3. SentimentModelTrainerTest (Heavy NLP Testing)
+
 **Comprehensive NLP and text processing tests:**
+
 - Trainer initialization
 - Model training with valid data
 - Missing text attribute validation
@@ -37,7 +44,9 @@ Tests train/test data splitting:
 - Model persistence from file
 
 ### 4. ScoreMapperTest
+
 Tests sentiment label to numeric score mapping:
+
 - Standard sentiment labels (positive=1.0, negative=-1.0, neutral=0.0)
 - Case-insensitive mapping
 - Custom label handling
@@ -47,7 +56,9 @@ Tests sentiment label to numeric score mapping:
 - Single label edge case
 
 ### 5. DistributionUtilsTest
+
 Tests statistical distribution utilities:
+
 - Distribution smoothing
 - Zero value smoothing
 - KL divergence calculation
@@ -60,7 +71,9 @@ Tests statistical distribution utilities:
 - Original data preservation
 
 ### 6. SentimentStatisticsTest
+
 Tests aggregate statistics computation:
+
 - Basic statistics (counts, proportions)
 - Mean score calculation
 - Variance and standard deviation
@@ -73,7 +86,9 @@ Tests aggregate statistics computation:
 - Multiple group comparison
 
 ### 7. SentimentPredictorTest
+
 Tests prediction generation:
+
 - Results generation
 - All fields populated
 - Expected score range (-1.0 to 1.0)
@@ -90,21 +105,25 @@ Tests prediction generation:
 ## Running Tests
 
 ### Run all tests:
+
 ```bash
 mvn test
 ```
 
 ### Run specific test class:
+
 ```bash
 mvn test -Dtest=SentimentModelTrainerTest
 ```
 
 ### Run with verbose output:
+
 ```bash
 mvn test -X
 ```
 
 ### Run tests and generate coverage report:
+
 ```bash
 mvn clean test
 ```
@@ -114,25 +133,30 @@ mvn clean test
 The test suite includes extensive NLP validation:
 
 1. **Text Preprocessing**
+
    - Case normalization (GREAT → great)
    - Punctuation handling (!!! ??? ...)
    - Special character handling (@, #, &, etc.)
 
 2. **Tokenization**
+
    - Word boundary detection
    - Hyphenated words (top-notch)
    - Numbers in text (5 stars)
 
 3. **Stop Word Removal**
+
    - Common words filtered (the, a, is, are, etc.)
    - Content words preserved (excellent, terrible)
 
 4. **Stemming**
+
    - Verb forms (running, runs, ran → run)
    - Plural forms (products → product)
    - Past tense (broke, broken → break)
 
 5. **TF-IDF Weighting**
+
    - Rare discriminative words weighted higher
    - Common neutral words weighted lower
    - Document frequency impact
@@ -146,6 +170,7 @@ The test suite includes extensive NLP validation:
 ## Test Data
 
 Test datasets are located in:
+
 - `src/test/resources/data/test_reviews.csv` - Sample test data
 
 ## Dependencies
@@ -158,6 +183,7 @@ Test datasets are located in:
 ## Continuous Integration
 
 Tests are designed to be deterministic and can be integrated into CI/CD pipelines:
+
 - All randomized operations use fixed seeds
 - No external dependencies required
 - Fast execution (<1 minute for full suite)
