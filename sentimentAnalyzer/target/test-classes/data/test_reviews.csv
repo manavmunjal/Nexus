@@ -1,9 +1,0 @@
-review_id,company,product,review_text,sentiment_label
-test1,TestCo,Product1,"This product is absolutely amazing and works perfectly!",positive
-test2,TestCo,Product1,"Terrible quality, broke after one day.",negative
-test3,TestCo,Product1,"It's okay, nothing special.",neutral
-test4,TestCo,Product2,"Excellent build quality and great performance.",positive
-test5,TestCo,Product2,"Disappointed with the results, very poor.",negative
-test6,BetaCorp,Product3,"Average product, meets basic expectations.",neutral
-test7,BetaCorp,Product3,"Love it! Best purchase ever!",positive
-test8,BetaCorp,Product3,"Waste of money, completely useless.",negative

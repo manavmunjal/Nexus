@@ -27,7 +27,7 @@ class SentimentPredictorTest {
         attributes.add(new Attribute("product", (ArrayList<String>) null));
         attributes.add(new Attribute("review_text", (ArrayList<String>) null));
 
-        ArrayList<String> classValues = new ArrayList<>();
+        List<String> classValues = new ArrayList<>();
         classValues.add("positive");
         classValues.add("negative");
         classValues.add("neutral");
@@ -44,8 +44,8 @@ class SentimentPredictorTest {
         addInstance(testData, "5", "CompanyB", "ItemZ", "Poor quality, very disappointed.", "negative");
 
         // Train a simple classifier
-        SentimentModelTrainer trainer = new SentimentModelTrainer("review_text");
-        classifier = trainer.train(testData);
+        SentimentModelTrainer trainer = new SentimentModelTrainer();
+        classifier = trainer.train(testData, "review_text");
 
         scoreMapper = ScoreMapper.fromAttribute(testData.classAttribute());
     }
@@ -62,6 +62,10 @@ class SentimentPredictorTest {
     }
 
     @Test
+    /**
+     * Test that predictions are returned for all instances.
+     * @throws Exception
+     */
     void testPredictReturnsResults() throws Exception {
         List<PredictionResult> results = SentimentPredictor.predict(classifier, testData, scoreMapper);
 
@@ -70,6 +74,10 @@ class SentimentPredictorTest {
     }
 
     @Test
+    /**
+     * Test that each PredictionResult contains all expected fields.
+     * @throws Exception
+     */
     void testPredictionContainsAllFields() throws Exception {
         List<PredictionResult> results = SentimentPredictor.predict(classifier, testData, scoreMapper);
 
@@ -84,6 +92,10 @@ class SentimentPredictorTest {
     }
 
     @Test
+    /**
+     * Test that expected scores are within valid range.
+     * @throws Exception
+     */
     void testExpectedScoreInRange() throws Exception {
         List<PredictionResult> results = SentimentPredictor.predict(classifier, testData, scoreMapper);
 
@@ -93,6 +105,10 @@ class SentimentPredictorTest {
     }
 
     @Test
+    /**
+     * Test that label distributions sum to 1.0.
+     * @throws Exception
+     */
     void testDistributionSumsToOne() throws Exception {
         List<PredictionResult> results = SentimentPredictor.predict(classifier, testData, scoreMapper);
 
@@ -106,6 +122,10 @@ class SentimentPredictorTest {
     }
 
     @Test
+    /**
+     * Test that label distribution probabilities are between 0.0 and 1.0.
+     * @throws Exception
+     */
     void testDistributionProbabilitiesValid() throws Exception {
         List<PredictionResult> results = SentimentPredictor.predict(classifier, testData, scoreMapper);
 
@@ -117,6 +137,10 @@ class SentimentPredictorTest {
     }
 
     @Test
+    /**
+     * Test that probabilityFor method returns correct probabilities.
+     * @throws Exception
+     */
     void testProbabilityForMethod() throws Exception {
         List<PredictionResult> results = SentimentPredictor.predict(classifier, testData, scoreMapper);
         String[] classValues = new String[]{"positive", "negative", "neutral"};
@@ -132,6 +156,10 @@ class SentimentPredictorTest {
     }
 
     @Test
+    /**
+     * Test that probabilityFor method returns 0.0 for unknown label.
+     * @throws Exception
+     */
     void testProbabilityForUnknownLabel() throws Exception {
         List<PredictionResult> results = SentimentPredictor.predict(classifier, testData, scoreMapper);
         String[] classValues = new String[]{"positive", "negative", "neutral"};
@@ -143,6 +171,10 @@ class SentimentPredictorTest {
     }
 
     @Test
+    /**
+     * Test formatProbabilities method.
+     * @throws Exception
+     */
     void testFormatProbabilities() throws Exception {
         List<PredictionResult> results = SentimentPredictor.predict(classifier, testData, scoreMapper);
         String[] classValues = new String[]{"positive", "negative", "neutral"};
@@ -157,6 +189,10 @@ class SentimentPredictorTest {
     }
 
     @Test
+    /**
+     * Test debug summary output.
+     * @throws Exception
+     */
     void testDebugSummary() throws Exception {
         List<PredictionResult> results = SentimentPredictor.predict(classifier, testData, scoreMapper);
         String[] classValues = new String[]{"positive", "negative", "neutral"};
@@ -172,12 +208,16 @@ class SentimentPredictorTest {
     }
 
     @Test
+    /**
+     * Test that missing optional attributes are handled gracefully.
+     * @throws Exception
+     */
     void testMissingAttributes() throws Exception {
         // Create instances without review_id, company, product
         ArrayList<Attribute> minimalAttributes = new ArrayList<>();
         minimalAttributes.add(new Attribute("review_text", (ArrayList<String>) null));
 
-        ArrayList<String> classValues = new ArrayList<>();
+        List<String> classValues = new ArrayList<>();
         classValues.add("positive");
         classValues.add("negative");
         classValues.add("neutral");
@@ -186,23 +226,56 @@ class SentimentPredictorTest {
         Instances minimalData = new Instances("MinimalData", minimalAttributes, 0);
         minimalData.setClassIndex(1);
 
-        DenseInstance instance = new DenseInstance(2);
-        instance.setValue(0, "Great product!");
-        instance.setValue(1, "positive");
-        minimalData.add(instance);
+        // Add minimum 5 instances required for training
+        DenseInstance instance1 = new DenseInstance(2);
+        instance1.setDataset(minimalData);
+        instance1.setValue(0, "Great product!");
+        instance1.setValue(1, "positive");
+        minimalData.add(instance1);
 
-        SentimentModelTrainer trainer = new SentimentModelTrainer("review_text");
-        FilteredClassifier minimalClassifier = trainer.train(minimalData);
+        DenseInstance instance2 = new DenseInstance(2);
+        instance2.setDataset(minimalData);
+        instance2.setValue(0, "Terrible quality!");
+        instance2.setValue(1, "negative");
+        minimalData.add(instance2);
+
+        DenseInstance instance3 = new DenseInstance(2);
+        instance3.setDataset(minimalData);
+        instance3.setValue(0, "It's okay");
+        instance3.setValue(1, "neutral");
+        minimalData.add(instance3);
+
+        DenseInstance instance4 = new DenseInstance(2);
+        instance4.setDataset(minimalData);
+        instance4.setValue(0, "Excellent product!");
+        instance4.setValue(1, "positive");
+        minimalData.add(instance4);
+
+        DenseInstance instance5 = new DenseInstance(2);
+        instance5.setDataset(minimalData);
+        instance5.setValue(0, "Not good!");
+        instance5.setValue(1, "negative");
+        minimalData.add(instance5);
+
+        SentimentModelTrainer trainer = new SentimentModelTrainer();
+        FilteredClassifier minimalClassifier = trainer.train(minimalData, "review_text");
 
         List<PredictionResult> results = SentimentPredictor.predict(minimalClassifier, minimalData, scoreMapper);
 
-        assertThat(results).hasSize(1);
-        assertThat(results.get(0).reviewId()).isEmpty();
-        assertThat(results.get(0).company()).isEmpty();
-        assertThat(results.get(0).product()).isEmpty();
+        assertThat(results).hasSize(5);
+        // All results should have empty optional fields (review_id, company, product)
+        for (PredictionResult result : results) {
+            assertThat(result.reviewId()).isEmpty();
+            assertThat(result.company()).isEmpty();
+            assertThat(result.product()).isEmpty();
+        }
     }
 
     @Test
+    /**
+     * Test that predicted label matches highest probability in distribution.
+     * @throws Exception
+     */
     void testPredictedLabelMatchesHighestProbability() throws Exception {
         List<PredictionResult> results = SentimentPredictor.predict(classifier, testData, scoreMapper);
         String[] classValues = new String[]{"positive", "negative", "neutral"};
@@ -223,6 +296,10 @@ class SentimentPredictorTest {
     }
 
     @Test
+    /**
+     * Test expected score calculation correctness.
+     * @throws Exception
+     */
     void testExpectedScoreCalculation() throws Exception {
         List<PredictionResult> results = SentimentPredictor.predict(classifier, testData, scoreMapper);
 

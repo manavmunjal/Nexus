@@ -30,6 +30,9 @@ class SentimentStatisticsTest {
     }
 
     @Test
+    /**
+     * Verifies that basic statistics (group name, total reviews, label counts) are calculated correctly.
+     */
     void testSummarizeBasicStatistics() {
         SentimentStatistics.GroupStatistics stats = SentimentStatistics.summarize("TestGroup", predictions, classValues);
 
@@ -41,6 +44,9 @@ class SentimentStatisticsTest {
     }
 
     @Test
+    /**
+     * Verifies that label proportions are calculated correctly as fractions of total reviews.
+     */
     void testProportionsCalculation() {
         SentimentStatistics.GroupStatistics stats = SentimentStatistics.summarize("TestGroup", predictions, classValues);
 
@@ -50,6 +56,9 @@ class SentimentStatisticsTest {
     }
 
     @Test
+    /**
+     * Verifies that the mean sentiment score is calculated correctly as the average of all scores.
+     */
     void testMeanScoreCalculation() {
         SentimentStatistics.GroupStatistics stats = SentimentStatistics.summarize("TestGroup", predictions, classValues);
 
@@ -58,6 +67,9 @@ class SentimentStatisticsTest {
     }
 
     @Test
+    /**
+     * Verifies that variance and standard deviation are calculated correctly and that StdDev² = Variance.
+     */
     void testVarianceAndStdDevCalculation() {
         SentimentStatistics.GroupStatistics stats = SentimentStatistics.summarize("TestGroup", predictions, classValues);
 
@@ -69,6 +81,9 @@ class SentimentStatisticsTest {
     }
 
     @Test
+    /**
+     * Verifies that skewness is calculated as a finite, non-NaN value for asymmetric distributions.
+     */
     void testSkewnessCalculation() {
         SentimentStatistics.GroupStatistics stats = SentimentStatistics.summarize("TestGroup", predictions, classValues);
 
@@ -78,6 +93,9 @@ class SentimentStatisticsTest {
     }
 
     @Test
+    /**
+     * Verifies that empty prediction lists result in zero values for all statistics.
+     */
     void testEmptyPredictions() {
         List<PredictionResult> empty = new ArrayList<>();
         SentimentStatistics.GroupStatistics stats = SentimentStatistics.summarize("Empty", empty, classValues);
@@ -90,6 +108,9 @@ class SentimentStatisticsTest {
     }
 
     @Test
+    /**
+     * Verifies that statistics are correct when only a single prediction is provided.
+     */
     void testSinglePrediction() {
         List<PredictionResult> single = List.of(predictions.get(0));
         SentimentStatistics.GroupStatistics stats = SentimentStatistics.summarize("Single", single, classValues);
@@ -100,6 +121,9 @@ class SentimentStatisticsTest {
     }
 
     @Test
+    /**
+     * Verifies that when all predictions are positive, proportions and variance reflect perfect positive sentiment.
+     */
     void testAllPositivePredictions() {
         Map<String, Double> labelScores = Map.of(
                 "positive", 1.0,
@@ -123,6 +147,9 @@ class SentimentStatisticsTest {
     }
 
     @Test
+    /**
+     * Verifies that positive skewness is detected when the score distribution has a right tail.
+     */
     void testPositiveSkewness() {
         // Create distribution skewed to the right (positive skew)
         Map<String, Double> labelScores = Map.of(
@@ -145,6 +172,9 @@ class SentimentStatisticsTest {
     }
 
     @Test
+    /**
+     * Verifies that returned statistics maps are immutable and throw UnsupportedOperationException on modification attempts.
+     */
     void testImmutabilityOfStatistics() {
         SentimentStatistics.GroupStatistics stats = SentimentStatistics.summarize("Test", predictions, classValues);
 
@@ -156,6 +186,9 @@ class SentimentStatisticsTest {
     }
 
     @Test
+    /**
+     * Verifies that statistics from different groups are independent and computed correctly.
+     */
     void testMultipleGroups() {
         Map<String, Double> labelScores = Map.of(
                 "positive", 1.0,
