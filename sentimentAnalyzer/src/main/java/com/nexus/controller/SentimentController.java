@@ -13,29 +13,29 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/sentiment")
 public class SentimentController {
-    private final SentimentService sentimentService;
+  private final SentimentService sentimentService;
 
-    /**
-     * Constructs a SentimentController with the specified SentimentService.
-     *
-     * @param sentimentService the service for sentiment analysis operations
-     */
-    public SentimentController(SentimentService sentimentService) {
-        this.sentimentService = sentimentService;
-    }
+  /**
+   * Constructs a SentimentController with the specified SentimentService.
+   *
+   * @param sentimentService the service for sentiment analysis operations
+   */
+  public SentimentController(SentimentService sentimentService) {
+  this.sentimentService = sentimentService;
+  }
 
-    /**
-     * Calculates a sentiment score for the provided text.
-     *
-     * @param text the text to analyze
-     * @return the sentiment score, or 0.0 if an error occurs
-     */
-    @GetMapping("/score")
-    public double score(@RequestParam("text") String text) {
-        try {
-            return sentimentService.scoreFromText(text);
-        } catch (Exception e) {
-            return 0.0;
-        }
-    }
+  /**
+   * Calculates a sentiment score for the provided text.
+   *
+   * @param text the text to analyze
+   * @return the sentiment score, or 0.0 if an error occurs
+   */
+  @GetMapping("/score")
+  public double score(@RequestParam("text") String text) {
+  try {
+  return sentimentService.scoreFromText(text);
+  } catch (Exception e) {
+  return 0.0;
+  }
+  }
 }

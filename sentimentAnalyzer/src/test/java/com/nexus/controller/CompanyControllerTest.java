@@ -15,30 +15,30 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(MockitoExtension.class)
 public class CompanyControllerTest {
 
-    @Mock
-    private CompanyRepository companyRepository;
+  @Mock
+  private CompanyRepository companyRepository;
 
-    @InjectMocks
-    private CompanyController companyController;
+  @InjectMocks
+  private CompanyController companyController;
 
-    private Company testCompany;
+  private Company testCompany;
 
-    @BeforeEach
-    void setUp() {
-        testCompany = new Company();
-        testCompany.setId("1");
-        testCompany.setName("Test Company");
-    }
+  @BeforeEach
+  void setUp() {
+      testCompany = new Company();
+      testCompany.setId("1");
+      testCompany.setName("Test Company");
+  }
 
-    @Test
-    void createCompany_ShouldSaveAndReturnCompany() {
-        when(companyRepository.save(any(Company.class))).thenReturn(testCompany);
+  @Test
+  void createCompany_ShouldSaveAndReturnCompany() {
+      when(companyRepository.save(any(Company.class))).thenReturn(testCompany);
 
-        Company result = companyController.createCompany(testCompany);
+      Company result = companyController.createCompany(testCompany);
 
-        assertNotNull(result);
-        assertEquals("1", result.getId());
-        assertEquals("Test Company", result.getName());
-        verify(companyRepository).save(testCompany);
-    }
+      assertNotNull(result);
+      assertEquals("1", result.getId());
+      assertEquals("Test Company", result.getName());
+      verify(companyRepository).save(testCompany);
+  }
 }

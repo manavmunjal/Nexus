@@ -36,9 +36,9 @@ public class Product {
    * @param description the description of the product
    */
   public Product(String id, String name, String description) {
-    this.id = id;
-    this.name = name;
-    this.description = description;
+  this.id = id;
+  this.name = name;
+  this.description = description;
   }
 
   /**
@@ -47,7 +47,7 @@ public class Product {
    * @return the product id
    */
   public String getId() {
-    return id;
+  return id;
   }
 
   /**
@@ -56,7 +56,7 @@ public class Product {
    * @param id the product id to set
    */
   public void setId(String id) {
-    this.id = id;
+  this.id = id;
   }
 
   /**
@@ -65,7 +65,7 @@ public class Product {
    * @return the product name
    */
   public String getName() {
-    return name;
+  return name;
   }
 
   /**
@@ -74,7 +74,7 @@ public class Product {
    * @param name the product name to set
    */
   public void setName(String name) {
-    this.name = name;
+  this.name = name;
   }
 
   /**
@@ -83,7 +83,7 @@ public class Product {
    * @return the product description
    */
   public String getDescription() {
-    return description;
+  return description;
   }
 
   /**
@@ -92,7 +92,7 @@ public class Product {
    * @param description the product description to set
    */
   public void setDescription(String description) {
-    this.description = description;
+  this.description = description;
   }
 
   /**
@@ -101,7 +101,7 @@ public class Product {
    * @return the list of review IDs
    */
   public List<String> getReviewIds() {
-    return reviewIds;
+  return reviewIds;
   }
 
   /**
@@ -110,6 +110,6 @@ public class Product {
    * @param reviewIds the list of review IDs to set
    */
   public void setReviewIds(List<String> reviewIds) {
-    this.reviewIds = reviewIds;
+  this.reviewIds = reviewIds;
   }
 }

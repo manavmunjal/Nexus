@@ -20,7 +20,7 @@ public class TestDBController {
    * @param mongoTemplate the MongoDB template for database operations
    */
   public TestDBController(MongoTemplate mongoTemplate) {
-    this.mongoTemplate = mongoTemplate;
+  this.mongoTemplate = mongoTemplate;
   }
 
   /**
@@ -30,12 +30,12 @@ public class TestDBController {
    */
   @GetMapping
   public String testConnection() {
-    try {
-      mongoTemplate.getDb().listCollectionNames().first();
-      return "MongoDB connection successful!";
-    } catch (Exception e) {
-      return "MongoDB connection failed: " + e.getMessage();
-    }
+  try {
+  mongoTemplate.getDb().listCollectionNames().first();
+  return "MongoDB connection successful!";
+  } catch (Exception e) {
+  return "MongoDB connection failed: " + e.getMessage();
+  }
   }
 }
 

@@ -17,45 +17,45 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(MockitoExtension.class)
 public class UserControllerTest {
 
-    @Mock
-    private UserRepository userRepository;
+  @Mock
+  private UserRepository userRepository;
 
-    @InjectMocks
-    private UserController userController;
+  @InjectMocks
+  private UserController userController;
 
-    private User testUser;
+  private User testUser;
 
-    @BeforeEach
-    void setUp() {
-        testUser = new User();
-        testUser.setId("1");
-        testUser.setUsername("testuser");
-        testUser.setEmail("test@example.com");
-    }
+  @BeforeEach
+  void setUp() {
+      testUser = new User();
+      testUser.setId("1");
+      testUser.setUsername("testuser");
+      testUser.setEmail("test@example.com");
+  }
 
-    @Test
-    void createUser_ShouldSaveAndReturnUser() {
-        when(userRepository.save(any(User.class))).thenReturn(testUser);
+  @Test
+  void createUser_ShouldSaveAndReturnUser() {
+      when(userRepository.save(any(User.class))).thenReturn(testUser);
 
-        User result = userController.createUser(testUser);
+      User result = userController.createUser(testUser);
 
-        assertNotNull(result);
-        assertEquals("1", result.getId());
-        assertEquals("testuser", result.getUsername());
-        assertEquals("test@example.com", result.getEmail());
-        verify(userRepository).save(testUser);
-    }
+      assertNotNull(result);
+      assertEquals("1", result.getId());
+      assertEquals("testuser", result.getUsername());
+      assertEquals("test@example.com", result.getEmail());
+      verify(userRepository).save(testUser);
+  }
 
-    @Test
-    void getAllUsers_ShouldReturnListOfUsers() {
-        List<User> users = List.of(testUser);
-        when(userRepository.findAll()).thenReturn(users);
+  @Test
+  void getAllUsers_ShouldReturnListOfUsers() {
+      List<User> users = List.of(testUser);
+      when(userRepository.findAll()).thenReturn(users);
 
-        List<User> result = userController.getAllUsers();
+      List<User> result = userController.getAllUsers();
 
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals(testUser.getId(), result.get(0).getId());
-        verify(userRepository).findAll();
-    }
+      assertNotNull(result);
+      assertEquals(1, result.size());
+      assertEquals(testUser.getId(), result.get(0).getId());
+      verify(userRepository).findAll();
+  }
 }

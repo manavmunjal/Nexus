@@ -27,9 +27,9 @@ public class User {
    * @param email the email address of the user
    */
   public User(String id, String username, String email) {
-    this.id = id;
-    this.username = username;
-    this.email = email;
+  this.id = id;
+  this.username = username;
+  this.email = email;
   }
 
   /**
@@ -38,7 +38,7 @@ public class User {
    * @return the user id
    */
   public String getId() {
-    return id;
+  return id;
   }
 
   /**
@@ -47,7 +47,7 @@ public class User {
    * @param id the user id to set
    */
   public void setId(String id) {
-    this.id = id;
+  this.id = id;
   }
 
   /**
@@ -56,7 +56,7 @@ public class User {
    * @return the username
    */
   public String getUsername() {
-    return username;
+  return username;
   }
 
   /**
@@ -65,7 +65,7 @@ public class User {
    * @param username the username to set
    */
   public void setUsername(String username) {
-    this.username = username;
+  this.username = username;
   }
 
   /**
@@ -74,7 +74,7 @@ public class User {
    * @return the email address
    */
   public String getEmail() {
-    return email;
+  return email;
   }
 
   /**
@@ -83,6 +83,6 @@ public class User {
    * @param email the email address to set
    */
   public void setEmail(String email) {
-    this.email = email;
+  this.email = email;
   }
 }

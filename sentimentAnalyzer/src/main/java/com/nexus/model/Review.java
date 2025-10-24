@@ -32,10 +32,10 @@ public class Review {
    * @param user the user who created the review
    */
   public Review(String id, String comment, int rating, User user) {
-    this.id = id;
-    this.comment = comment;
-    this.rating = rating;
-    this.user = user;
+  this.id = id;
+  this.comment = comment;
+  this.rating = rating;
+  this.user = user;
   }
 
   /**
@@ -44,7 +44,7 @@ public class Review {
    * @return the review id
    */
   public String getId() {
-    return id;
+  return id;
   }
 
   /**
@@ -53,7 +53,7 @@ public class Review {
    * @param id the review id to set
    */
   public void setId(String id) {
-    this.id = id;
+  this.id = id;
   }
 
   /**
@@ -62,7 +62,7 @@ public class Review {
    * @return the comment text
    */
   public String getComment() {
-    return comment;
+  return comment;
   }
 
   /**
@@ -71,7 +71,7 @@ public class Review {
    * @param comment the comment text to set
    */
   public void setComment(String comment) {
-    this.comment = comment;
+  this.comment = comment;
   }
 
   /**
@@ -80,7 +80,7 @@ public class Review {
    * @return the rating value
    */
   public int getRating() {
-    return rating;
+  return rating;
   }
 
   /**
@@ -89,7 +89,7 @@ public class Review {
    * @param rating the rating value to set
    */
   public void setRating(int rating) {
-    this.rating = rating;
+  this.rating = rating;
   }
 
   /**
@@ -98,7 +98,7 @@ public class Review {
    * @return the user
    */
   public User getUser() {
-    return user;
+  return user;
   }
 
   /**
@@ -107,6 +107,6 @@ public class Review {
    * @param user the user to set
    */
   public void setUser(User user) {
-    this.user = user;
+  this.user = user;
   }
 }

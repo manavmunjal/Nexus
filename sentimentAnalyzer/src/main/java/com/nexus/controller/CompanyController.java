@@ -14,29 +14,29 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/companies")
 public class CompanyController {
-    private final CompanyRepository companyRepository;
+  private final CompanyRepository companyRepository;
 
-    /**
-     * Constructs a CompanyController with the specified CompanyRepository.
-     *
-     * @param companyRepository the repository for company operations
-     */
-    public CompanyController(CompanyRepository companyRepository) {
-        this.companyRepository = companyRepository;
-    }
+  /**
+   * Constructs a CompanyController with the specified CompanyRepository.
+   *
+   * @param companyRepository the repository for company operations
+   */
+  public CompanyController(CompanyRepository companyRepository) {
+  this.companyRepository = companyRepository;
+  }
 
-    /**
-     * Creates a new company.
-     *
-     * @param company the company to create
-     * @return the created company, or null if an error occurs
-     */
-    @PostMapping
-    public Company createCompany(@RequestBody Company company) {
-        try {
-            return companyRepository.save(company);
-        } catch (Exception e) {
-            return null;
-        }
-    }
+  /**
+   * Creates a new company.
+   *
+   * @param company the company to create
+   * @return the created company, or null if an error occurs
+   */
+  @PostMapping
+  public Company createCompany(@RequestBody Company company) {
+  try {
+  return companyRepository.save(company);
+  } catch (Exception e) {
+  return null;
+  }
+  }
 }

@@ -25,8 +25,8 @@ public class Company {
    * @param name the name of the company
    */
   public Company(String id, String name) {
-    this.id = id;
-    this.name = name;
+  this.id = id;
+  this.name = name;
   }
 
   /**
@@ -35,7 +35,7 @@ public class Company {
    * @return the company id
    */
   public String getId() {
-    return id;
+  return id;
   }
 
   /**
@@ -44,7 +44,7 @@ public class Company {
    * @param id the company id to set
    */
   public void setId(String id) {
-    this.id = id;
+  this.id = id;
   }
 
   /**
@@ -53,7 +53,7 @@ public class Company {
    * @return the company name
    */
   public String getName() {
-    return name;
+  return name;
   }
 
   /**
@@ -62,6 +62,6 @@ public class Company {
    * @param name the company name to set
    */
   public void setName(String name) {
-    this.name = name;
+  this.name = name;
   }
 }
