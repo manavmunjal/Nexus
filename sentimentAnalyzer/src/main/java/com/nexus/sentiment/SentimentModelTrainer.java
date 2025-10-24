@@ -18,7 +18,7 @@ import weka.core.tokenizers.NGramTokenizer;
  * Trains an SVM model using text data and preprocessing filters.
  */
 @Service
-public final class SentimentModelTrainer {
+public class SentimentModelTrainer {
 
   /**
    * The final trained classifier.
