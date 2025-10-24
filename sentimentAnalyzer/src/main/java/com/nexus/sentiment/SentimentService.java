@@ -39,6 +39,9 @@ public class SentimentService {
    */
   private volatile ScoreMapper scoreMapper;
 
+  /**
+   * Trainer used to build the sentiment model.
+   */
   private final SentimentModelTrainer trainer;
 
   /**
