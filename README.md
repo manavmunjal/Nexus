@@ -294,6 +294,7 @@ Run the following command to check code style:
 cd sentimentAnalyzer
 mvn checkstyle:check
 ```
+![Checkstyle Report](static/img/checkstyle.jpg)
 
 ## AI Usage
 1. We used Claude Code on Copilot to determine the hyper-parameter range for the 
