@@ -379,7 +379,7 @@ The project now includes a full REST API for sentiment analysis and review manag
 
 ---
 
-# Unit Testing
+# Controller Unit Testing
 
 - All controllers and services have unit tests using JUnit 5 and Mockito.
 - Example test classes:
@@ -397,5 +397,28 @@ The project now includes a full REST API for sentiment analysis and review manag
   - Success and error cases
   - Mocked repository/service dependencies
   - Boundary conditions and input validation
+
+
+  # Sentiment Analyzer Unit Testing
+
+- All controllers and services have unit tests using JUnit 5 and Mockito.
+- Example test classes:
+  - `DatasetLoaderTest`
+  - `DataSplitterTest`
+  - `SentimentModelTrainerTest`
+  - `ScoreMapperTest`
+  - `DistributionUtilsTest`
+  - `SentimentStatisticsTest`
+  ...
+- Run individual unit test:
+  ```bash
+  mvn test -Dtest=DatasetLoaderTest#testLoadIllFormattedDataset
+  ```
+- Tests cover:
+  - Edge cases for text input for the sentiment analyzer
+  - Data loader and splitter so that ill-formatted csv file can be handled properly
+  - Distribution tests for the mathematical details of the sentiment analysis.
+ - Sentiment analysis tests to validate the accuracy and performance of the model.
+ 
 
 ---
