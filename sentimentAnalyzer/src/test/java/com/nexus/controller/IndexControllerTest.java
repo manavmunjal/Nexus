@@ -14,7 +14,7 @@ public class IndexControllerTest {
 
   @Test
   void welcome_ShouldReturnWelcomeMessage() {
-      String result = indexController.welcome();
+      String result = String.valueOf(indexController.welcome());
       
       assertNotNull(result);
       assertTrue(result.contains("Welcome to Sentiment Analysis API"));

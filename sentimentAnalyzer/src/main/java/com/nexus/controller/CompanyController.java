@@ -2,41 +2,44 @@ package com.nexus.controller;
 
 import com.nexus.model.Company;
 import com.nexus.repository.CompanyRepository;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
-/**
- * REST controller for managing Company entities.
- * Provides endpoints for creating companies.
- */
 @RestController
 @RequestMapping("/api/companies")
 public class CompanyController {
+
   private final CompanyRepository companyRepository;
 
-  /**
-   * Constructs a CompanyController with the specified CompanyRepository.
-   *
-   * @param companyRepository the repository for company operations
-   */
   public CompanyController(CompanyRepository companyRepository) {
-  this.companyRepository = companyRepository;
+    this.companyRepository = companyRepository;
   }
 
-  /**
-   * Creates a new company.
-   *
-   * @param company the company to create
-   * @return the created company, or null if an error occurs
-   */
   @PostMapping
-  public Company createCompany(@RequestBody Company company) {
-  try {
-  return companyRepository.save(company);
-  } catch (Exception e) {
-  return null;
-  }
+  public ResponseEntity<?> createCompany(@RequestBody Company company) {
+    try {
+      if (company == null || company.getName() == null || company.getName().isBlank()) {
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body("Invalid company data. 'name' field is required.");
+      }
+
+      Company savedCompany = companyRepository.save(company);
+      return ResponseEntity.status(HttpStatus.CREATED).body(savedCompany);
+
+    } catch (DataAccessException dae) {
+      // Handles database-related issues
+      return ResponseEntity
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body("Database error while saving company: " + dae.getMessage());
+
+    } catch (Exception e) {
+      // Catch-all for other unexpected exceptions
+      return ResponseEntity
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body("Unexpected error occurred: " + e.getMessage());
+    }
   }
 }

@@ -1,10 +1,9 @@
 package com.nexus.controller;
 
 import com.nexus.sentiment.SentimentService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * REST controller for sentiment analysis operations.
@@ -13,29 +12,30 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/sentiment")
 public class SentimentController {
+
   private final SentimentService sentimentService;
 
-  /**
-   * Constructs a SentimentController with the specified SentimentService.
-   *
-   * @param sentimentService the service for sentiment analysis operations
-   */
   public SentimentController(SentimentService sentimentService) {
-  this.sentimentService = sentimentService;
+    this.sentimentService = sentimentService;
   }
 
   /**
    * Calculates a sentiment score for the provided text.
    *
    * @param text the text to analyze
-   * @return the sentiment score, or 0.0 if an error occurs
+   * @return ResponseEntity with the sentiment score or an error message
    */
   @GetMapping("/score")
-  public double score(@RequestParam("text") String text) {
-  try {
-  return sentimentService.scoreFromText(text);
-  } catch (Exception e) {
-  return 0.0;
-  }
+  public ResponseEntity<?> score(@RequestParam("text") String text) {
+    try {
+      double score = sentimentService.scoreFromText(text);
+      return ResponseEntity.ok(score);
+    } catch (IllegalArgumentException iae) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+          .body("Invalid input: " + iae.getMessage());
+    } catch (Exception e) {
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body("Error calculating sentiment score: " + e.getMessage());
+    }
   }
 }
