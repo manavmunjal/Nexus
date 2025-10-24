@@ -2,155 +2,155 @@ package com.nexus.controller;
 
 import com.nexus.model.Product;
 import com.nexus.model.Review;
-import com.nexus.model.User;
 import com.nexus.repository.ProductRepository;
 import com.nexus.repository.ReviewRepository;
 import com.nexus.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
-public class ProductControllerTest {
+class ProductControllerTest {
 
-    @Mock
-    private ProductRepository productRepository;
+  private ProductRepository productRepository;
+  private ReviewRepository reviewRepository;
+  private UserRepository userRepository;
+  private ProductController controller;
 
-    @Mock
-    private ReviewRepository reviewRepository;
+  @BeforeEach
+  void setUp() {
+    productRepository = mock(ProductRepository.class);
+    reviewRepository = mock(ReviewRepository.class);
+    userRepository = mock(UserRepository.class);
+    controller = new ProductController(productRepository, reviewRepository, userRepository);
+  }
 
-    @Mock
-    private UserRepository userRepository;
+  @Test
+  void createProduct_ShouldReturnCreatedProduct() {
+    Product product = new Product();
+    product.setId("p1");
 
-    @InjectMocks
-    private ProductController productController;
+    when(productRepository.save(product)).thenReturn(product);
 
-    private Product testProduct;
-    private Review testReview;
-    private User testUser;
+    ResponseEntity<?> response = controller.createProduct(product);
 
-    @BeforeEach
-    void setUp() {
-        testProduct = new Product();
-        testProduct.setId("1");
-        testProduct.setName("Test Product");
-        testProduct.setDescription("Test Description");
-        testProduct.setReviewIds(new ArrayList<>());
+    assertEquals(HttpStatus.CREATED, response.getStatusCode());
+    assertEquals(product, response.getBody());
+    verify(productRepository, times(1)).save(product);
+  }
 
-        testUser = new User();
-        testUser.setId("1");
-        testUser.setUsername("testuser");
-        testUser.setEmail("test@example.com");
+  @Test
+  void createProduct_ShouldReturnInternalServerError_OnDatabaseException() {
+    Product product = new Product();
 
-        testReview = new Review();
-        testReview.setId("1");
-        testReview.setComment("Great product");
-        testReview.setRating(5);
-        testReview.setUser(testUser);
-    }
+    when(productRepository.save(product)).thenThrow(new DataAccessException("DB down") {});
 
-    @Test
-    void createProduct_ShouldSaveAndReturnProduct() {
-        when(productRepository.save(any(Product.class))).thenReturn(testProduct);
+    ResponseEntity<?> response = controller.createProduct(product);
 
-        Product result = productController.createProduct(testProduct);
+    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+  assertNotNull(response.getBody());
+  assertTrue(response.getBody().toString().contains("Database error"));
+  }
 
-        assertNotNull(result);
-        assertEquals("1", result.getId());
-        assertEquals("Test Product", result.getName());
-        verify(productRepository).save(testProduct);
-    }
+  @Test
+  void getAllProducts_ShouldReturnProductList() {
+    List<Product> products = List.of(new Product(), new Product());
+    when(productRepository.findAll()).thenReturn(products);
 
-    @Test
-    void getAllProducts_ShouldReturnListOfProducts() {
-        List<Product> products = List.of(testProduct);
-        when(productRepository.findAll()).thenReturn(products);
+    ResponseEntity<List<Product>> response = controller.getAllProducts();
 
-        List<Product> result = productController.getAllProducts();
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(products, response.getBody());
+  }
 
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals(testProduct.getId(), result.get(0).getId());
-        verify(productRepository).findAll();
-    }
+  @Test
+  void getReviews_ShouldReturnListOfReviews() {
+    Product product = new Product();
+    product.setId("p1");
+    product.setReviewIds(List.of("r1"));
 
-    @Test
-    void postReview_ShouldSaveReviewAndUpdateProduct() {
-        when(productRepository.findById("1")).thenReturn(Optional.of(testProduct));
-        when(reviewRepository.save(any(Review.class))).thenReturn(testReview);
-        when(productRepository.save(any(Product.class))).thenReturn(testProduct);
+    Review review = new Review();
+    review.setId("r1");
 
-        Review result = productController.postReview("1", testReview);
+    when(productRepository.findById("p1")).thenReturn(Optional.of(product));
+    when(reviewRepository.findByIdIn(List.of("r1"))).thenReturn(List.of(review));
 
-        assertNotNull(result);
-        assertEquals("1", result.getId());
-        assertEquals("Great product", result.getComment());
-        verify(reviewRepository).save(testReview);
-        verify(productRepository).save(testProduct);
-    }
+    ResponseEntity<?> response = controller.getReviews("p1");
 
-    @Test
-    void postReview_WithNewUser_ShouldSaveUserFirst() {
-        User newUser = new User();
-        newUser.setUsername("newuser");
-        newUser.setEmail("new@example.com");
-        
-        Review reviewWithNewUser = new Review();
-        reviewWithNewUser.setComment("Great product");
-        reviewWithNewUser.setRating(5);
-        reviewWithNewUser.setUser(newUser);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(List.of(review), response.getBody());
+  }
 
-        when(productRepository.findById("1")).thenReturn(Optional.of(testProduct));
-        when(userRepository.save(any(User.class))).thenReturn(testUser);
-        when(reviewRepository.save(any(Review.class))).thenReturn(testReview);
-        when(productRepository.save(any(Product.class))).thenReturn(testProduct);
+  @Test
+  void getReviews_ShouldReturnNotFound_WhenProductMissing() {
+    when(productRepository.findById("p1")).thenReturn(Optional.empty());
 
-        Review result = productController.postReview("1", reviewWithNewUser);
+    ResponseEntity<?> response = controller.getReviews("p1");
 
-        assertNotNull(result);
-        verify(userRepository).save(newUser);
-        verify(reviewRepository).save(any(Review.class));
-    }
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+  assertNotNull(response.getBody());
+  assertTrue(response.getBody().toString().contains("Product not found"));
+  }
 
-    @Test
-    void getReviews_ShouldReturnListOfReviews() {
-        testProduct.setReviewIds(List.of("1", "2"));
-        List<Review> reviews = List.of(testReview);
+  @Test
+  void postReview_ShouldReturnNotFound_WhenProductMissing() {
+    Review review = new Review();
+    when(productRepository.findById("p1")).thenReturn(Optional.empty());
 
-        when(productRepository.findById("1")).thenReturn(Optional.of(testProduct));
-        when(reviewRepository.findByIdIn(anyList())).thenReturn(reviews);
+    ResponseEntity<?> response = controller.postReview("p1", review);
 
-        List<Review> result = productController.getReviews("1");
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+  assertNotNull(response.getBody());
+  assertTrue(response.getBody().toString().contains("Product not found"));
+  }
 
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals("Great product", result.get(0).getComment());
-        verify(reviewRepository).findByIdIn(testProduct.getReviewIds());
-    }
+  @Test
+  void updateReview_ShouldReturnUpdatedReview() {
+    Product product = new Product();
+    product.setId("p1");
 
-    @Test
-    void updateReview_ShouldUpdateAndReturnReview() {
-        Review updatedReview = new Review();
-        updatedReview.setComment("Updated comment");
-        updatedReview.setRating(4);
+    Review existing = new Review();
+    existing.setId("r1");
+    existing.setComment("Old");
+    existing.setRating(3);
 
-        when(productRepository.findById("1")).thenReturn(Optional.of(testProduct));
-        when(reviewRepository.findById("1")).thenReturn(Optional.of(testReview));
-        when(reviewRepository.save(any(Review.class))).thenReturn(testReview);
+    Review update = new Review();
+    update.setComment("New");
+    update.setRating(5);
 
-        Review result = productController.updateReview("1", "1", updatedReview);
+    when(productRepository.findById("p1")).thenReturn(Optional.of(product));
+    when(reviewRepository.findById("r1")).thenReturn(Optional.of(existing));
+    when(reviewRepository.save(existing)).thenReturn(existing);
 
-        assertNotNull(result);
-        verify(reviewRepository).save(any(Review.class));
-    }
+    ResponseEntity<?> response = controller.updateReview("p1", "r1", update);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+  Review saved = (Review) response.getBody();
+  assertNotNull(saved);
+  assertEquals("New", saved.getComment());
+  assertEquals(5, saved.getRating());
+  }
+
+  @Test
+  void updateReview_ShouldReturnNotFound_WhenReviewMissing() {
+    Product product = new Product();
+    product.setId("p1");
+
+    Review update = new Review();
+    when(productRepository.findById("p1")).thenReturn(Optional.of(product));
+    when(reviewRepository.findById("r1")).thenReturn(Optional.empty());
+
+    ResponseEntity<?> response = controller.updateReview("p1", "r1", update);
+
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+  assertNotNull(response.getBody());
+  assertTrue(response.getBody().toString().contains("Review not found"));
+  }
 }

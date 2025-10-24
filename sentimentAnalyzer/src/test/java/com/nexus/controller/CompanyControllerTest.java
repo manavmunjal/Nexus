@@ -4,41 +4,98 @@ import com.nexus.model.Company;
 import com.nexus.repository.CompanyRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
-import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
-public class CompanyControllerTest {
+class CompanyControllerTest {
 
-    @Mock
-    private CompanyRepository companyRepository;
+  private CompanyRepository companyRepository;
+  private CompanyController companyController;
 
-    @InjectMocks
-    private CompanyController companyController;
+  @BeforeEach
+  void setUp() {
+    companyRepository = mock(CompanyRepository.class);
+    companyController = new CompanyController(companyRepository);
+  }
 
-    private Company testCompany;
+  @Test
+  void createCompany_ShouldReturnCreated_WhenValidCompany() {
+    // Arrange
+    Company company = new Company();
+    company.setName("OpenAI");
 
-    @BeforeEach
-    void setUp() {
-        testCompany = new Company();
-        testCompany.setId("1");
-        testCompany.setName("Test Company");
-    }
+    when(companyRepository.save(company)).thenReturn(company);
 
-    @Test
-    void createCompany_ShouldSaveAndReturnCompany() {
-        when(companyRepository.save(any(Company.class))).thenReturn(testCompany);
+    // Act
+    ResponseEntity<?> response = companyController.createCompany(company);
 
-        Company result = companyController.createCompany(testCompany);
+    // Assert
+    assertEquals(HttpStatus.CREATED, response.getStatusCode());
+    assertEquals(company, response.getBody());
+    verify(companyRepository, times(1)).save(company);
+  }
 
-        assertNotNull(result);
-        assertEquals("1", result.getId());
-        assertEquals("Test Company", result.getName());
-        verify(companyRepository).save(testCompany);
-    }
+  @Test
+  void createCompany_ShouldReturnBadRequest_WhenCompanyIsNull() {
+    // Act
+    ResponseEntity<?> response = companyController.createCompany(null);
+
+    // Assert
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    assertTrue(response.getBody().toString().contains("Invalid company data"));
+    verify(companyRepository, never()).save(any());
+  }
+
+  @Test
+  void createCompany_ShouldReturnBadRequest_WhenCompanyNameIsEmpty() {
+    // Arrange
+    Company company = new Company();
+    company.setName("  "); // blank name
+
+    // Act
+    ResponseEntity<?> response = companyController.createCompany(company);
+
+    // Assert
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    assertTrue(response.getBody().toString().contains("Invalid company data"));
+    verify(companyRepository, never()).save(any());
+  }
+
+  @Test
+  void createCompany_ShouldReturnInternalServerError_WhenDatabaseErrorOccurs() {
+    // Arrange
+    Company company = new Company();
+    company.setName("ErrorCorp");
+
+    when(companyRepository.save(company))
+        .thenThrow(new DataAccessException("DB down") {});
+
+    // Act
+    ResponseEntity<?> response = companyController.createCompany(company);
+
+    // Assert
+    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+    assertTrue(response.getBody().toString().contains("Database error"));
+  }
+
+  @Test
+  void createCompany_ShouldReturnInternalServerError_WhenUnexpectedExceptionOccurs() {
+    // Arrange
+    Company company = new Company();
+    company.setName("FailCorp");
+
+    when(companyRepository.save(company))
+        .thenThrow(new RuntimeException("Unexpected failure"));
+
+    // Act
+    ResponseEntity<?> response = companyController.createCompany(company);
+
+    // Assert
+    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+    assertTrue(response.getBody().toString().contains("Unexpected error"));
+  }
 }

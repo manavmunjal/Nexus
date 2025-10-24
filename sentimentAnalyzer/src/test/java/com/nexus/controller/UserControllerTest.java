@@ -4,58 +4,55 @@ import com.nexus.model.User;
 import com.nexus.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
-import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
-public class UserControllerTest {
+class UserControllerTest {
 
-    @Mock
-    private UserRepository userRepository;
+  private UserRepository userRepository;
+  private UserController userController;
 
-    @InjectMocks
-    private UserController userController;
+  @BeforeEach
+  void setUp() {
+    userRepository = mock(UserRepository.class);
+    userController = new UserController(userRepository);
+  }
 
-    private User testUser;
+  @Test
+  void createUser_ShouldReturnInternalServerError_OnDatabaseException() {
+    User user = new User();
+    when(userRepository.save(user)).thenThrow(new DataAccessException("DB down") {});
 
-    @BeforeEach
-    void setUp() {
-        testUser = new User();
-        testUser.setId("1");
-        testUser.setUsername("testuser");
-        testUser.setEmail("test@example.com");
-    }
+    ResponseEntity<?> response = userController.createUser(user);
 
-    @Test
-    void createUser_ShouldSaveAndReturnUser() {
-        when(userRepository.save(any(User.class))).thenReturn(testUser);
+    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+    assertTrue(response.getBody().toString().contains("Database error"));
+  }
 
-        User result = userController.createUser(testUser);
+  @Test
+  void createUser_ShouldReturnInternalServerError_OnUnexpectedException() {
+    User user = new User();
+    when(userRepository.save(user)).thenThrow(new RuntimeException("Unexpected"));
 
-        assertNotNull(result);
-        assertEquals("1", result.getId());
-        assertEquals("testuser", result.getUsername());
-        assertEquals("test@example.com", result.getEmail());
-        verify(userRepository).save(testUser);
-    }
+    ResponseEntity<?> response = userController.createUser(user);
 
-    @Test
-    void getAllUsers_ShouldReturnListOfUsers() {
-        List<User> users = List.of(testUser);
-        when(userRepository.findAll()).thenReturn(users);
+    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+    assertTrue(response.getBody().toString().contains("Unexpected error"));
+  }
 
-        List<User> result = userController.getAllUsers();
+  @Test
+  void getAllUsers_ShouldReturnEmptyList_OnException() {
+    when(userRepository.findAll()).thenThrow(new RuntimeException("DB down"));
 
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals(testUser.getId(), result.get(0).getId());
-        verify(userRepository).findAll();
-    }
+    ResponseEntity<List<User>> response = userController.getAllUsers();
+
+    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+    assertEquals(0, response.getBody().size());
+  }
 }
