@@ -129,11 +129,14 @@
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.8.10</version>
                 <executions>
+                    <!-- Attach the JaCoCo agent to collect coverage data -->
                     <execution>
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
                     </execution>
+
+                    <!-- Generate a coverage report after running tests -->
                     <execution>
                         <id>report</id>
                         <phase>test</phase>
@@ -142,6 +145,22 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <rules>
+                        <rule>
+                            <!-- Apply rule to the entire project -->
+                            <element>BUNDLE</element>
+                            <limits>
+                                <limit>
+                                    <!-- Minimum 50% instruction coverage -->
+                                    <counter>INSTRUCTION</counter>
+                                    <value>COVEREDRATIO</value>
+                                    <minimum>0.50</minimum>
+                                </limit>
+                            </limits>
+                        </rule>
+                    </rules>
+                </configuration>
             </plugin>
         </plugins>
     </build>
