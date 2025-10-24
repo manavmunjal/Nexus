@@ -10,32 +10,46 @@ import org.springframework.data.mongodb.core.mapping.Document;
  */
 @Document(collection = "reviews")
 public class Review {
+  /**
+   * Unique identifier for the review.
+   */
   @Id
   private String id;
+  /**
+   * Comment text of the review.
+   */
   private String comment;
+  /**
+   * Rating value of the review.
+   */
   private int rating;
 
+  /**
+   * User who created the review.
+   */
   @DBRef
   private User user;
 
   /**
    * Default constructor for Review.
+   * Required for frameworks and serialization.
    */
-  public Review() {}
+  public Review() { }
 
   /**
    * Constructs a Review with the specified id, comment, rating, and user.
    *
-   * @param id the unique identifier for the review
-   * @param comment the comment text of the review
-   * @param rating the rating value of the review
-   * @param user the user who created the review
+   * @param idx the unique identifier for the review
+   * @param cmt the comment text of the review
+   * @param rtg the rating value of the review
+   * @param usr the user who created the review
    */
-  public Review(String id, String comment, int rating, User user) {
-  this.id = id;
-  this.comment = comment;
-  this.rating = rating;
-  this.user = user;
+  public Review(final String idx, final String cmt,
+  final int rtg, final User usr) {
+    this.id = idx;
+    this.comment = cmt;
+    this.rating = rtg;
+    this.user = usr;
   }
 
   /**
@@ -50,10 +64,10 @@ public class Review {
   /**
    * Sets the review's unique identifier.
    *
-   * @param id the review id to set
+   * @param idx the review id to set
    */
-  public void setId(String id) {
-  this.id = id;
+  public void setId(final String idx) {
+    this.id = idx;
   }
 
   /**
@@ -68,10 +82,10 @@ public class Review {
   /**
    * Sets the review's comment text.
    *
-   * @param comment the comment text to set
+   * @param cmt the comment text to set
    */
-  public void setComment(String comment) {
-  this.comment = comment;
+  public void setComment(final String cmt) {
+    this.comment = cmt;
   }
 
   /**
@@ -80,16 +94,16 @@ public class Review {
    * @return the rating value
    */
   public int getRating() {
-  return rating;
+    return rating;
   }
 
   /**
    * Sets the review's rating value.
    *
-   * @param rating the rating value to set
+   * @param rtg the rating value to set
    */
-  public void setRating(int rating) {
-  this.rating = rating;
+  public void setRating(final int rtg) {
+    this.rating = rtg;
   }
 
   /**
@@ -98,15 +112,15 @@ public class Review {
    * @return the user
    */
   public User getUser() {
-  return user;
+    return user;
   }
 
   /**
    * Sets the user who created the review.
    *
-   * @param user the user to set
+   * @param usr the user to set
    */
-  public void setUser(User user) {
-  this.user = user;
+  public void setUser(final User usr) {
+    this.user = usr;
   }
 }

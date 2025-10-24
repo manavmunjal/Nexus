@@ -11,11 +11,19 @@ import java.util.List;
  */
 @Document(collection = "products")
 public class Product {
+  /**
+   * Unique identifier for the product.
+   */
   @Id
   private String id;
+  /**
+   * Name of the product.
+   */
   private String name;
+  /**
+   * Description of the product.
+   */
   private String description;
-  
   /**
    * List of review IDs associated with this product.
    * Holds review IDs to avoid embedding full Review objects.
@@ -24,6 +32,7 @@ public class Product {
 
   /**
    * Default constructor for Product.
+   * Required for frameworks and serialization.
    */
   public Product() {
   }
@@ -31,14 +40,14 @@ public class Product {
   /**
    * Constructs a Product with the specified id, name, and description.
    *
-   * @param id the unique identifier for the product
-   * @param name the name of the product
-   * @param description the description of the product
+   * @param pId the unique identifier for the product
+   * @param pN the name of the product
+   * @param pD the description of the product
    */
-  public Product(String id, String name, String description) {
-  this.id = id;
-  this.name = name;
-  this.description = description;
+  public Product(final String pId, final String pN, final String pD) {
+    this.id = pId;
+    this.name = pN;
+    this.description = pD;
   }
 
   /**
@@ -53,10 +62,10 @@ public class Product {
   /**
    * Sets the product's unique identifier.
    *
-   * @param id the product id to set
+   * @param pId the product id to set
    */
-  public void setId(String id) {
-  this.id = id;
+  public void setId(final String pId) {
+    this.id = pId;
   }
 
   /**
@@ -71,10 +80,10 @@ public class Product {
   /**
    * Sets the product's name.
    *
-   * @param name the product name to set
+   * @param pN the product name to set
    */
-  public void setName(String name) {
-  this.name = name;
+  public void setName(final String pN) {
+    this.name = pN;
   }
 
   /**
@@ -89,10 +98,10 @@ public class Product {
   /**
    * Sets the product's description.
    *
-   * @param description the product description to set
+   * @param pD the product description to set
    */
-  public void setDescription(String description) {
-  this.description = description;
+  public void setDescription(final String pD) {
+    this.description = pD;
   }
 
   /**
@@ -107,9 +116,9 @@ public class Product {
   /**
    * Sets the list of review IDs associated with this product.
    *
-   * @param reviewIds the list of review IDs to set
+   * @param rIds the list of review IDs to set
    */
-  public void setReviewIds(List<String> reviewIds) {
-  this.reviewIds = reviewIds;
+  public void setReviewIds(final List<String> rIds) {
+    this.reviewIds = rIds;
   }
 }

@@ -2,7 +2,6 @@ package com.nexus.controller;
 
 import com.nexus.model.Product;
 import com.nexus.model.Review;
-import com.nexus.model.User;
 import com.nexus.repository.ProductRepository;
 import com.nexus.repository.ReviewRepository;
 import com.nexus.repository.UserRepository;
@@ -56,7 +55,8 @@ class ProductControllerTest {
     ResponseEntity<?> response = controller.createProduct(product);
 
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-    assertTrue(response.getBody().toString().contains("Database error"));
+  assertNotNull(response.getBody());
+  assertTrue(response.getBody().toString().contains("Database error"));
   }
 
   @Test
@@ -95,7 +95,8 @@ class ProductControllerTest {
     ResponseEntity<?> response = controller.getReviews("p1");
 
     assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-    assertTrue(response.getBody().toString().contains("Product not found"));
+  assertNotNull(response.getBody());
+  assertTrue(response.getBody().toString().contains("Product not found"));
   }
 
   @Test
@@ -106,7 +107,8 @@ class ProductControllerTest {
     ResponseEntity<?> response = controller.postReview("p1", review);
 
     assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-    assertTrue(response.getBody().toString().contains("Product not found"));
+  assertNotNull(response.getBody());
+  assertTrue(response.getBody().toString().contains("Product not found"));
   }
 
   @Test
@@ -130,9 +132,10 @@ class ProductControllerTest {
     ResponseEntity<?> response = controller.updateReview("p1", "r1", update);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    Review saved = (Review) response.getBody();
-    assertEquals("New", saved.getComment());
-    assertEquals(5, saved.getRating());
+  Review saved = (Review) response.getBody();
+  assertNotNull(saved);
+  assertEquals("New", saved.getComment());
+  assertEquals(5, saved.getRating());
   }
 
   @Test
@@ -147,6 +150,7 @@ class ProductControllerTest {
     ResponseEntity<?> response = controller.updateReview("p1", "r1", update);
 
     assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-    assertTrue(response.getBody().toString().contains("Review not found"));
+  assertNotNull(response.getBody());
+  assertTrue(response.getBody().toString().contains("Review not found"));
   }
 }

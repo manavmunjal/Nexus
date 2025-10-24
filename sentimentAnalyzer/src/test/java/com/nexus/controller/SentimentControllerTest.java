@@ -14,44 +14,46 @@ class SentimentControllerTest {
   private SentimentController controller;
 
   @BeforeEach
-  void setUp() {
+  void setup() {
     sentimentService = mock(SentimentService.class);
     controller = new SentimentController(sentimentService);
   }
 
   @Test
-  void score_ShouldReturnSentimentScore() {
+  void scoreShouldReturnSentimentScore() {
     String text = "I love this product!";
     when(sentimentService.scoreFromText(text)).thenReturn(4.2);
 
     ResponseEntity<?> response = controller.score(text);
 
-    assertEquals(200, response.getStatusCodeValue());
+  assertEquals(200, response.getStatusCode().value());
     assertEquals(4.2, response.getBody());
     verify(sentimentService, times(1)).scoreFromText(text);
   }
 
   @Test
-  void score_ShouldReturnBadRequest_OnIllegalArgumentException() {
+  void scoreShouldReturnBadRequestOnIllegalArgumentException() {
     String text = "";
     when(sentimentService.scoreFromText(text)).thenThrow(new IllegalArgumentException("Text cannot be empty"));
 
     ResponseEntity<?> response = controller.score(text);
 
-    assertEquals(400, response.getStatusCodeValue());
-    assertTrue(response.getBody().toString().contains("Invalid input"));
+  assertEquals(400, response.getStatusCode().value());
+  assertNotNull(response.getBody());
+  assertTrue(response.getBody().toString().contains("Invalid input"));
     verify(sentimentService, times(1)).scoreFromText(text);
   }
 
   @Test
-  void score_ShouldReturnInternalServerError_OnOtherException() {
+  void scoreShouldReturnInternalServerErrorOnOtherException() {
     String text = "Some text";
     when(sentimentService.scoreFromText(text)).thenThrow(new RuntimeException("Model not loaded"));
 
     ResponseEntity<?> response = controller.score(text);
 
-    assertEquals(500, response.getStatusCodeValue());
-    assertTrue(response.getBody().toString().contains("Error calculating sentiment score"));
+  assertEquals(500, response.getStatusCode().value());
+  assertNotNull(response.getBody());
+  assertTrue(response.getBody().toString().contains("Error calculating sentiment score"));
     verify(sentimentService, times(1)).scoreFromText(text);
   }
 }

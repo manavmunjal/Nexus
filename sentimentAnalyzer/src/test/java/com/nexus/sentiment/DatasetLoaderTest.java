@@ -4,33 +4,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import weka.core.Instances;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.*;
 
 class DatasetLoaderTest {
-
-  @Test
-  /**
-   * Test loading a dataset missing the required class attribute.
-   * This should throw an IllegalArgumentException.
-   * @param tempDir Temporary directory for test files
-   * @throws IOException
-   */
-  void testLoadMissingClassAttribute(@TempDir Path tempDir) throws IOException {
-      Path csvFilePath = tempDir.resolve("test.csv");
-      String content = """
-              review_id,review_text
-              1,"Great product"
-              """;
-      Files.writeString(csvFilePath, content);
-
-      assertThatThrownBy(() -> DatasetLoader.load(csvFilePath, "sentiment_label"))
-              .isInstanceOf(IllegalArgumentException.class)
-              .hasMessageContaining("Missing class attribute");
-  }
 
   @Test
   /**

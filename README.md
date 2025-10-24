@@ -1,11 +1,11 @@
 # Nexus
 This is the official repository for the Advanced Software Engineering project of team Nexus comprising of Manav Munjal, Sreenivas Karthik Bandi, Song Li and Sindhu Krishnamurthy.
 
-# Sentiment Analyzer - Multi-Class Sentiment Analysis with Weka and Naive Bayes
+# Sentiment Analyzer - Multi-Class Sentiment Analysis with Weka and SVM
 
 ## Project Overview
 
-A comprehensive Java-based sentiment analysis system using Weka's machine learning library and Naive Bayes classifier with TF-IDF feature extraction. The system performs multi-class sentiment classification (positive, negative, neutral) on review text data.
+A comprehensive Java-based sentiment analysis system using Weka's machine learning library and SVM classifier with TF-IDF feature extraction. The system performs multi-class sentiment classification (positive, negative, neutral) on review text data.
 
 ## Key Features
 
@@ -17,7 +17,7 @@ A comprehensive Java-based sentiment analysis system using Weka's machine learni
 - **Case Normalization**: Converts all text to lowercase for consistency
 
 ### 2. **Machine Learning**
-- **Naive Bayes Multinomial Classifier**: Probabilistic model optimized for text classification
+- **SVM Multinomial Classifier**: Probabilistic model optimized for text classification (experimantal)
 - **FilteredClassifier**: Combines preprocessing (TF-IDF) with classification in a pipeline
 - **Multi-class Support**: Handles positive, negative, and neutral sentiments
 - **Probability Distributions**: Provides confidence scores for each sentiment class
@@ -45,7 +45,7 @@ sentimentAnalyzer/
 │   │   │   ├── Main.java                      # Entry point
 │   │   │   ├── DatasetLoader.java             # CSV data loading
 │   │   │   ├── DataSplitter.java              # Train/test splitting
-│   │   │   ├── SentimentModelTrainer.java     # TF-IDF + Naive Bayes training
+│   │   │   ├── SentimentModelTrainer.java     # TF-IDF + SVM training
 │   │   │   ├── SentimentPredictor.java        # Generate predictions
 │   │   │   ├── ScoreMapper.java               # Label→score mapping
 │   │   │   ├── SentimentStatistics.java       # Statistical computations
@@ -227,7 +227,7 @@ mvn clean compile exec:java -Dexec.args="--dataset=src/main/resources/data/augme
 
 ### `SentimentModelTrainer`
 - Configures TF-IDF vectorization (5000 words, stemming, stop words)
-- Trains Naive Bayes Multinomial classifier
+- Trains SVM classifier
 - Wraps in FilteredClassifier for pipeline execution
 
 ### `SentimentPredictor`
@@ -283,7 +283,7 @@ To see the index.html report, open:
 `target/site/jacoco/index.html`.
 
 Rightnow, our test coverage is 69% in total with 86 unit tests.
-![Jacoco Report](static/img/jacoco.jpg)
+![Jacoco Report](static/img/jacoco.png)
 
 ## External Documentation
 We did not use any external third-party codes.
@@ -294,17 +294,17 @@ Run the following command to check code style:
 cd sentimentAnalyzer
 mvn checkstyle:check
 ```
-![Checkstyle Report](static/img/checkstyle.jpg)
+![Checkstyle Report](static/img/checkstyle.png)
 
 ## AI Usage
 1. We used Claude Code on Copilot to determine the hyper-parameter range for the 
 `gamma` in the SVM implementations.
 Prompt: what is an ideal range of gamma for SVM classifier in weka library for 3-class text classification?
 
-2. We used mobile version of ChatGPT to discuss the potential limitations of Naive Bayes classifier
+2. We used mobile version of ChatGPT to discuss the potential limitations of SVM classifier
 for text classification tasks.
 
-Prompt: What are the limitations of Naive Bayes classifier for text classification tasks?
+Prompt: What are the limitations of SVM classifier for text classification tasks?
 
 3. We used Copilot to discuss the SVM stemmer implementation in Weka library.
 Prompt: How to use SVM stemmer in Weka library for text classification tasks?

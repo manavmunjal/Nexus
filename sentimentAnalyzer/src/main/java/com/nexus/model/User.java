@@ -9,27 +9,37 @@ import org.springframework.data.mongodb.core.mapping.Document;
  */
 @Document(collection = "users")
 public class User {
+  /**
+   * Unique identifier for the user.
+   */
   @Id
   private String id;
+  /**
+   * Username of the user.
+   */
   private String username;
+  /**
+   * Email address of the user.
+   */
   private String email;
 
   /**
    * Default constructor for User.
+   * Required for frameworks and serialization.
    */
-  public User() {}
+  public User() { }
 
   /**
    * Constructs a User with the specified id, username, and email.
    *
-   * @param id the unique identifier for the user
-   * @param username the username of the user
-   * @param email the email address of the user
+   * @param idx the unique identifier for the user
+   * @param uname the username of the user
+   * @param mail the email address of the user
    */
-  public User(String id, String username, String email) {
-  this.id = id;
-  this.username = username;
-  this.email = email;
+  public User(final String idx, final String uname, final String mail) {
+    this.id = idx;
+    this.username = uname;
+    this.email = mail;
   }
 
   /**
@@ -44,10 +54,10 @@ public class User {
   /**
    * Sets the user's unique identifier.
    *
-   * @param id the user id to set
+   * @param idx the user id to set
    */
-  public void setId(String id) {
-  this.id = id;
+  public void setId(final String idx) {
+    this.id = idx;
   }
 
   /**
@@ -62,10 +72,10 @@ public class User {
   /**
    * Sets the user's username.
    *
-   * @param username the username to set
+   * @param uname the username to set
    */
-  public void setUsername(String username) {
-  this.username = username;
+  public void setUsername(final String uname) {
+    this.username = uname;
   }
 
   /**
@@ -80,9 +90,9 @@ public class User {
   /**
    * Sets the user's email address.
    *
-   * @param email the email address to set
+   * @param mail the email address to set
    */
-  public void setEmail(String email) {
-  this.email = email;
+  public void setEmail(final String mail) {
+    this.email = mail;
   }
 }
