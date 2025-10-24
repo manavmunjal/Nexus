@@ -129,7 +129,7 @@ review_id,company,product,review_text,sentiment_label
 
 **Required Columns**:
 - `review_text`: The text to analyze
-- `sentiment_label`: Ground truth labels (positive/negative/neutral/somewhat positive/somewhat negative/very positive/very negative)
+- `sentiment_label`: Ground truth labels (positive/negative/neutral/somewhat positive/somewhat negative/very positive/very negative). If unconventional labels are used, they will be mapped to standard labels.
 
 **Optional Columns** (for grouping):
 - `review_id`: Unique identifier
@@ -288,10 +288,25 @@ Rightnow, our test coverage is 69% in total with 86 unit tests.
 ## External Documentation
 We did not use any external third-party codes.
 
+## Style Checking 
+Run the following command to check code style:
+```bash
+cd sentimentAnalyzer
+mvn checkstyle:check
+```
+
 ## AI Usage
-1. We used ChatGPT and Claude Code on Copilot to determine the hyper-parameter range for the 
+1. We used Claude Code on Copilot to determine the hyper-parameter range for the 
 `gamma` in the SVM implementations.
 Prompt: what is an ideal range of gamma for SVM classifier in weka library for 3-class text classification?
+
+2. We used mobile version of ChatGPT to discuss the potential limitations of Naive Bayes classifier
+for text classification tasks.
+
+Prompt: What are the limitations of Naive Bayes classifier for text classification tasks?
+
+3. We used Copilot to discuss the SVM stemmer implementation in Weka library.
+Prompt: How to use SVM stemmer in Weka library for text classification tasks?
 
 ## Notes
 
@@ -308,14 +323,10 @@ To add new features:
 3. Update documentation
 4. Run full test suite
 
-## License
-
-This project is part of the Nexus repository.
 
 ## Authors
-
 - Development Team: Nexus Project Contributors - Manav, Sreenivas, Sindhu, Song
-
+We used the [Trello](https://trello.com/b/GtJUzHHj/nexus) to keep track of our tasks and progress.
 
 ---
 
