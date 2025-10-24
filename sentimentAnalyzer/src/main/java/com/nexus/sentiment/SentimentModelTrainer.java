@@ -1,5 +1,6 @@
 package com.nexus.sentiment;
 
+import org.springframework.stereotype.Service;
 import weka.classifiers.functions.SMO;
 import weka.classifiers.meta.CVParameterSelection;
 import weka.classifiers.meta.FilteredClassifier;
@@ -16,6 +17,7 @@ import weka.core.tokenizers.NGramTokenizer;
 /**
  * Trains an SVM model using text data and preprocessing filters.
  */
+@Service
 public final class SentimentModelTrainer {
 
     /**
