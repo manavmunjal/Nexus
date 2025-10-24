@@ -15,7 +15,7 @@ import static org.mockito.Mockito.*;
 
 public class SentimentServiceTest {
 
-  private SentimentModelTrainer mockTrainer;
+  private SentimentModelTrainer stubTrainer;
   private SentimentService sentimentService;
   private FilteredClassifier mockClassifier;
   private Instances mockInstances;
@@ -23,16 +23,24 @@ public class SentimentServiceTest {
 
   @BeforeEach
   void setup() throws Exception {
-  mockTrainer = mock(SentimentModelTrainer.class);
-  mockClassifier = mock(FilteredClassifier.class);
-  mockMapper = mock(ScoreMapper.class);
+    mockClassifier = mock(FilteredClassifier.class);
+    mockMapper = mock(ScoreMapper.class);
 
-  // Prepare mock dataset
-  mockInstances = buildMockDataset();
-  when(mockTrainer.train(any(), any())).thenReturn(mockClassifier);
+    // Use a stub implementation instead of mocking
+    stubTrainer = new SentimentModelTrainer() {
+      @Override
+      public FilteredClassifier train(
+              final Instances trainData,
+              final String textAttributeName) throws Exception {
+        return mockClassifier;
+      }
+    };
 
-  // Create service with injected trainer
-  sentimentService = new SentimentService(mockTrainer);
+    // Prepare mock dataset
+    mockInstances = buildMockDataset();
+
+    // Create service with injected trainer
+    sentimentService = new SentimentService(stubTrainer);
   }
 
   private Instances buildMockDataset() {
