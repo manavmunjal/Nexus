@@ -71,9 +71,12 @@ public final class SentimentController {
    */
   @PostMapping("/train")
   public ResponseEntity<?> train(
-      @RequestParam(value = "datasetPath", required = false) final String datasetPath,
-      @RequestParam(value = "classAttr", required = false) final String classAttr,
-      @RequestParam(value = "textAttr", required = false) final String textAttr
+      @RequestParam(
+        value = "datasetPath", required = false) final String datasetPath,
+      @RequestParam(
+        value = "classAttr", required = false) final String classAttr,
+      @RequestParam(
+        value = "textAttr", required = false) final String textAttr
   ) {
     try {
       sentimentService.trainModel(datasetPath, classAttr, textAttr);

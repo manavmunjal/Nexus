@@ -77,12 +77,14 @@ public class SentimentService {
 
   private synchronized void ensureReady() {
     if (classifier == null || scoreMapper == null || trainedHeader == null) {
-      throw new IllegalStateException("Sentiment model not trained yet. Call /api/sentiment/train first.");
+      throw new IllegalStateException(
+        "Sentiment model not trained yet. Call /api/sentiment/train first.");
     }
   }
 
   /**
    * Returns true if a trained model is available for inference.
+   * @return true if trained model is ready
    */
   public boolean isTrained() {
     return classifier != null && scoreMapper != null && trainedHeader != null;
@@ -130,7 +132,9 @@ public class SentimentService {
     } finally {
       // Best-effort cleanup if we created a temp file for classpath resource
       if (tmpToDelete != null) {
-        try { Files.deleteIfExists(tmpToDelete); } catch (Exception ignore) { }
+        try {
+          Files.deleteIfExists(tmpToDelete);
+        } catch (Exception ignore) { }
       }
     }
   }
@@ -138,7 +142,10 @@ public class SentimentService {
   /**
    * Resolve dataset path from either filesystem or classpath.
    * If the provided string points to a readable file, returns it.
-   * Otherwise attempts to load it from the classpath (e.g., resources/data/...).
+   * Otherwise load it from the classpath (e.g., resources/data/...).
+   * @param ds dataset path string
+   * @return resolved Path to dataset CSV
+   * @throws Exception if the dataset cannot be found or accessed
    */
   private Path resolveDatasetPath(final String ds) throws Exception {
     Path p = Paths.get(ds);
@@ -153,7 +160,8 @@ public class SentimentService {
       url = cl.getResource(alt);
     }
     if (url == null) {
-      throw new IllegalArgumentException("Dataset not found at path or classpath: " + ds);
+      throw new IllegalArgumentException(
+        "Dataset not found at path or classpath: " + ds);
     }
     try (InputStream in = url.openStream()) {
       Path tmp = Files.createTempFile("dataset_", ".csv");
