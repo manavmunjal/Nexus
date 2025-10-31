@@ -11,6 +11,9 @@ import org.springframework.stereotype.Service;
 
 import java.nio.file.Paths;
 import java.nio.file.Path;
+import java.nio.file.Files;
+import java.io.InputStream;
+import java.net.URL;
 
 @Service
 public class SentimentService {
@@ -90,7 +93,7 @@ public class SentimentService {
    * If any parameter is null or blank, sensible defaults are used.
    *
    * Defaults:
-  * - datasetPath: "src/main/resources/data/augmented_cleaned_data.csv"
+  * - datasetPath: "data/augmented_cleaned_data.csv" (classpath resource)
    * - classAttr:   "sentiment_label"
    * - textAttr:    "review_text"
    *
@@ -104,7 +107,7 @@ public class SentimentService {
       final String textAttr
   ) {
   final String ds = (datasetPath == null || datasetPath.isBlank())
-    ? "src/main/resources/data/augmented_cleaned_data.csv"
+    ? "data/augmented_cleaned_data.csv"
         : datasetPath;
     final String cls = (classAttr == null || classAttr.isBlank())
         ? "sentiment_label"
@@ -113,8 +116,9 @@ public class SentimentService {
         ? "review_text"
         : textAttr;
 
+    Path tmpToDelete = null;
     try {
-      Path path = Paths.get(ds);
+      Path path = resolveDatasetPath(ds);
       Instances data = DatasetLoader.load(path, cls);
       // Build mapper and train classifier
       scoreMapper = ScoreMapper.fromAttribute(data.classAttribute());
@@ -123,6 +127,38 @@ public class SentimentService {
       trainedTextAttr = txt;
     } catch (Exception e) {
       throw new RuntimeException("Failed to train sentiment model", e);
+    } finally {
+      // Best-effort cleanup if we created a temp file for classpath resource
+      if (tmpToDelete != null) {
+        try { Files.deleteIfExists(tmpToDelete); } catch (Exception ignore) { }
+      }
+    }
+  }
+
+  /**
+   * Resolve dataset path from either filesystem or classpath.
+   * If the provided string points to a readable file, returns it.
+   * Otherwise attempts to load it from the classpath (e.g., resources/data/...).
+   */
+  private Path resolveDatasetPath(final String ds) throws Exception {
+    Path p = Paths.get(ds);
+    if (Files.exists(p)) {
+      return p;
+    }
+    ClassLoader cl = Thread.currentThread().getContextClassLoader();
+    URL url = cl.getResource(ds.startsWith("/") ? ds.substring(1) : ds);
+    if (url == null) {
+      // Try common prefix when given a source-relative path
+      String alt = ds.replaceFirst("^src/main/resources/", "");
+      url = cl.getResource(alt);
+    }
+    if (url == null) {
+      throw new IllegalArgumentException("Dataset not found at path or classpath: " + ds);
+    }
+    try (InputStream in = url.openStream()) {
+      Path tmp = Files.createTempFile("dataset_", ".csv");
+      Files.copy(in, tmp, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+      return tmp;
     }
   }
 
