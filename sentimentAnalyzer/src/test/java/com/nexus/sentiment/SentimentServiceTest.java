@@ -75,8 +75,8 @@ public class SentimentServiceTest {
   when(mockMapper.scoreFor("neutral")).thenReturn(0.0);
   when(mockMapper.scoreFor("positive")).thenReturn(1.0);
 
-  // Preload dependencies
-  sentimentService.scoreFromText("Nice experience!");
+  // Train once before scoring
+  sentimentService.trainModel(null, null, null);
 
   double score = sentimentService.scoreFromText("Excellent product!");
   assertTrue(score >= 0 && score <= 5, "Normalized score should be between 0 and 5");
@@ -98,6 +98,9 @@ public class SentimentServiceTest {
   when(mockMapper.scoreFor("neutral")).thenReturn(0.0);
   when(mockMapper.scoreFor("positive")).thenReturn(1.0);
 
+  // Train once before scoring
+  sentimentService.trainModel(null, null, null);
+
   double score = sentimentService.scoreFromText("Amazing quality!");
   assertEquals(5.0, score, 0.1);
   }
@@ -118,6 +121,9 @@ public class SentimentServiceTest {
   when(mockMapper.scoreFor("neutral")).thenReturn(0.0);
   when(mockMapper.scoreFor("positive")).thenReturn(1.0);
 
+  // Train once before scoring
+  sentimentService.trainModel(null, null, null);
+
   double score = sentimentService.scoreFromText("Terrible service!");
   assertEquals(0.0, score, 0.1);
   }
@@ -125,6 +131,16 @@ public class SentimentServiceTest {
 
   @Test
   void testScoreFromText_throwsOnNullInput() {
-  assertThrows(RuntimeException.class, () -> sentimentService.scoreFromText(null));
+  try (MockedStatic<DatasetLoader> loaderMock = mockStatic(DatasetLoader.class);
+       MockedStatic<ScoreMapper> mapperMock = mockStatic(ScoreMapper.class)) {
+
+    loaderMock.when(() -> DatasetLoader.load(any(), any())).thenReturn(mockInstances);
+    mapperMock.when(() -> ScoreMapper.fromAttribute(any())).thenReturn(mockMapper);
+
+    // Train to avoid IllegalStateException
+    sentimentService.trainModel(null, null, null);
+
+    assertThrows(RuntimeException.class, () -> sentimentService.scoreFromText(null));
+  }
   }
 }
