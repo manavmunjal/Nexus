@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 /**
@@ -40,8 +41,15 @@ public final class SentimentController {
   @GetMapping("/score")
   public ResponseEntity<?> score(@RequestParam("text") final String text) {
     try {
+      boolean trainedBefore = sentimentService.isTrained();
+      if (!trainedBefore) {
+        // Train on-demand with defaults (augmented_cleaned_data.csv)
+        sentimentService.trainModel(null, null, null);
+      }
       double score = sentimentService.scoreFromText(text);
-      return ResponseEntity.ok(score);
+      return ResponseEntity.ok()
+          .header("X-Model-Training", trainedBefore ? "no" : "performed")
+          .body(score);
     } catch (IllegalArgumentException iae) {
       return ResponseEntity.status(HttpStatus.BAD_REQUEST)
           .body("Invalid input: " + iae.getMessage());
@@ -49,6 +57,33 @@ public final class SentimentController {
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
       .body("Error calculating sentiment score: "
         + e.getMessage());
+    }
+  }
+
+  /**
+   * Triggers training (or retraining) of the sentiment model.
+   * All parameters are optional; defaults are used when omitted.
+   *
+   * @param datasetPath optional path to CSV dataset
+   * @param classAttr optional class attribute name
+   * @param textAttr optional text attribute name
+   * @return HTTP 200 if training succeeds, otherwise appropriate error
+   */
+  @PostMapping("/train")
+  public ResponseEntity<?> train(
+      @RequestParam(value = "datasetPath", required = false) final String datasetPath,
+      @RequestParam(value = "classAttr", required = false) final String classAttr,
+      @RequestParam(value = "textAttr", required = false) final String textAttr
+  ) {
+    try {
+      sentimentService.trainModel(datasetPath, classAttr, textAttr);
+      return ResponseEntity.ok("Model trained successfully");
+    } catch (IllegalArgumentException iae) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+          .body("Invalid training parameters: " + iae.getMessage());
+    } catch (Exception e) {
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body("Error training model: " + e.getMessage());
     }
   }
 }
