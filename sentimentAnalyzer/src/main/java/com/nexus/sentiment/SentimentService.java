@@ -186,14 +186,15 @@ public class SentimentService {
       inst.setDataset(header);
       Attribute textAttr = header.attribute(trainedTextAttr);
       if (textAttr != null && textAttr.isString()) {
-          inst.setValue(textAttr, text);
+        System.out.println("Setting text attribute: " + trainedTextAttr + " to value: " + text);
+        inst.setValue(textAttr, text);
       }
 
       double[] dist = classifier.distributionForInstance(inst);
       double expected = 0.0;
       for (int i = 0; i < dist.length; i++) {
         String label = header.classAttribute().value(i);
-          expected += dist[i] * scoreMapper.scoreFor(label);
+        expected += dist[i] * scoreMapper.scoreFor(label);
       }
 
       // Map -1..1 → 0..5
