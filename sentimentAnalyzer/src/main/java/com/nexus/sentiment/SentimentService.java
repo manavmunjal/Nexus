@@ -179,36 +179,35 @@ public class SentimentService {
    * @return sentiment score between 0 and 5
    */
   public double scoreFromText(final String text) {
-  ensureReady();
-  try {
-  Instances header = new Instances(trainedHeader, 0);
-  Instance inst = new DenseInstance(header.numAttributes());
-  inst.setDataset(header);
-  Attribute textAttr = header.attribute(trainedTextAttr);
-  if (textAttr != null && textAttr.isString()) {
-      inst.setValue(textAttr, text);
-  }
+    ensureReady();
+    try {
+      Instances header = new Instances(trainedHeader, 0);
+      Instance inst = new DenseInstance(header.numAttributes());
+      inst.setDataset(header);
+      Attribute textAttr = header.attribute(trainedTextAttr);
+      if (textAttr != null && textAttr.isString()) {
+          inst.setValue(textAttr, text);
+      }
 
-  double[] dist = classifier.distributionForInstance(inst);
-  double expected = 0.0;
-  for (int i = 0; i < dist.length; i++) {
-    String label = header.classAttribute().value(i);
-      expected += dist[i] * scoreMapper.scoreFor(label);
-  }
+      double[] dist = classifier.distributionForInstance(inst);
+      double expected = 0.0;
+      for (int i = 0; i < dist.length; i++) {
+        String label = header.classAttribute().value(i);
+          expected += dist[i] * scoreMapper.scoreFor(label);
+      }
 
-  // Map -1..1 → 0..5
-  double normalized = (expected + 1.0) * NORMALIZATION_FACTOR;
-  if (normalized < MIN_SCORE) {
-    normalized = MIN_SCORE;
-  }
-  if (normalized > MAX_SCORE) {
-    normalized = MAX_SCORE;
-  }
+      // Map -1..1 → 0..5
+      double normalized = (expected + 1.0) * NORMALIZATION_FACTOR;
+      if (normalized < MIN_SCORE) {
+        normalized = MIN_SCORE;
+      }
+      if (normalized > MAX_SCORE) {
+        normalized = MAX_SCORE;
+      }
 
-  return normalized;
-  } catch (Exception e) {
-  throw new RuntimeException(e);
+      return normalized;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
-  }
-
 }
