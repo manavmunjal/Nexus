@@ -19,21 +19,6 @@ import java.net.URL;
 public class SentimentService {
 
   /**
-   * Factor for normalizing sentiment scores.
-   */
-  private static final double NORMALIZATION_FACTOR = 2.5;
-
-  /**
-   * Minimum sentiment score value.
-   */
-  private static final double MIN_SCORE = 0.0;
-
-  /**
-   * Maximum sentiment score value.
-   */
-  private static final double MAX_SCORE = 5.0;
-
-  /**
    * Classifier used for sentiment prediction.
    */
   private volatile FilteredClassifier classifier;
@@ -122,6 +107,7 @@ public class SentimentService {
     try {
       Path path = resolveDatasetPath(ds);
       Instances data = DatasetLoader.load(path, cls);
+      data = SentimentLabelConverter.convertTo3Class(data, cls);
       // Build mapper and train classifier
       scoreMapper = ScoreMapper.fromAttribute(data.classAttribute());
       classifier = trainer.train(data, txt);
@@ -186,7 +172,6 @@ public class SentimentService {
       inst.setDataset(header);
       Attribute textAttr = header.attribute(trainedTextAttr);
       if (textAttr != null && textAttr.isString()) {
-        System.out.println("Setting text attribute: " + trainedTextAttr + " to value: " + text);
         inst.setValue(textAttr, text);
       }
 
@@ -194,19 +179,13 @@ public class SentimentService {
       double expected = 0.0;
       for (int i = 0; i < dist.length; i++) {
         String label = header.classAttribute().value(i);
+        System.out.println("Label: " + label + ", Probability: "
+                        + dist[i] + ", Score: " + scoreMapper.scoreFor(label));
         expected += dist[i] * scoreMapper.scoreFor(label);
       }
+      System.out.println("Expected score (raw): " + expected);
 
-      // Map -1..1 → 0..5
-      double normalized = (expected + 1.0) * NORMALIZATION_FACTOR;
-      if (normalized < MIN_SCORE) {
-        normalized = MIN_SCORE;
-      }
-      if (normalized > MAX_SCORE) {
-        normalized = MAX_SCORE;
-      }
-
-      return normalized;
+      return expected;
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

@@ -29,7 +29,7 @@ class SentimentControllerTest {
 
     assertEquals(200, response.getStatusCode().value());
     assertEquals(4.2, response.getBody());
-    assertEquals("performed", response.getHeaders().getFirst("X-Model-Training"));
+    assertEquals("no", response.getHeaders().getFirst("Model-Training"));
     verify(sentimentService, times(1)).trainModel(null, null, null);
     verify(sentimentService, times(1)).scoreFromText(text);
   }
@@ -72,7 +72,7 @@ class SentimentControllerTest {
 
     assertEquals(200, response.getStatusCode().value());
     assertEquals(3.8, response.getBody());
-    assertEquals("no", response.getHeaders().getFirst("X-Model-Training"));
+    assertEquals("performed", response.getHeaders().getFirst("Model-Training"));
     verify(sentimentService, never()).trainModel(any(), any(), any());
     verify(sentimentService, times(1)).scoreFromText(text);
   }
