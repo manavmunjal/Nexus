@@ -48,7 +48,7 @@ public final class SentimentController {
       }
       double score = sentimentService.scoreFromText(text);
       return ResponseEntity.ok()
-          .header("X-Model-Training", trainedBefore ? "no" : "performed")
+          .header("Model-Training", trainedBefore ? "performed" : "no")
           .body(score);
     } catch (IllegalArgumentException iae) {
       return ResponseEntity.status(HttpStatus.BAD_REQUEST)

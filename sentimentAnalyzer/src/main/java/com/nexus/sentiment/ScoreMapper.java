@@ -100,6 +100,6 @@ public final class ScoreMapper {
    * @return Map of labels to scores.
    */
   public Map<String, Double> allScores() {
-      return Map.copyOf(scoreByLabel);
+    return Map.copyOf(scoreByLabel);
   }
 }
