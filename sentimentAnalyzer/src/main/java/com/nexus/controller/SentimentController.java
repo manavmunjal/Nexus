@@ -40,24 +40,27 @@ public final class SentimentController {
    */
   @GetMapping("/score")
   public ResponseEntity<?> score(@RequestParam("text") final String text) {
-    try {
-      boolean trainedBefore = sentimentService.isTrained();
-      if (!trainedBefore) {
-        // Train on-demand with defaults (augmented_cleaned_data.csv)
-        sentimentService.trainModel(null, null, null);
+      try {
+          if (!sentimentService.isTrained()) {
+              try {
+                  System.out.println("Loading saved model.");
+                  sentimentService.loadModel();
+              } catch (Exception e) {
+                  // if load fails, train with defaults
+                  System.out.println("No model saved - training.");
+                  sentimentService.trainModel(null, null, null);
+              }
+          }
+
+          double score = sentimentService.scoreFromText(text);
+          return ResponseEntity.ok(score);
+      } catch (IllegalArgumentException iae) {
+          return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                  .body("Invalid input: " + iae.getMessage());
+      } catch (Exception e) {
+          return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                  .body("Error calculating sentiment score: " + e.getMessage());
       }
-      double score = sentimentService.scoreFromText(text);
-      return ResponseEntity.ok()
-          .header("Model-Training", trainedBefore ? "performed" : "no")
-          .body(score);
-    } catch (IllegalArgumentException iae) {
-      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-          .body("Invalid input: " + iae.getMessage());
-    } catch (Exception e) {
-    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-      .body("Error calculating sentiment score: "
-        + e.getMessage());
-    }
   }
 
   /**

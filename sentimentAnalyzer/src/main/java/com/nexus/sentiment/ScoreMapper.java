@@ -7,11 +7,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.io.Serializable;
 
 /**
  * Maps sentiment labels to numeric scores.
  */
-public final class ScoreMapper {
+public final class ScoreMapper implements Serializable {
+  private static final long serialVersionUID = 1L;
 
   /**
    * Mapping from label to sentiment score.
