@@ -158,7 +158,6 @@
                             <goal>checkstyle</goal>
                         </goals>
                         <configuration>
-                            <configLocation>rulesets/checkstyle.xml</configLocation>
                             <failOnViolation>false</failOnViolation>
                         </configuration>
                     </execution>
