@@ -41,7 +41,8 @@ public final class SentimentController {
   @GetMapping("/score")
   public ResponseEntity<?> score(@RequestParam("text") final String text) {
       try {
-          if (!sentimentService.isTrained()) {
+          boolean trainedBefore = sentimentService.isTrained();
+          if (!trainedBefore) {
               try {
                   System.out.println("Loading saved model.");
                   sentimentService.loadModel();
@@ -53,7 +54,9 @@ public final class SentimentController {
           }
 
           double score = sentimentService.scoreFromText(text);
-          return ResponseEntity.ok(score);
+          return ResponseEntity.ok()
+              .header("Model-Training", trainedBefore ? "performed" : "no")
+              .body(score);
       } catch (IllegalArgumentException iae) {
           return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                   .body("Invalid input: " + iae.getMessage());
