@@ -22,7 +22,7 @@ public class Review {
   /**
    * Rating value of the review.
    */
-  private int rating;
+  private double rating;
 
   /**
    * User who created the review.
@@ -34,7 +34,8 @@ public class Review {
    * Default constructor for Review.
    * Required for frameworks and serialization.
    */
-  public Review() { }
+  public Review() {
+  }
 
   /**
    * Constructs a Review with the specified id, comment, rating, and user.
@@ -45,7 +46,7 @@ public class Review {
    * @param usr the user who created the review
    */
   public Review(final String idx, final String cmt,
-  final int rtg, final User usr) {
+      final double rtg, final User usr) {
     this.id = idx;
     this.comment = cmt;
     this.rating = rtg;
@@ -58,7 +59,7 @@ public class Review {
    * @return the review id
    */
   public String getId() {
-  return id;
+    return id;
   }
 
   /**
@@ -76,7 +77,7 @@ public class Review {
    * @return the comment text
    */
   public String getComment() {
-  return comment;
+    return comment;
   }
 
   /**
@@ -93,7 +94,7 @@ public class Review {
    *
    * @return the rating value
    */
-  public int getRating() {
+  public double getRating() {
     return rating;
   }
 
@@ -102,7 +103,7 @@ public class Review {
    *
    * @param rtg the rating value to set
    */
-  public void setRating(final int rtg) {
+  public void setRating(final double rtg) {
     this.rating = rtg;
   }
 
