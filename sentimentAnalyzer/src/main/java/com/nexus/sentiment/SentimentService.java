@@ -1,19 +1,22 @@
 package com.nexus.sentiment;
 
-import weka.classifiers.meta.FilteredClassifier;
-import weka.core.Instance;
-import weka.core.Instances;
-import weka.core.DenseInstance;
-import weka.core.Attribute;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.nio.file.Paths;
-import java.nio.file.Path;
-import java.nio.file.Files;
+import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import weka.classifiers.meta.FilteredClassifier;
+import weka.core.Attribute;
+import weka.core.DenseInstance;
+import weka.core.Instance;
+import weka.core.Instances;
+import weka.core.SerializationHelper;
 
 @Service
 public class SentimentService {
@@ -43,27 +46,91 @@ public class SentimentService {
    */
   private final SentimentModelTrainer trainer;
 
+  private final String classifierFile;
+  private final String headerFile;
+  private final String scoresFile;
+  private final String modelDir;
+
+
   /**
    * Constructs a SentimentService with a provided trainer.
    *
    * @param sentimentTrainer the sentiment model trainer
    */
   @Autowired
-  public SentimentService(final SentimentModelTrainer sentimentTrainer) {
-    this.trainer = sentimentTrainer;
+  public SentimentService(SentimentModelTrainer trainer, @Value("${sentiment.modelDir}") String modelDir) {
+    this.trainer = trainer;
+    this.modelDir = modelDir;
+    this.classifierFile = modelDir + "sentiment_classifier.model";
+    this.headerFile = modelDir + "sentiment_header.model";
+    this.scoresFile = modelDir + "sentiment_scores.model";
   }
 
-  /**
-   * Constructs a SentimentService with default trainer.
-   */
+  public SentimentService(SentimentModelTrainer trainer) {
+    this(trainer, "saved_models/");
+  }
+
   public SentimentService() {
-    this.trainer = new SentimentModelTrainer();
+    this(new SentimentModelTrainer());
   }
 
   private synchronized void ensureReady() {
     if (classifier == null || scoreMapper == null || trainedHeader == null) {
       throw new IllegalStateException(
         "Sentiment model not trained yet. Call /api/sentiment/train first.");
+    }
+  }
+
+  public String getModelDir() {
+    return modelDir;
+  }
+
+  public FilteredClassifier getClassifier() {
+    return classifier;
+  }
+
+  public Instances getTrainedHeader() {
+      return trainedHeader;
+  }
+
+  public ScoreMapper getScoreMapper() {
+      return scoreMapper;
+  }
+
+  void setClassifier(FilteredClassifier classifier) {
+    this.classifier = classifier;
+  }
+  
+  void setTrainedHeader(Instances trainedHeader) {
+    this.trainedHeader = trainedHeader;
+  }
+
+  void setScoreMapper(ScoreMapper scoreMapper) {
+    this.scoreMapper = scoreMapper;
+  }
+
+  /**
+   * Saves the currently trained sentiment model to disk.
+   * 
+   * Files created:
+   * - CLASSIFIER_FILE: serialized FilteredClassifier
+   * - HEADER_FILE: serialized Instances header
+   * - SCORES_FILE: serialized ScoreMapper object mapping labels to scores
+   *
+   * Ensures the model directory exists before writing.
+   *
+   * @throws RuntimeException if any of the model components cannot be serialized or written
+   */
+  public synchronized void saveModel() {
+    try {
+        File dir = new File(modelDir);
+        if (!dir.exists()) dir.mkdirs();
+
+        SerializationHelper.write(classifierFile, classifier);
+        SerializationHelper.write(headerFile, trainedHeader);
+        SerializationHelper.write(scoresFile, scoreMapper);
+    } catch (Exception e) {
+        throw new RuntimeException("Failed to save sentiment model", e);
     }
   }
 
@@ -113,6 +180,9 @@ public class SentimentService {
       classifier = trainer.train(data, txt);
       trainedHeader = new Instances(data, 0);
       trainedTextAttr = txt;
+      
+      saveModel();
+
     } catch (Exception e) {
       throw new RuntimeException("Failed to train sentiment model", e);
     } finally {
@@ -124,6 +194,36 @@ public class SentimentService {
       }
     }
   }
+
+  /**
+   * Loads a previously trained sentiment model from disk.
+   * Expects the model, header, and score mapper files to exist in the configured model directory.
+   *
+   * Files required:
+   * - CLASSIFIER_FILE: the serialized FilteredClassifier
+   * - HEADER_FILE: the Instances header from training
+   * - SCORES_FILE: the ScoreMapper object mapping labels to scores
+   *
+   * After successful loading, the model is ready for inference via scoreFromText().
+   *
+   * @throws RuntimeException if any of the model files are missing or cannot be read
+   */
+  public synchronized void loadModel() {
+    try {
+        File c = new File(classifierFile);
+        File h = new File(headerFile);
+        File s = new File(scoresFile);
+        if (c.exists() && h.exists() && s.exists()) {
+            classifier = (FilteredClassifier) SerializationHelper.read(classifierFile);
+            trainedHeader = (Instances) SerializationHelper.read(headerFile);
+            scoreMapper = (ScoreMapper) SerializationHelper.read(scoresFile);
+        } else {
+            throw new RuntimeException("Saved model files not found in " + modelDir);
+        }
+    } catch (Exception e) {
+        throw new RuntimeException("Failed to load sentiment model", e);
+    }
+}
 
   /**
    * Resolve dataset path from either filesystem or classpath.

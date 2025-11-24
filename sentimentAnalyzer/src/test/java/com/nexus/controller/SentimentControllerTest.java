@@ -23,6 +23,7 @@ class SentimentControllerTest {
   void scoreShouldTrainOnDemandAndReturnScore() {
     String text = "I love this product!";
     when(sentimentService.isTrained()).thenReturn(false);
+    doThrow(new RuntimeException("No saved model")).when(sentimentService).loadModel();
     when(sentimentService.scoreFromText(text)).thenReturn(4.2);
 
     ResponseEntity<?> response = controller.score(text);
