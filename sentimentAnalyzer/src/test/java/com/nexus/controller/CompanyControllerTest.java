@@ -1,25 +1,35 @@
 package com.nexus.controller;
 
-import com.nexus.model.Company;
-import com.nexus.repository.CompanyRepository;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import com.nexus.model.Company;
+import com.nexus.repository.CompanyRepository;
+import com.nexus.repository.ProductRepository;
+import com.nexus.repository.ReviewRepository;
 
 class CompanyControllerTest {
 
   private CompanyRepository companyRepository;
   private CompanyController companyController;
+  private ProductRepository productRepository;
+  private ReviewRepository reviewRepository;
 
   @BeforeEach
   void setUp() {
     companyRepository = mock(CompanyRepository.class);
-    companyController = new CompanyController(companyRepository);
+    companyController = new CompanyController(companyRepository, productRepository, reviewRepository);
   }
 
   @Test
