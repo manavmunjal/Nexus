@@ -1,21 +1,28 @@
 package com.nexus.controller;
 
-import com.nexus.model.Product;
-import com.nexus.model.Review;
-import com.nexus.repository.ProductRepository;
-import com.nexus.repository.ReviewRepository;
-import com.nexus.repository.UserRepository;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import com.nexus.model.Product;
+import com.nexus.model.Review;
+import com.nexus.repository.CompanyRepository;
+import com.nexus.repository.ProductRepository;
+import com.nexus.repository.ReviewRepository;
+import com.nexus.repository.UserRepository;
+import com.nexus.sentiment.SentimentService;
 
 class ProductControllerTest {
 
@@ -23,13 +30,18 @@ class ProductControllerTest {
   private ReviewRepository reviewRepository;
   private UserRepository userRepository;
   private ProductController controller;
+  private CompanyRepository companyRepository;
+  private SentimentService sentimentService;
 
   @BeforeEach
   void setUp() {
     productRepository = mock(ProductRepository.class);
     reviewRepository = mock(ReviewRepository.class);
     userRepository = mock(UserRepository.class);
-    controller = new ProductController(productRepository, reviewRepository, userRepository);
+    companyRepository = mock(CompanyRepository.class);
+    sentimentService = mock(SentimentService.class);
+
+    controller = new ProductController(productRepository, reviewRepository, userRepository, companyRepository, sentimentService);
   }
 
   @Test
