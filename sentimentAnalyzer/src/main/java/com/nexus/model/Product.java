@@ -1,9 +1,8 @@
 package com.nexus.model;
 
+import java.util.List;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-
-import java.util.List;
 
 /**
  * Represents a product entity in the system.
@@ -29,6 +28,14 @@ public class Product {
    * Holds review IDs to avoid embedding full Review objects.
    */
   private List<String> reviewIds;
+  /**
+   * Average rating of the product.
+   */
+  private double rating;
+  /**
+   * Company name of the product.
+   */
+  private String companyName;
 
   /**
    * Default constructor for Product.
@@ -41,13 +48,15 @@ public class Product {
    * Constructs a Product with the specified id, name, and description.
    *
    * @param pId the unique identifier for the product
-   * @param pN the name of the product
-   * @param pD the description of the product
+   * @param pN  the name of the product
+   * @param pD  the description of the product
+   * @param pCN the company name of the product
    */
-  public Product(final String pId, final String pN, final String pD) {
+  public Product(final String pId, final String pN, final String pD, final String pCN) {
     this.id = pId;
     this.name = pN;
     this.description = pD;
+    this.companyName = pCN;
   }
 
   /**
@@ -56,7 +65,7 @@ public class Product {
    * @return the product id
    */
   public String getId() {
-  return id;
+    return id;
   }
 
   /**
@@ -74,7 +83,7 @@ public class Product {
    * @return the product name
    */
   public String getName() {
-  return name;
+    return name;
   }
 
   /**
@@ -92,7 +101,7 @@ public class Product {
    * @return the product description
    */
   public String getDescription() {
-  return description;
+    return description;
   }
 
   /**
@@ -110,7 +119,7 @@ public class Product {
    * @return the list of review IDs
    */
   public List<String> getReviewIds() {
-  return reviewIds;
+    return reviewIds;
   }
 
   /**
@@ -120,5 +129,56 @@ public class Product {
    */
   public void setReviewIds(final List<String> rIds) {
     this.reviewIds = rIds;
+  }
+
+  /**
+   * Gets the company name of the product.
+   *
+   * @return the company name of the product
+   */
+  public String getCompanyName() {
+    return companyName;
+  }
+
+  /**
+   * Sets the company name of the product.
+   *
+   * @param pCN the company name of the product to set
+   */
+  public void setCompanyName(final String pCN) {
+    this.companyName = pCN;
+  }
+
+  /**
+   * Gets the average rating of the product.
+   *
+   * @return the average rating
+   */
+  public double getRating() {
+    return rating;
+  }
+
+  /**
+   * Sets the average rating of the product.
+   *
+   * @param rtg the rating to set
+   */
+  public void setRating(final double rtg) {
+    this.rating = rtg;
+  }
+
+  /**
+   * Finds average rating of product from reviews
+   *
+   * @param reviews the list of reviews to calculate average from
+   * @return the average rating of the product
+   */
+  public double findAverageRating(final List<Review> reviews) {
+    if (reviews == null || reviews.isEmpty()) {
+      this.rating = 0.0;
+      return 0.0;
+    }
+    this.rating = reviews.stream().mapToDouble(Review::getRating).average().orElse(0.0);
+    return this.rating;
   }
 }
