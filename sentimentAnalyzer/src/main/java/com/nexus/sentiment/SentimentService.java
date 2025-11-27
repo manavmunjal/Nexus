@@ -93,6 +93,10 @@ public class SentimentService {
       return trainedHeader;
   }
 
+  public String getTrainedTextAttr() {
+      return trainedTextAttr;
+  }
+
   public ScoreMapper getScoreMapper() {
       return scoreMapper;
   }

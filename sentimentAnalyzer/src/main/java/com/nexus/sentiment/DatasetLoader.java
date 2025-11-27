@@ -12,6 +12,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import weka.filters.unsupervised.attribute.NumericToNominal;
+
 /**
  * Utility class for loading datasets from CSV files.
  */
@@ -85,6 +87,16 @@ public final class DatasetLoader {
     }
 
     data.setClass(data.attribute(classAttributeName));
+
+    // not the case for our dataset, but just to cover the scenario
+    if (data.classAttribute().isNumeric()) {
+      weka.filters.unsupervised.attribute.NumericToNominal numToNom =
+          new weka.filters.unsupervised.attribute.NumericToNominal();
+      numToNom.setAttributeIndices(String.valueOf(data.classIndex() + 1));
+      numToNom.setInputFormat(data);
+      data = Filter.useFilter(data, numToNom);
+      data.setClass(data.attribute(classAttributeName));
+    }
 
     if (!data.classAttribute().isNominal()) {
       StringToNominal strToNom = new StringToNominal();
