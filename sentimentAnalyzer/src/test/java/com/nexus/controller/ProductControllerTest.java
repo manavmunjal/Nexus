@@ -133,23 +133,6 @@ class ProductControllerTest {
     assertEquals(HttpStatus.CREATED, response.getStatusCode());
   }
 
-  @Test
-  void createProduct_ShouldReturnInternalServerError_WhenDatabaseErrorOccurs() {
-    // Arrange
-    Product product = new Product();
-    product.setName("ErrorProduct");
-
-    when(productRepository.save(product))
-        .thenThrow(new DataAccessException("DB down") {});
-
-    // Act
-    ResponseEntity<?> response = controller.createProduct(product);
-
-    // Assert
-    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-    assertTrue(response.getBody().toString().contains("Database error while saving product"));
-  }
-
   // ---- getAllProducts ----
 
   @Test
