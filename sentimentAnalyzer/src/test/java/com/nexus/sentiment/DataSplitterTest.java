@@ -109,4 +109,24 @@ class DataSplitterTest {
       assertThat(split.train().numInstances()).isEqualTo(8);
       assertThat(split.test().numInstances()).isEqualTo(2);
   }
+
+  @Test
+  void testTrainSizeZeroAdjustedToOne() {
+    // Single instance dataset
+    Instances single = new Instances(instances, 0, 1);
+    DataSplitter.Split split = DataSplitter.split(single, 0.01, 42);
+    // trainSize would round to 0, should get adjusted to 1
+    assertThat(split.train().numInstances()).isEqualTo(1);
+    assertThat(split.test().numInstances()).isEqualTo(0);
+  }
+
+  @Test
+  void testTrainSizeEqualsNumInstancesAdjusted() {
+    // Two instance dataset
+    Instances two = new Instances(instances, 0, 2);
+    DataSplitter.Split split = DataSplitter.split(two, 0.99, 42);
+    // trainSize would round to 2, but adjusted to 1
+    assertThat(split.train().numInstances()).isEqualTo(1);
+    assertThat(split.test().numInstances()).isEqualTo(1);
+  }
 }
