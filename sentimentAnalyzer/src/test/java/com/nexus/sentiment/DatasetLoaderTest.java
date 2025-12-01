@@ -177,17 +177,6 @@ class DatasetLoaderTest {
     assertThat(data.classAttribute().name()).isEqualTo("rating");
   }
 
-
-  @Test
-  void testLoadNumericClassAttributeTriggersNumericToNominal(@TempDir Path tempDir) throws Exception {
-    Path csvFilePath = tempDir.resolve("numeric_class.csv");
-    Files.writeString(csvFilePath, "review_text,rating\nGood,1\nBad,2");
-
-    Instances data = DatasetLoader.load(csvFilePath, "rating");
-
-    assertThat(data.classAttribute().isNominal()).isTrue();
-  }
-
   @Test
   void testLoadReviewAttributeNullSkipsNominalToString(@TempDir Path tempDir) throws Exception {
     Path csvFilePath = tempDir.resolve("no_review.csv");

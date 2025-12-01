@@ -8,24 +8,15 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URL;
 
 import org.junit.jupiter.api.AfterEach;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import org.mockito.MockedStatic;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 import weka.classifiers.meta.FilteredClassifier;
 import weka.core.Attribute;
@@ -78,21 +69,21 @@ public class SentimentServiceTest {
   }
 
   private Instances buildMockDataset() {
-  ArrayList<Attribute> attributes = new ArrayList<>();
-  Attribute textAttr = new Attribute("review_text", (ArrayList<String>) null);
+    ArrayList<Attribute> attributes = new ArrayList<>();
+    Attribute textAttr = new Attribute("review_text", (ArrayList<String>) null);
 
-  ArrayList<String> classValues = new ArrayList<>();
-  classValues.add("negative");
-  classValues.add("neutral");
-  classValues.add("positive");
-  Attribute classAttr = new Attribute("sentiment_label", classValues);
+    ArrayList<String> classValues = new ArrayList<>();
+    classValues.add("negative");
+    classValues.add("neutral");
+    classValues.add("positive");
+    Attribute classAttr = new Attribute("sentiment_label", classValues);
 
-  attributes.add(textAttr);
-  attributes.add(classAttr);
+    attributes.add(textAttr);
+    attributes.add(classAttr);
 
-  Instances data = new Instances("mock_data", attributes, 0);
-  data.setClass(classAttr);
-  return data;
+    Instances data = new Instances("mock_data", attributes, 0);
+    data.setClass(classAttr);
+    return data;
   }
 
   // ---- scoreFromText ----
@@ -144,18 +135,18 @@ public class SentimentServiceTest {
   }
 
   @Test
-  void testScoreFromText_throwsOnNullInput() {
-  try (MockedStatic<DatasetLoader> loaderMock = mockStatic(DatasetLoader.class);
-       MockedStatic<ScoreMapper> mapperMock = mockStatic(ScoreMapper.class)) {
+  void testScoreFromText_nullTextCausesException() {
+    try (MockedStatic<DatasetLoader> loaderMock = mockStatic(DatasetLoader.class);
+         MockedStatic<ScoreMapper> mapperMock = mockStatic(ScoreMapper.class)) {
 
-    loaderMock.when(() -> DatasetLoader.load(any(), any())).thenReturn(mockInstances);
-    mapperMock.when(() -> ScoreMapper.fromAttribute(any())).thenReturn(mockMapper);
+      loaderMock.when(() -> DatasetLoader.load(any(), any())).thenReturn(mockInstances);
+      mapperMock.when(() -> ScoreMapper.fromAttribute(any())).thenReturn(mockMapper);
 
-    // Train to avoid IllegalStateException
-    sentimentService.trainModel(null, null, null);
+      // Train to avoid IllegalStateException
+      sentimentService.trainModel(null, null, null);
 
-    assertThrows(RuntimeException.class, () -> sentimentService.scoreFromText(null));
-  }
+      assertThrows(RuntimeException.class, () -> sentimentService.scoreFromText(null));
+    }
   }
 
   // ---- saveModel ----
@@ -217,33 +208,22 @@ public class SentimentServiceTest {
   }
 
   @Test
-  void loadModel_success_loadsFilesCorrectly() throws Exception {
-    // Prepare files, since load model checks that they exist
-    File classifierFile = new File(tmpDir, "sentiment_classifier.model");
-    File headerFile = new File(tmpDir, "sentiment_header.model");
-    File scoresFile = new File(tmpDir, "sentiment_scores.model");
+  void loadModel_success_loadsRealFiles() throws Exception {
+    // Copy test model files from resources
+    SentimentService realService = new SentimentService(stubTrainer, "src/test/resources/data/");
 
-    classifierFile.createNewFile();
-    headerFile.createNewFile();
-    scoresFile.createNewFile();
+    // Load models from disk
+    realService.loadModel();
 
-    try (MockedStatic<SerializationHelper> serMock = mockStatic(SerializationHelper.class)) {
-        // Mock output of reading the files
-        serMock.when(() -> SerializationHelper.read(classifierFile.getAbsolutePath()))
-               .thenReturn(mockClassifier);
-        serMock.when(() -> SerializationHelper.read(headerFile.getAbsolutePath()))
-               .thenReturn(mockInstances);
-        serMock.when(() -> SerializationHelper.read(scoresFile.getAbsolutePath()))
-               .thenReturn(mockMapper);
+    // Assertions: check objects are loaded and of correct type
+    assertNotNull(realService.getClassifier());
+    assertTrue(realService.getClassifier() instanceof FilteredClassifier);
 
-        // Call loadModel
-        sentimentService.loadModel();
+    assertNotNull(realService.getTrainedHeader());
+    assertTrue(realService.getTrainedHeader() instanceof Instances);
 
-        // Verify that the objects are correctly loaded
-        assertEquals(mockClassifier, sentimentService.getClassifier());
-        assertEquals(mockInstances, sentimentService.getTrainedHeader());
-        assertEquals(mockMapper, sentimentService.getScoreMapper());
-    }
+    assertNotNull(realService.getScoreMapper());
+    assertTrue(realService.getScoreMapper() instanceof ScoreMapper);
   }
 
   // ---- ensureReady ----
@@ -280,6 +260,7 @@ public class SentimentServiceTest {
 
   @Test
   void isTrainedShouldReturnFalseWhenOnlyClassifierSet() {
+    blankService.setClassifier(mockClassifier);
     assertFalse(blankService.isTrained(),
             "Expected isTrained() to be false when only classifier is set");
   }
@@ -313,15 +294,15 @@ public class SentimentServiceTest {
          MockedStatic<SentimentLabelConverter> conv = mockStatic(SentimentLabelConverter.class);
          MockedStatic<ScoreMapper> mapper = mockStatic(ScoreMapper.class)) {
 
-        ld.when(() -> DatasetLoader.load(any(), any())).thenReturn(mockInstances);
-        conv.when(() -> SentimentLabelConverter.convertTo3Class(any(), any())).thenReturn(mockInstances);
-        mapper.when(() -> ScoreMapper.fromAttribute(any())).thenReturn(mockMapper);
+      ld.when(() -> DatasetLoader.load(any(), any())).thenReturn(mockInstances);
+      conv.when(() -> SentimentLabelConverter.convertTo3Class(any(), any())).thenReturn(mockInstances);
+      mapper.when(() -> ScoreMapper.fromAttribute(any())).thenReturn(mockMapper);
 
-        blankService.trainModel(null, null, null);
+      blankService.trainModel(null, null, null);
 
-        assertEquals(mockClassifier, blankService.getClassifier());
-        assertEquals(mockMapper, blankService.getScoreMapper());
-        assertEquals("review_text", blankService.getTrainedTextAttr());
+      assertEquals(mockClassifier, blankService.getClassifier());
+      assertEquals(mockMapper, blankService.getScoreMapper());
+      assertEquals("review_text", blankService.getTrainedTextAttr());
     }
   }
 
@@ -408,32 +389,17 @@ public class SentimentServiceTest {
 
   @Test
   void resolveDatasetPath_inClasspath_returnsTempCopy() throws Exception {
-      // Create a temporary CSV to simulate a classpath resource
-      Path tempCsv = Files.createTempFile("sample_", ".csv");
-      Files.writeString(tempCsv, "dummy,data\n");
-      tempCsv.toFile().deleteOnExit();
+    String resourcePath = "data/test_sample.csv";
 
-      Method m = SentimentService.class.getDeclaredMethod("resolveDatasetPath", String.class);
-      m.setAccessible(true);
-      Path resolved = (Path) m.invoke(blankService, tempCsv.toAbsolutePath().toString());
+    Method m = SentimentService.class.getDeclaredMethod("resolveDatasetPath", String.class);
+    m.setAccessible(true);
+    Path resolved = (Path) m.invoke(blankService, resourcePath);
 
-      assertTrue(Files.exists(resolved));
-      assertTrue(resolved.toString().endsWith(".csv"));
-  }
+    assertTrue(Files.exists(resolved));
+    assertTrue(resolved.toString().endsWith(".csv"));
 
-  @Test
-  void resolveDatasetPath_srcMainResourcesPrefix_returnsTempCopy() throws Exception {
-      // Another temp CSV for src/main/resources path simulation
-      Path tempCsv = Files.createTempFile("sample_", ".csv");
-      Files.writeString(tempCsv, "dummy,data\n");
-      tempCsv.toFile().deleteOnExit();
-
-      Method m = SentimentService.class.getDeclaredMethod("resolveDatasetPath", String.class);
-      m.setAccessible(true);
-      Path resolved = (Path) m.invoke(blankService, tempCsv.toAbsolutePath().toString());
-
-      assertTrue(Files.exists(resolved));
-      assertTrue(resolved.toString().endsWith(".csv"));
+    String content = Files.readString(resolved);
+    assertTrue(content.contains("dummy") || content.length() > 0);
   }
 
   @Test

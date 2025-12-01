@@ -84,7 +84,6 @@ class ProductControllerTest {
   assertTrue(response.getBody().toString().contains("Database error"));
   }
 
-
   @Test
   void createProduct_ShouldInitializeReviewIds_WhenNull() {
     Product product = new Product();
