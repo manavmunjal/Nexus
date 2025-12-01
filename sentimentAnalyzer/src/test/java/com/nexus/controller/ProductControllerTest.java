@@ -42,6 +42,7 @@ class ProductControllerTest {
   private CompanyRepository companyRepository;
   private SentimentService sentimentService;
   private ProductController controller;
+  private Product product;
 
   @BeforeEach
   void setUp() {
@@ -53,15 +54,16 @@ class ProductControllerTest {
 
     controller = new ProductController(productRepository, reviewRepository, userRepository,
         companyRepository, sentimentService);
+
+    product = new Product();
+    product.setId("p1");
+    product.setReviewIds(new ArrayList<>());
   }
 
   // ---- createProduct ----
 
   @Test
   void createProduct_ShouldReturnCreatedProduct() {
-    Product product = new Product();
-    product.setId("p1");
-
     when(productRepository.save(product)).thenReturn(product);
 
     ResponseEntity<?> response = controller.createProduct(product);
@@ -73,8 +75,6 @@ class ProductControllerTest {
 
   @Test
   void createProduct_ShouldReturnInternalServerError_OnDatabaseException() {
-    Product product = new Product();
-
     when(productRepository.save(product)).thenThrow(new DataAccessException("DB down") {});
 
     ResponseEntity<?> response = controller.createProduct(product);
@@ -86,8 +86,6 @@ class ProductControllerTest {
 
   @Test
   void createProduct_ShouldInitializeReviewIds_WhenNull() {
-    Product product = new Product();
-    product.setId("p1");
     product.setReviewIds(null);
 
     when(productRepository.save(product)).thenReturn(product);
@@ -101,8 +99,6 @@ class ProductControllerTest {
 
   @Test
   void createProduct_ShouldAddProductToCompany_WhenCompanyExists() {
-    Product product = new Product();
-    product.setId("p1");
     product.setCompanyName("Acme");
 
     Company company = new Company();
@@ -121,8 +117,6 @@ class ProductControllerTest {
 
   @Test
   void createProduct_ShouldSkipCompanyUpdate_WhenCompanyNameBlank() {
-    Product product = new Product();
-    product.setId("p1");
     product.setCompanyName(" ");
 
     when(productRepository.save(product)).thenReturn(product);
@@ -137,11 +131,9 @@ class ProductControllerTest {
   @Test
   void getAllProducts_ShouldReturnListOfProducts_WhenRepositoryReturnsData() {
     // Arrange
-    Product product1 = new Product();
-    product1.setId("p1");
     Product product2 = new Product();
     product2.setId("p2");
-    List<Product> products = List.of(product1, product2);
+    List<Product> products = List.of(product, product2);
 
     when(productRepository.findAll()).thenReturn(products);
 
@@ -151,7 +143,7 @@ class ProductControllerTest {
     // Assert
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertEquals(2, response.getBody().size());
-    assertTrue(response.getBody().contains(product1));
+    assertTrue(response.getBody().contains(product));
     assertTrue(response.getBody().contains(product2));
   }
 
@@ -172,8 +164,6 @@ class ProductControllerTest {
 
   @Test
   void postReview_ShouldSetUserAndCalculateRating_WhenMissingRatingAndCommentPresent() {
-    Product product = new Product();
-    product.setId("p1");
     product.setReviewIds(new ArrayList<>());
 
     Review review = new Review();
@@ -197,8 +187,6 @@ class ProductControllerTest {
 
   @Test
   void postReview_ShouldSkipRatingCalculation_WhenRatingProvided() {
-    Product product = new Product();
-    product.setId("p1");
     product.setReviewIds(new ArrayList<>());
 
     Review review = new Review();
@@ -229,8 +217,6 @@ class ProductControllerTest {
 
   @Test
   void postReview_ShouldSetUserFromRepository_WhenUserExists() {
-    Product product = new Product();
-    product.setId("p1");
     product.setReviewIds(new ArrayList<>());
 
     Review review = new Review();
@@ -255,8 +241,6 @@ class ProductControllerTest {
 
   @Test
   void postReview_ShouldSaveUser_WhenUserDoesNotExist() {
-    Product product = new Product();
-    product.setId("p1");
     product.setReviewIds(new ArrayList<>());
 
     com.nexus.model.User user = new com.nexus.model.User();
@@ -282,8 +266,6 @@ class ProductControllerTest {
 
   @Test
   void postReview_ShouldTrainSentiment_WhenNotTrainedAndCommentPresent() {
-    Product product = new Product();
-    product.setId("p1");
     product.setReviewIds(new ArrayList<>());
 
     Review review = new Review();
@@ -307,8 +289,6 @@ class ProductControllerTest {
 
   @Test
   void postReview_ShouldSkipTraining_WhenSentimentAlreadyTrained() {
-    Product product = new Product();
-    product.setId("p1");
     product.setReviewIds(new ArrayList<>());
 
     Review review = new Review();
@@ -331,8 +311,6 @@ class ProductControllerTest {
 
   @Test
   void postReview_ShouldSetRatingZero_WhenNoCommentAndRatingZero() {
-    Product product = new Product();
-    product.setId("p1");
     product.setReviewIds(new ArrayList<>());
 
     Review review = new Review();
@@ -352,8 +330,6 @@ class ProductControllerTest {
 
   @Test
   void postReview_ShouldInitializeReviewIds_WhenNull() {
-    Product product = new Product();
-    product.setId("p1");
     product.setReviewIds(null);
 
     Review review = new Review();
@@ -373,8 +349,6 @@ class ProductControllerTest {
 
   @Test
   void postReview_ShouldUpdateCompanyAverageRating_WhenCompanyNamePresent() {
-    Product product = new Product();
-    product.setId("p1");
     product.setCompanyName("Acme");
     product.setReviewIds(new ArrayList<>());
 
@@ -401,8 +375,6 @@ class ProductControllerTest {
 
   @Test
   void postReview_ShouldHandleUserWithBlankId() {
-    Product product = new Product();
-    product.setId("p1");
     product.setReviewIds(new ArrayList<>());
 
     com.nexus.model.User user = new com.nexus.model.User();
@@ -428,8 +400,6 @@ class ProductControllerTest {
 
   @Test
   void postReview_ShouldReturnInternalServerError_OnDataAccessException() {
-    Product product = new Product();
-    product.setId("p1");
     product.setReviewIds(new ArrayList<>());
 
     Review review = new Review();
@@ -462,8 +432,6 @@ class ProductControllerTest {
 
   @Test
   void postReview_ShouldHandleMultipleUsersSeparately() {
-      Product product = new Product();
-      product.setId("p1");
       product.setReviewIds(new ArrayList<>());
 
       // First user
@@ -518,9 +486,6 @@ class ProductControllerTest {
 
   @Test
   void updateReview_ShouldReturnInternalServerError_OnDataAccessException() {
-    Product product = new Product();
-    product.setId("p1");
-
     Review update = new Review();
     when(productRepository.findById("p1")).thenReturn(Optional.of(product));
     when(reviewRepository.findById("r1")).thenReturn(Optional.of(new Review()));
@@ -547,9 +512,6 @@ class ProductControllerTest {
 
   @Test
   void updateReview_ShouldReturnNotFound_WhenReviewMissing() {
-    Product product = new Product();
-    product.setId("p1");
-
     Review update = new Review();
 
     when(productRepository.findById("p1")).thenReturn(Optional.of(product));
@@ -564,8 +526,6 @@ class ProductControllerTest {
 
   @Test
   void updateReview_ShouldUpdateReviewWithoutUser() {
-    Product product = new Product();
-    product.setId("p1");
     product.setReviewIds(List.of("r1"));
 
     Review existing = new Review();
@@ -595,8 +555,6 @@ class ProductControllerTest {
 
   @Test
   void updateReview_ShouldUpdateReviewWithUser() {
-    Product product = new Product();
-    product.setId("p1");
     product.setReviewIds(List.of("r1"));
 
     Review existing = new Review();
@@ -634,8 +592,6 @@ class ProductControllerTest {
   @Test
   void updateReview_ShouldUpdateCompanyAverageRating_WhenProductHasCompany() {
     // Setup product with company
-    Product product = new Product();
-    product.setId("p1");
     product.setCompanyName("AcmeCorp");
     product.setReviewIds(List.of("r1"));
 
@@ -676,8 +632,6 @@ class ProductControllerTest {
 
   @Test
   void getReviews_ShouldReturnListOfReviews() {
-    Product product = new Product();
-    product.setId("p1");
     product.setReviewIds(List.of("r1"));
 
     Review review = new Review();
@@ -694,8 +648,6 @@ class ProductControllerTest {
 
   @Test
   void getReviews_ShouldReturnEmptyList_WhenReviewIdsNull() {
-    Product product = new Product();
-    product.setId("p1");
     product.setReviewIds(null);
 
     when(productRepository.findById("p1")).thenReturn(Optional.of(product));
@@ -709,8 +661,6 @@ class ProductControllerTest {
 
   @Test
   void getReviews_ShouldReturnEmptyList_WhenReviewIdsEmpty() {
-    Product product = new Product();
-    product.setId("p1");
     product.setReviewIds(new ArrayList<>());
 
     when(productRepository.findById("p1")).thenReturn(Optional.of(product));
@@ -735,8 +685,6 @@ class ProductControllerTest {
 
   @Test
   void getReviews_ShouldReturnReviews_WhenReviewIdsPopulated() {
-    Product product = new Product();
-    product.setId("p1");
     product.setReviewIds(List.of("r1", "r2"));
 
     Review r1 = new Review();
@@ -757,8 +705,6 @@ class ProductControllerTest {
 
   @Test
   void getAverageRating_ShouldReturnOk_WhenProductExists() {
-    Product product = new Product();
-    product.setId("p1");
     product.setRating(4.5);
 
     when(productRepository.findById("p1")).thenReturn(Optional.of(product));
