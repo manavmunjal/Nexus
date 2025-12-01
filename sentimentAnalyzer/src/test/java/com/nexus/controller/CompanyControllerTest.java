@@ -35,6 +35,8 @@ class CompanyControllerTest {
   private ReviewRepository reviewRepository;
   private UserRepository userRepository;
 
+  private Company testCompany;
+
   @BeforeEach
   void setUp() {
     companyRepository = mock(CompanyRepository.class);
@@ -42,6 +44,12 @@ class CompanyControllerTest {
     reviewRepository = mock(ReviewRepository.class);
     companyController = new CompanyController(companyRepository, productRepository, reviewRepository);
     userRepository = mock(UserRepository.class);
+
+    // Reusable company instance
+    testCompany = new Company();
+    testCompany.setId("c1");
+    testCompany.setName("TestCompany");
+    testCompany.setProducts(new ArrayList<>());
   }
 
   // ---- createCompany ----
@@ -128,10 +136,8 @@ class CompanyControllerTest {
   @Test
   void getAllReviews_ShouldReturnEmptyList_WhenCompanyHasNoProducts() {
     // Arrange
-    Company company = new Company();
-    company.setId("c1");
-    company.setProducts(new ArrayList<>());
-    when(companyRepository.findById("c1")).thenReturn(Optional.of(company));
+    testCompany.setProducts(new ArrayList<>());
+    when(companyRepository.findById("c1")).thenReturn(Optional.of(testCompany));
 
     // Act
     ResponseEntity<?> response = companyController.getAllReviews("c1");
@@ -144,10 +150,7 @@ class CompanyControllerTest {
   @Test
   void getAllReviews_ShouldReturnReviews_WhenProductsHaveReviews() {
     // Arrange
-    Company company = new Company();
-    company.setId("c1");
-    List<String> productIds = List.of("p1", "p2");
-    company.setProducts(productIds);
+    testCompany.setProducts(List.of("p1", "p2"));
 
     Product product1 = new Product();
     product1.setId("p1");
@@ -161,8 +164,8 @@ class CompanyControllerTest {
     Review review2 = new Review("r2", "Average", 3.0, new User("u2", "Bob", "bob@test.com"));
     Review review3 = new Review("r3", "Excellent", 4.5, new User("u3", "Charlie", "charlie@test.com"));
 
-    when(companyRepository.findById("c1")).thenReturn(Optional.of(company));
-    when(productRepository.findAllById(productIds)).thenReturn(List.of(product1, product2));
+    when(companyRepository.findById("c1")).thenReturn(Optional.of(testCompany));
+    when(productRepository.findAllById(List.of("p1", "p2"))).thenReturn(List.of(product1, product2));
     when(reviewRepository.findAllById(List.of("r1", "r2", "r3")))
         .thenReturn(List.of(review1, review2, review3));
 
@@ -216,12 +219,11 @@ class CompanyControllerTest {
   @Test
   void getAllReviews_ShouldReturnEmptyList_WhenCompanyHasNoProducts_NullList() {
     // Arrange
-    Company company = new Company();
-    company.setProducts(null);
-    when(companyRepository.findById("123")).thenReturn(Optional.of(company));
+    testCompany.setProducts(null);
+    when(companyRepository.findById("c1")).thenReturn(Optional.of(testCompany));
 
     // Act
-    ResponseEntity<?> response = companyController.getAllReviews("123");
+    ResponseEntity<?> response = companyController.getAllReviews("c1");
 
     // Assert
     assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -232,9 +234,7 @@ class CompanyControllerTest {
   @Test
   void getAllReviews_ShouldReturnEmptyList_WhenProductsHaveNoReviews() {
     // Arrange
-    Company company = new Company();
-    company.setId("c2");
-    company.setProducts(List.of("p3", "p4"));
+    testCompany.setProducts(List.of("p3", "p4"));
 
     Product p3 = new Product();
     p3.setId("p3");
@@ -244,11 +244,11 @@ class CompanyControllerTest {
     p4.setId("p4");
     p4.setReviewIds(null);
 
-    when(companyRepository.findById("c2")).thenReturn(Optional.of(company));
-    when(productRepository.findAllById(company.getProducts())).thenReturn(List.of(p3, p4));
+    when(companyRepository.findById("c1")).thenReturn(Optional.of(testCompany));
+    when(productRepository.findAllById(testCompany.getProducts())).thenReturn(List.of(p3, p4));
 
     // Act
-    ResponseEntity<?> response = companyController.getAllReviews("c2");
+    ResponseEntity<?> response = companyController.getAllReviews("c1");
 
     // Assert
     assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -258,9 +258,7 @@ class CompanyControllerTest {
   @Test
   void getAllReviews_ShouldHandleReviewsWithNullUser() {
     // Arrange
-    Company company = new Company();
-    company.setId("c1");
-    company.setProducts(List.of("p1"));
+    testCompany.setProducts(List.of("p1"));
 
     Product p1 = new Product();
     p1.setId("p1");
@@ -268,7 +266,7 @@ class CompanyControllerTest {
 
     Review review = new Review("r1", "Great", 5.0, null);
 
-    when(companyRepository.findById("c1")).thenReturn(Optional.of(company));
+    when(companyRepository.findById("c1")).thenReturn(Optional.of(testCompany));
     when(productRepository.findAllById(List.of("p1"))).thenReturn(List.of(p1));
     when(reviewRepository.findAllById(List.of("r1"))).thenReturn(List.of(review));
 
@@ -285,9 +283,7 @@ class CompanyControllerTest {
   @Test
   void getAllReviews_ShouldReturnMultipleUsersCorrectly() {
     // Arrange
-    Company company = new Company();
-    company.setId("c1");
-    company.setProducts(List.of("p1"));
+    testCompany.setProducts(List.of("p1"));
 
     Product p1 = new Product();
     p1.setId("p1");
@@ -296,7 +292,7 @@ class CompanyControllerTest {
     Review r1 = new Review("r1", "Good", 4.0, new User("u1", "Alice", "alice@test.com"));
     Review r2 = new Review("r2", "Bad", 2.0, new User("u2", "Bob", "bob@test.com"));
 
-    when(companyRepository.findById("c1")).thenReturn(Optional.of(company));
+    when(companyRepository.findById("c1")).thenReturn(Optional.of(testCompany));
     when(productRepository.findAllById(List.of("p1"))).thenReturn(List.of(p1));
     when(reviewRepository.findAllById(List.of("r1", "r2"))).thenReturn(List.of(r1, r2));
 
@@ -316,12 +312,11 @@ class CompanyControllerTest {
   @Test
   void getAverageRating_ShouldReturnRating_WhenCompanyExists() {
     // Arrange
-    Company company = new Company();
-    company.setRating(4.5);
-    when(companyRepository.findById("123")).thenReturn(Optional.of(company));
+    testCompany.setRating(4.5);
+    when(companyRepository.findById("c1")).thenReturn(Optional.of(testCompany));
 
     // Act
-    ResponseEntity<?> response = companyController.getAverageRating("123");
+    ResponseEntity<?> response = companyController.getAverageRating("c1");
 
     // Assert
     assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -331,12 +326,11 @@ class CompanyControllerTest {
   @Test
   void getAverageRating_ShouldReturnZero_WhenCompanyHasDefaultRating() {
     // Arrange
-    Company company = new Company();
-
-    when(companyRepository.findById("123")).thenReturn(Optional.of(company));
+    testCompany.setRating(0.0);
+    when(companyRepository.findById("c1")).thenReturn(Optional.of(testCompany));
 
     // Act
-    ResponseEntity<?> response = companyController.getAverageRating("123");
+    ResponseEntity<?> response = companyController.getAverageRating("c1");
 
     // Assert
     assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -346,10 +340,10 @@ class CompanyControllerTest {
   @Test
   void getAverageRating_ShouldReturnInternalServerError_WhenCompanyNotFound() {
     // Arrange
-    when(companyRepository.findById("123")).thenReturn(Optional.empty());
+    when(companyRepository.findById("c1")).thenReturn(Optional.empty());
 
     // Act
-    ResponseEntity<?> response = companyController.getAverageRating("123");
+    ResponseEntity<?> response = companyController.getAverageRating("c1");
 
     // Assert
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
@@ -359,11 +353,11 @@ class CompanyControllerTest {
   @Test
   void getAverageRating_ShouldReturnInternalServerError_WhenDatabaseErrorOccurs() {
     // Arrange
-    when(companyRepository.findById("123"))
+    when(companyRepository.findById("c1"))
         .thenThrow(new DataAccessException("DB down") {});
 
     // Act
-    ResponseEntity<?> response = companyController.getAverageRating("123");
+    ResponseEntity<?> response = companyController.getAverageRating("c1");
 
     // Assert
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
@@ -373,11 +367,11 @@ class CompanyControllerTest {
   @Test
   void getAverageRating_ShouldReturnInternalServerError_WhenUnexpectedExceptionOccurs() {
     // Arrange
-    when(companyRepository.findById("123"))
+    when(companyRepository.findById("c1"))
         .thenThrow(new RuntimeException("Unexpected failure"));
 
     // Act
-    ResponseEntity<?> response = companyController.getAverageRating("123");
+    ResponseEntity<?> response = companyController.getAverageRating("c1");
 
     // Assert
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
