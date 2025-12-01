@@ -154,24 +154,18 @@ public class SentimentServiceTest {
   @Test
   void saveModel_createsFiles() throws Exception {
     try (MockedStatic<SerializationHelper> serMock = mockStatic(SerializationHelper.class)) {
-
       serMock.when(() -> SerializationHelper.write(anyString(), any()))
-             .thenAnswer(invocation -> null); // do nothing when write is called
+              .thenAnswer(invocation -> null);
 
-      sentimentService.saveModel(); // save model
+      sentimentService.saveModel();
 
-      // Check that it tries to write the correct content to the correct file
-      serMock.verify(() -> SerializationHelper.write(
-          new File(tmpDir, "sentiment_classifier.model").getAbsolutePath(),
-          mockClassifier));
+      String classifierPath = new File(tmpDir, "sentiment_classifier.model").getAbsolutePath();
+      String headerPath = new File(tmpDir, "sentiment_header.model").getAbsolutePath();
+      String scoresPath = new File(tmpDir, "sentiment_scores.model").getAbsolutePath();
 
-      serMock.verify(() -> SerializationHelper.write(
-          new File(tmpDir, "sentiment_header.model").getAbsolutePath(),
-          mockInstances));
-
-      serMock.verify(() -> SerializationHelper.write(
-          new File(tmpDir, "sentiment_scores.model").getAbsolutePath(),
-          mockMapper));
+      serMock.verify(() -> SerializationHelper.write(classifierPath, mockClassifier));
+      serMock.verify(() -> SerializationHelper.write(headerPath, mockInstances));
+      serMock.verify(() -> SerializationHelper.write(scoresPath, mockMapper));
     }
   }
 
