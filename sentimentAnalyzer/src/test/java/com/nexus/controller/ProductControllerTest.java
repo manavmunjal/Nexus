@@ -164,8 +164,6 @@ class ProductControllerTest {
 
   @Test
   void postReview_ShouldSetUserAndCalculateRating_WhenMissingRatingAndCommentPresent() {
-    product.setReviewIds(new ArrayList<>());
-
     Review review = new Review();
     review.setComment("Great!");
     review.setRating(0);
@@ -187,8 +185,6 @@ class ProductControllerTest {
 
   @Test
   void postReview_ShouldSkipRatingCalculation_WhenRatingProvided() {
-    product.setReviewIds(new ArrayList<>());
-
     Review review = new Review();
     review.setRating(5);
 
@@ -217,8 +213,6 @@ class ProductControllerTest {
 
   @Test
   void postReview_ShouldSetUserFromRepository_WhenUserExists() {
-    product.setReviewIds(new ArrayList<>());
-
     Review review = new Review();
     review.setUser(new com.nexus.model.User());
     review.getUser().setId(null);
@@ -241,8 +235,6 @@ class ProductControllerTest {
 
   @Test
   void postReview_ShouldSaveUser_WhenUserDoesNotExist() {
-    product.setReviewIds(new ArrayList<>());
-
     com.nexus.model.User user = new com.nexus.model.User();
     user.setId(null);
     user.setUsername("bob");
@@ -266,8 +258,6 @@ class ProductControllerTest {
 
   @Test
   void postReview_ShouldTrainSentiment_WhenNotTrainedAndCommentPresent() {
-    product.setReviewIds(new ArrayList<>());
-
     Review review = new Review();
     review.setComment("Good product");
     review.setRating(0);
@@ -289,8 +279,6 @@ class ProductControllerTest {
 
   @Test
   void postReview_ShouldSkipTraining_WhenSentimentAlreadyTrained() {
-    product.setReviewIds(new ArrayList<>());
-
     Review review = new Review();
     review.setComment("Nice");
     review.setRating(0);
@@ -311,8 +299,6 @@ class ProductControllerTest {
 
   @Test
   void postReview_ShouldSetRatingZero_WhenNoCommentAndRatingZero() {
-    product.setReviewIds(new ArrayList<>());
-
     Review review = new Review();
     review.setRating(0);
     review.setComment(null);
@@ -350,7 +336,6 @@ class ProductControllerTest {
   @Test
   void postReview_ShouldUpdateCompanyAverageRating_WhenCompanyNamePresent() {
     product.setCompanyName("Acme");
-    product.setReviewIds(new ArrayList<>());
 
     Review review = new Review();
     review.setId("r1");
@@ -375,8 +360,6 @@ class ProductControllerTest {
 
   @Test
   void postReview_ShouldHandleUserWithBlankId() {
-    product.setReviewIds(new ArrayList<>());
-
     com.nexus.model.User user = new com.nexus.model.User();
     user.setId(""); // blank id
     user.setUsername("charlie");
@@ -400,8 +383,6 @@ class ProductControllerTest {
 
   @Test
   void postReview_ShouldReturnInternalServerError_OnDataAccessException() {
-    product.setReviewIds(new ArrayList<>());
-
     Review review = new Review();
     review.setRating(5);
 
@@ -432,8 +413,6 @@ class ProductControllerTest {
 
   @Test
   void postReview_ShouldHandleMultipleUsersSeparately() {
-      product.setReviewIds(new ArrayList<>());
-
       // First user
       User user1 = new User();
       user1.setId("");
@@ -661,8 +640,6 @@ class ProductControllerTest {
 
   @Test
   void getReviews_ShouldReturnEmptyList_WhenReviewIdsEmpty() {
-    product.setReviewIds(new ArrayList<>());
-
     when(productRepository.findById("p1")).thenReturn(Optional.of(product));
 
     ResponseEntity<?> response = controller.getReviews("p1");
