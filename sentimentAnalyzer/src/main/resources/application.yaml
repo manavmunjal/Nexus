@@ -9,4 +9,4 @@ server:
 
 
 sentiment:
-  modelDir: saved_models/
+  modelDir: /tmp/saved_models/
