@@ -49,10 +49,10 @@ public class AuthUser {
     /**
      * Constructs an AuthUser with the specified user ID.
      *
-     * @param userId the unique user identifier for authentication
+     * @param newUserId the unique user identifier for authentication
      */
-    public AuthUser(final String userId) {
-        this.userId = userId;
+    public AuthUser(final String newUserId) {
+        this.userId = newUserId;
         this.createdAt = Instant.now();
         this.lastAccessedAt = Instant.now();
     }
@@ -69,10 +69,10 @@ public class AuthUser {
     /**
      * Sets the MongoDB document ID.
      *
-     * @param id the document ID to set
+     * @param newId the document ID to set
      */
-    public void setId(final String id) {
-        this.id = id;
+    public void setId(final String newId) {
+        this.id = newId;
     }
 
     /**
@@ -87,10 +87,10 @@ public class AuthUser {
     /**
      * Sets the unique user ID.
      *
-     * @param userId the user ID to set
+     * @param newUserId the user ID to set
      */
-    public void setUserId(final String userId) {
-        this.userId = userId;
+    public void setUserId(final String newUserId) {
+        this.userId = newUserId;
     }
 
     /**
