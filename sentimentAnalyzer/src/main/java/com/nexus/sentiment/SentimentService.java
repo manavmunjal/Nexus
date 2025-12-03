@@ -46,30 +46,55 @@ public final class SentimentService {
    */
   private final SentimentModelTrainer trainer;
 
+  /**
+   * File paths for saving/loading the model components.
+   */
   private final String classifierFile;
+
+  /**
+   * File paths for saving/loading the model components.
+   */
   private final String headerFile;
+
+  /**
+   * File paths for saving/loading the model components.
+   */
   private final String scoresFile;
+  /**
+   * Directory where the sentiment model files are stored.
+   */
   private final String modelDir;
 
 
   /**
    * Constructs a SentimentService with a provided trainer.
    *
-   * @param sentimentTrainer the sentiment model trainer
+   * @param newTrainer the sentiment model trainer
+   * @param newModelDir the directory to save/load the model files
    */
   @Autowired
-  public SentimentService(SentimentModelTrainer trainer, @Value("${sentiment.modelDir}") String modelDir) {
-    this.trainer = trainer;
-    this.modelDir = modelDir;
-    this.classifierFile = modelDir + "sentiment_classifier.model";
-    this.headerFile = modelDir + "sentiment_header.model";
-    this.scoresFile = modelDir + "sentiment_scores.model";
+  public SentimentService(final SentimentModelTrainer newTrainer,
+   final @Value("${sentiment.modelDir}") String newModelDir) {
+    this.trainer = newTrainer;
+    this.modelDir = newModelDir;
+    this.classifierFile = newModelDir + "sentiment_classifier.model";
+    this.headerFile = newModelDir + "sentiment_header.model";
+    this.scoresFile = newModelDir + "sentiment_scores.model";
   }
 
-  public SentimentService(SentimentModelTrainer trainer) {
-    this(trainer, "saved_models/");
+  /**
+   * Constructs a SentimentService with a provided trainer
+   * and default model directory.
+   *
+   * @param newTrainer the sentiment model trainer
+   */
+  public SentimentService(final SentimentModelTrainer newTrainer) {
+    this(newTrainer, "saved_models/");
   }
 
+  /**
+   * Constructs a SentimentService with a default trainer.
+   */
   public SentimentService() {
     this(new SentimentModelTrainer());
   }
@@ -81,10 +106,14 @@ public final class SentimentService {
     }
   }
 
+  /**
+   * Gets the directory where the sentiment model is stored.
+   * @return the model directory path
+   */
   public String getModelDir() {
     return modelDir;
   }
-  
+
   /**
    * Gets the trained FilteredClassifier model.
    * @return the trained FilteredClassifier
