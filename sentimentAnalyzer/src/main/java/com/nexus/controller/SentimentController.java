@@ -91,6 +91,7 @@ public final class SentimentController {
       return ResponseEntity.status(HttpStatus.BAD_REQUEST)
           .body("Invalid training parameters: " + iae.getMessage());
     } catch (Exception e) {
+      e.printStackTrace();
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body("Error training model: " + e.getMessage());
     }

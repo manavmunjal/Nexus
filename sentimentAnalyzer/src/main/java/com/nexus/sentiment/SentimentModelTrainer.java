@@ -2,7 +2,7 @@ package com.nexus.sentiment;
 
 import org.springframework.stereotype.Service;
 import weka.classifiers.functions.SMO;
-import weka.classifiers.meta.CVParameterSelection;
+import weka.classifiers.Evaluation;
 import weka.classifiers.meta.FilteredClassifier;
 import weka.core.Instances;
 import weka.core.Utils;
@@ -121,23 +121,35 @@ public class SentimentModelTrainer {
       Instances filteredTrainData =
               Filter.useFilter(trainData, multiFilter);
 
-      SMO smo = new SMO();
-      RBFKernel rbf = new RBFKernel();
-      rbf.setGamma(DEFAULT_GAMMA);
-      smo.setKernel(rbf);
+      // Find best C value through manual cross-validation to avoid Weka class loading issues
+      double bestC = 1.0;
+      double bestAccuracy = 0.0;
+      double[] cValues = {0.1, 1.0, 2.0, 3.0, 5.0};
 
-      CVParameterSelection cvParams = new CVParameterSelection();
-      cvParams.setClassifier(smo);
-      cvParams.setNumFolds(CV_FOLDS);
-      cvParams.addCVParameter("C 0.1 5.0 5");
-      cvParams.buildClassifier(filteredTrainData);
+      for (double c : cValues) {
+          SMO testSmo = new SMO();
+          RBFKernel testRbf = new RBFKernel();
+          testRbf.setGamma(DEFAULT_GAMMA);
+          testSmo.setKernel(testRbf);
+          testSmo.setC(c);
 
-      System.out.println("Best parameters found: "
-              + Utils.joinOptions(cvParams.getBestClassifierOptions()));
+          Evaluation eval = new Evaluation(filteredTrainData);
+          eval.crossValidateModel(testSmo, filteredTrainData, CV_FOLDS, new java.util.Random(1));
+          double accuracy = eval.pctCorrect();
+
+          if (accuracy > bestAccuracy) {
+              bestAccuracy = accuracy;
+              bestC = c;
+          }
+      }
+
+      System.out.println("Best C value found: " + bestC + " with accuracy: " + bestAccuracy + "%");
 
       SMO tunedSmo = new SMO();
-      tunedSmo.setOptions(cvParams.getBestClassifierOptions());
-      tunedSmo.setKernel(rbf);
+      RBFKernel tunedRbf = new RBFKernel();
+      tunedRbf.setGamma(DEFAULT_GAMMA);
+      tunedSmo.setKernel(tunedRbf);
+      tunedSmo.setC(bestC);
 
       FilteredClassifier tunedClassifier = new FilteredClassifier();
       tunedClassifier.setFilter(multiFilter);
