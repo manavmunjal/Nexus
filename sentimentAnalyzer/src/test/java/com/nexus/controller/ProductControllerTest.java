@@ -24,6 +24,8 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import com.nexus.auth.model.AuthUser;
+import com.nexus.auth.service.UserAuthService;
 import com.nexus.model.Company;
 import com.nexus.model.Product;
 import com.nexus.model.Review;
@@ -41,8 +43,12 @@ class ProductControllerTest {
   private UserRepository userRepository;
   private CompanyRepository companyRepository;
   private SentimentService sentimentService;
+  private UserAuthService userAuthService;
   private ProductController controller;
   private Product product;
+
+  /** Valid user ID for authenticated requests. */
+  private static final String VALID_USER_ID = "test-user-123";
 
   @BeforeEach
   void setUp() {
@@ -51,13 +57,17 @@ class ProductControllerTest {
     userRepository = mock(UserRepository.class);
     companyRepository = mock(CompanyRepository.class);
     sentimentService = mock(SentimentService.class);
+    userAuthService = mock(UserAuthService.class);
 
     controller = new ProductController(productRepository, reviewRepository, userRepository,
-        companyRepository, sentimentService);
+        companyRepository, sentimentService, userAuthService);
 
     product = new Product();
     product.setId("p1");
     product.setReviewIds(new ArrayList<>());
+
+    // Default: user authentication succeeds
+    when(userAuthService.validateUser(VALID_USER_ID)).thenReturn(new AuthUser(VALID_USER_ID));
   }
 
   // ---- createProduct ----
@@ -66,7 +76,7 @@ class ProductControllerTest {
   void createProduct_ShouldReturnCreatedProduct() {
     when(productRepository.save(product)).thenReturn(product);
 
-    ResponseEntity<?> response = controller.createProduct(product);
+    ResponseEntity<?> response = controller.createProduct(VALID_USER_ID, product);
 
     assertEquals(HttpStatus.CREATED, response.getStatusCode());
     assertEquals(product, response.getBody());
@@ -77,7 +87,7 @@ class ProductControllerTest {
   void createProduct_ShouldReturnInternalServerError_OnDatabaseException() {
     when(productRepository.save(product)).thenThrow(new DataAccessException("DB down") {});
 
-    ResponseEntity<?> response = controller.createProduct(product);
+    ResponseEntity<?> response = controller.createProduct(VALID_USER_ID, product);
 
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
   assertNotNull(response.getBody());
@@ -90,7 +100,7 @@ class ProductControllerTest {
 
     when(productRepository.save(product)).thenReturn(product);
 
-    ResponseEntity<?> response = controller.createProduct(product);
+    ResponseEntity<?> response = controller.createProduct(VALID_USER_ID, product);
 
     assertEquals(HttpStatus.CREATED, response.getStatusCode());
     assertNotNull(product.getReviewIds());
@@ -108,7 +118,7 @@ class ProductControllerTest {
     when(companyRepository.findByName("Acme")).thenReturn(Optional.of(company));
     when(companyRepository.save(company)).thenReturn(company);
 
-    ResponseEntity<?> response = controller.createProduct(product);
+    ResponseEntity<?> response = controller.createProduct(VALID_USER_ID, product);
 
     assertEquals(HttpStatus.CREATED, response.getStatusCode());
     assertNotNull(company.getProducts());
@@ -121,9 +131,21 @@ class ProductControllerTest {
 
     when(productRepository.save(product)).thenReturn(product);
 
-    ResponseEntity<?> response = controller.createProduct(product);
+    ResponseEntity<?> response = controller.createProduct(VALID_USER_ID, product);
 
     assertEquals(HttpStatus.CREATED, response.getStatusCode());
+  }
+
+  @Test
+  void createProduct_ShouldReturnUnauthorized_WhenUserDoesNotExist() {
+    String invalidUserId = "invalid-user";
+    when(userAuthService.validateUser(invalidUserId))
+        .thenThrow(new IllegalStateException("User does not exist"));
+
+    ResponseEntity<?> response = controller.createProduct(invalidUserId, product);
+
+    assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    assertTrue(response.getBody().toString().contains("Authentication failed"));
   }
 
   // ---- getAllProducts ----
@@ -138,13 +160,15 @@ class ProductControllerTest {
     when(productRepository.findAll()).thenReturn(products);
 
     // Act
-    ResponseEntity<List<Product>> response = controller.getAllProducts();
+    ResponseEntity<?> response = controller.getAllProducts(VALID_USER_ID);
 
     // Assert
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertEquals(2, response.getBody().size());
-    assertTrue(response.getBody().contains(product));
-    assertTrue(response.getBody().contains(product2));
+    @SuppressWarnings("unchecked")
+    List<Product> body = (List<Product>) response.getBody();
+    assertEquals(2, body.size());
+    assertTrue(body.contains(product));
+    assertTrue(body.contains(product2));
   }
 
   @Test
@@ -153,11 +177,21 @@ class ProductControllerTest {
     when(productRepository.findAll()).thenThrow(new RuntimeException("DB failure"));
 
     // Act
-    ResponseEntity<List<Product>> response = controller.getAllProducts();
+    ResponseEntity<?> response = controller.getAllProducts(VALID_USER_ID);
 
     // Assert
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-    assertTrue(response.getBody().isEmpty());
+  }
+
+  @Test
+  void getAllProducts_ShouldReturnUnauthorized_WhenUserDoesNotExist() {
+    String invalidUserId = "invalid-user";
+    when(userAuthService.validateUser(invalidUserId))
+        .thenThrow(new IllegalStateException("User does not exist"));
+
+    ResponseEntity<?> response = controller.getAllProducts(invalidUserId);
+
+    assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
   }
 
   // ---- postReview ----
@@ -177,7 +211,7 @@ class ProductControllerTest {
     when(reviewRepository.findByIdIn(anyList())).thenReturn(List.of(review));
     when(productRepository.save(product)).thenReturn(product);
 
-    ResponseEntity<?> response = controller.postReview("p1", review);
+    ResponseEntity<?> response = controller.postReview(VALID_USER_ID, "p1", review);
 
     assertEquals(HttpStatus.CREATED, response.getStatusCode());
     assertEquals(4.2, ((Review) response.getBody()).getRating());
@@ -193,7 +227,7 @@ class ProductControllerTest {
     when(reviewRepository.findByIdIn(anyList())).thenReturn(List.of(review));
     when(productRepository.save(product)).thenReturn(product);
 
-    ResponseEntity<?> response = controller.postReview("p1", review);
+    ResponseEntity<?> response = controller.postReview(VALID_USER_ID, "p1", review);
 
     assertEquals(HttpStatus.CREATED, response.getStatusCode());
     assertEquals(5, ((Review) response.getBody()).getRating());
@@ -204,7 +238,7 @@ class ProductControllerTest {
     Review review = new Review();
     when(productRepository.findById("p1")).thenReturn(Optional.empty());
 
-    ResponseEntity<?> response = controller.postReview("p1", review);
+    ResponseEntity<?> response = controller.postReview(VALID_USER_ID, "p1", review);
 
     assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     assertNotNull(response.getBody());
@@ -226,7 +260,7 @@ class ProductControllerTest {
     when(reviewRepository.findByIdIn(anyList())).thenReturn(List.of(review));
     when(productRepository.save(product)).thenReturn(product);
 
-    ResponseEntity<?> response = controller.postReview("p1", review);
+    ResponseEntity<?> response = controller.postReview(VALID_USER_ID, "p1", review);
 
     assertEquals(HttpStatus.CREATED, response.getStatusCode());
     verify(userRepository, times(1)).findByUsername("alice");
@@ -250,7 +284,7 @@ class ProductControllerTest {
     when(reviewRepository.findByIdIn(anyList())).thenReturn(List.of(review));
     when(productRepository.save(product)).thenReturn(product);
 
-    ResponseEntity<?> response = controller.postReview("p1", review);
+    ResponseEntity<?> response = controller.postReview(VALID_USER_ID, "p1", review);
 
     assertEquals(HttpStatus.CREATED, response.getStatusCode());
     verify(userRepository, times(1)).save(user);
@@ -270,7 +304,7 @@ class ProductControllerTest {
     when(reviewRepository.findByIdIn(anyList())).thenReturn(List.of(review));
     when(productRepository.save(product)).thenReturn(product);
 
-    ResponseEntity<?> response = controller.postReview("p1", review);
+    ResponseEntity<?> response = controller.postReview(VALID_USER_ID, "p1", review);
 
     assertEquals(HttpStatus.CREATED, response.getStatusCode());
     assertEquals(4.5, ((Review) response.getBody()).getRating());
@@ -290,7 +324,7 @@ class ProductControllerTest {
     when(reviewRepository.findByIdIn(anyList())).thenReturn(List.of(review));
     when(productRepository.save(product)).thenReturn(product);
 
-    ResponseEntity<?> response = controller.postReview("p1", review);
+    ResponseEntity<?> response = controller.postReview(VALID_USER_ID, "p1", review);
 
     assertEquals(HttpStatus.CREATED, response.getStatusCode());
     assertEquals(3.8, ((Review) response.getBody()).getRating());
@@ -308,7 +342,7 @@ class ProductControllerTest {
     when(reviewRepository.findByIdIn(anyList())).thenReturn(List.of(review));
     when(productRepository.save(product)).thenReturn(product);
 
-    ResponseEntity<?> response = controller.postReview("p1", review);
+    ResponseEntity<?> response = controller.postReview(VALID_USER_ID, "p1", review);
 
     assertEquals(HttpStatus.CREATED, response.getStatusCode());
     assertEquals(0, ((Review) response.getBody()).getRating());
@@ -326,7 +360,7 @@ class ProductControllerTest {
     when(reviewRepository.findByIdIn(anyList())).thenReturn(List.of(review));
     when(productRepository.save(product)).thenReturn(product);
 
-    ResponseEntity<?> response = controller.postReview("p1", review);
+    ResponseEntity<?> response = controller.postReview(VALID_USER_ID, "p1", review);
 
     assertEquals(HttpStatus.CREATED, response.getStatusCode());
     assertNotNull(product.getReviewIds());
@@ -352,7 +386,7 @@ class ProductControllerTest {
     when(productRepository.findAllById(company.getProducts())).thenReturn(List.of(product));
     when(companyRepository.save(company)).thenReturn(company);
 
-    ResponseEntity<?> response = controller.postReview("p1", review);
+    ResponseEntity<?> response = controller.postReview(VALID_USER_ID, "p1", review);
 
     assertEquals(HttpStatus.CREATED, response.getStatusCode());
     assertEquals(5, company.getRating());
@@ -375,7 +409,7 @@ class ProductControllerTest {
     when(reviewRepository.findByIdIn(anyList())).thenReturn(List.of(review));
     when(productRepository.save(product)).thenReturn(product);
 
-    ResponseEntity<?> response = controller.postReview("p1", review);
+    ResponseEntity<?> response = controller.postReview(VALID_USER_ID, "p1", review);
 
     assertEquals(HttpStatus.CREATED, response.getStatusCode());
     verify(userRepository, times(1)).save(user);
@@ -389,7 +423,7 @@ class ProductControllerTest {
     when(productRepository.findById("p1")).thenReturn(Optional.of(product));
     when(reviewRepository.save(review)).thenThrow(new DataAccessException("DB error") {});
 
-    ResponseEntity<?> response = controller.postReview("p1", review);
+    ResponseEntity<?> response = controller.postReview(VALID_USER_ID, "p1", review);
 
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
     assertNotNull(response.getBody());
@@ -404,7 +438,7 @@ class ProductControllerTest {
     // Force a runtime exception on findById to hit generic catch
     when(productRepository.findById("p1")).thenThrow(new RuntimeException("Oops"));
 
-    ResponseEntity<?> response = controller.postReview("p1", review);
+    ResponseEntity<?> response = controller.postReview(VALID_USER_ID, "p1", review);
 
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
     assertNotNull(response.getBody());
@@ -442,13 +476,13 @@ class ProductControllerTest {
       when(reviewRepository.findByIdIn(any())).thenReturn(List.of(review1, review2));
 
       // Post first review
-      ResponseEntity<?> response1 = controller.postReview("p1", review1);
+      ResponseEntity<?> response1 = controller.postReview(VALID_USER_ID, "p1", review1);
       assertEquals(HttpStatus.CREATED, response1.getStatusCode());
       assertEquals("alice", ((Review) response1.getBody()).getId());
       assertTrue(product.getReviewIds().contains("alice"));
 
       // Post second review
-      ResponseEntity<?> response2 = controller.postReview("p1", review2);
+      ResponseEntity<?> response2 = controller.postReview(VALID_USER_ID, "p1", review2);
       assertEquals(HttpStatus.CREATED, response2.getStatusCode());
       assertEquals("bob", ((Review) response2.getBody()).getId());
       assertTrue(product.getReviewIds().contains("bob"));
@@ -470,7 +504,7 @@ class ProductControllerTest {
     when(reviewRepository.findById("r1")).thenReturn(Optional.of(new Review()));
     when(reviewRepository.save(any())).thenThrow(new DataAccessException("DB fail") {});
 
-    ResponseEntity<?> response = controller.updateReview("p1", "r1", update);
+    ResponseEntity<?> response = controller.updateReview(VALID_USER_ID, "p1", "r1", update);
 
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
     assertTrue(response.getBody().toString().contains("Database error"));
@@ -482,7 +516,7 @@ class ProductControllerTest {
 
     when(productRepository.findById("p1")).thenReturn(Optional.empty());
 
-    ResponseEntity<?> response = controller.updateReview("p1", "r1", update);
+    ResponseEntity<?> response = controller.updateReview(VALID_USER_ID, "p1", "r1", update);
 
     assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     assertNotNull(response.getBody());
@@ -496,7 +530,7 @@ class ProductControllerTest {
     when(productRepository.findById("p1")).thenReturn(Optional.of(product));
     when(reviewRepository.findById("r1")).thenReturn(Optional.empty());
 
-    ResponseEntity<?> response = controller.updateReview("p1", "r1", update);
+    ResponseEntity<?> response = controller.updateReview(VALID_USER_ID, "p1", "r1", update);
 
     assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     assertNotNull(response.getBody());
@@ -523,7 +557,7 @@ class ProductControllerTest {
     when(reviewRepository.save(existing)).thenReturn(existing);
     when(productRepository.save(product)).thenReturn(product);
 
-    ResponseEntity<?> response = controller.updateReview("p1", "r1", update);
+    ResponseEntity<?> response = controller.updateReview(VALID_USER_ID, "p1", "r1", update);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
     Review saved = (Review) response.getBody();
@@ -548,7 +582,7 @@ class ProductControllerTest {
     when(reviewRepository.save(existing)).thenReturn(existing);
     when(productRepository.save(product)).thenReturn(product);
 
-    ResponseEntity<?> response = controller.updateReview("p1", "r1", update);
+    ResponseEntity<?> response = controller.updateReview(VALID_USER_ID, "p1", "r1", update);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
     Review saved = (Review) response.getBody();
@@ -561,7 +595,7 @@ class ProductControllerTest {
     when(productRepository.findById("p1")).thenThrow(new RuntimeException("Oops"));
 
     Review update = new Review();
-    ResponseEntity<?> response = controller.updateReview("p1", "r1", update);
+    ResponseEntity<?> response = controller.updateReview(VALID_USER_ID, "p1", "r1", update);
 
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
     assertNotNull(response.getBody());
@@ -597,7 +631,7 @@ class ProductControllerTest {
     when(productRepository.findAllById(company.getProducts())).thenReturn(List.of(product));
     when(companyRepository.save(company)).thenReturn(company);
 
-    ResponseEntity<?> response = controller.updateReview("p1", "r1", update);
+    ResponseEntity<?> response = controller.updateReview(VALID_USER_ID, "p1", "r1", update);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
     Review saved = (Review) response.getBody();
@@ -619,7 +653,7 @@ class ProductControllerTest {
     when(productRepository.findById("p1")).thenReturn(Optional.of(product));
     when(reviewRepository.findByIdIn(List.of("r1"))).thenReturn(List.of(review));
 
-    ResponseEntity<?> response = controller.getReviews("p1");
+    ResponseEntity<?> response = controller.getReviews(VALID_USER_ID, "p1");
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertEquals(List.of(review), response.getBody());
@@ -631,7 +665,7 @@ class ProductControllerTest {
 
     when(productRepository.findById("p1")).thenReturn(Optional.of(product));
 
-    ResponseEntity<?> response = controller.getReviews("p1");
+    ResponseEntity<?> response = controller.getReviews(VALID_USER_ID, "p1");
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertNotNull(response.getBody());
@@ -642,7 +676,7 @@ class ProductControllerTest {
   void getReviews_ShouldReturnEmptyList_WhenReviewIdsEmpty() {
     when(productRepository.findById("p1")).thenReturn(Optional.of(product));
 
-    ResponseEntity<?> response = controller.getReviews("p1");
+    ResponseEntity<?> response = controller.getReviews(VALID_USER_ID, "p1");
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertNotNull(response.getBody());
@@ -653,7 +687,7 @@ class ProductControllerTest {
   void getReviews_ShouldReturnInternalServerError_OnGenericException() {
     when(productRepository.findById("p1")).thenThrow(new RuntimeException("Oops"));
 
-    ResponseEntity<?> response = controller.getReviews("p1");
+    ResponseEntity<?> response = controller.getReviews(VALID_USER_ID, "p1");
 
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
     assertNotNull(response.getBody());
@@ -672,7 +706,7 @@ class ProductControllerTest {
     when(productRepository.findById("p1")).thenReturn(Optional.of(product));
     when(reviewRepository.findByIdIn(List.of("r1", "r2"))).thenReturn(List.of(r1, r2));
 
-    ResponseEntity<?> response = controller.getReviews("p1");
+    ResponseEntity<?> response = controller.getReviews(VALID_USER_ID, "p1");
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertEquals(List.of(r1, r2), response.getBody());
@@ -686,7 +720,7 @@ class ProductControllerTest {
 
     when(productRepository.findById("p1")).thenReturn(Optional.of(product));
 
-    ResponseEntity<?> response = controller.getAverageRating("p1");
+    ResponseEntity<?> response = controller.getAverageRating(VALID_USER_ID, "p1");
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertEquals(4.5, response.getBody());
@@ -696,7 +730,7 @@ class ProductControllerTest {
   void getAverageRating_ShouldReturnInternalServerError_OnException() {
     when(productRepository.findById("p1")).thenThrow(new RuntimeException("fail"));
 
-    ResponseEntity<?> response = controller.getAverageRating("p1");
+    ResponseEntity<?> response = controller.getAverageRating(VALID_USER_ID, "p1");
 
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
     assertTrue(response.getBody().toString().contains("Unexpected error"));

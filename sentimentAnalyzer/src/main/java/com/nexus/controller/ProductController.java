@@ -1,5 +1,6 @@
 package com.nexus.controller;
 
+import com.nexus.auth.service.UserAuthService;
 import com.nexus.model.Product;
 import com.nexus.model.Review;
 import com.nexus.model.Company;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.util.ArrayList;
 
@@ -48,35 +50,48 @@ public final class ProductController {
   private final SentimentService sentimentService;
 
   /**
-   * Constructs a ProductController with the given repositories.
+   * Service for user authentication.
+   */
+  private final UserAuthService userAuthService;
+
+  /**
+   * Constructs a ProductController with the given repositories and services.
    *
    * @param productRepo      the repository for Product entities
    * @param reviewRepo       the repository for Review entities
    * @param userRepo         the repository for User entities
    * @param companyRepo      the repository for Company entities
    * @param sentimentService the service for sentiment analysis
+   * @param userAuthService  the service for user authentication
    */
   public ProductController(final ProductRepository productRepo,
       final ReviewRepository reviewRepo,
       final UserRepository userRepo,
       final CompanyRepository companyRepo,
-      final SentimentService sentimentService) {
+      final SentimentService sentimentService,
+      final UserAuthService userAuthService) {
     this.productRepository = productRepo;
     this.reviewRepository = reviewRepo;
     this.userRepository = userRepo;
     this.companyRepository = companyRepo;
     this.sentimentService = sentimentService;
+    this.userAuthService = userAuthService;
   }
 
   /**
    * Creates a new product entity. Not designed for extension.
    *
+   * @param userId  the authenticated user ID (required header)
    * @param product the product object to be created
    * @return ResponseEntity with status and body depending on the result
    */
   @PostMapping
-  public ResponseEntity<?> createProduct(@RequestBody final Product product) {
+  public ResponseEntity<?> createProduct(
+      @RequestHeader("X-User-Id") final String userId,
+      @RequestBody final Product product) {
     try {
+      // Validate user exists
+      userAuthService.validateUser(userId);
       if (product.getReviewIds() == null) {
         product.setReviewIds(new ArrayList<>());
       }
@@ -97,6 +112,14 @@ public final class ProductController {
 
       return ResponseEntity.status(HttpStatus.CREATED)
           .body(saved);
+    } catch (IllegalStateException ise) {
+      // User validation failed
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+          .body("Authentication failed: " + ise.getMessage());
+    } catch (IllegalArgumentException iae) {
+      // Invalid user ID format
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+          .body("Invalid user ID: " + iae.getMessage());
     } catch (DataAccessException dae) {
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body("Database error while saving product: "
@@ -111,12 +134,22 @@ public final class ProductController {
   /**
    * Retrieves all products. Not designed for extension.
    *
+   * @param userId the authenticated user ID (required header)
    * @return ResponseEntity with list of products or empty list on error
    */
   @GetMapping
-  public ResponseEntity<List<Product>> getAllProducts() {
+  public ResponseEntity<?> getAllProducts(
+      @RequestHeader("X-User-Id") final String userId) {
     try {
+      // Validate user exists
+      userAuthService.validateUser(userId);
       return ResponseEntity.ok(productRepository.findAll());
+    } catch (IllegalStateException ise) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+          .body("Authentication failed: " + ise.getMessage());
+    } catch (IllegalArgumentException iae) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+          .body("Invalid user ID: " + iae.getMessage());
     } catch (Exception e) {
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body(List.of());
@@ -126,14 +159,20 @@ public final class ProductController {
   /**
    * Posts a review for a product. Not designed for extension.
    *
+   * @param userId    the authenticated user ID (required header)
    * @param productId the product ID
    * @param review    the review object
    * @return ResponseEntity with status and body depending on the result
    */
   @PostMapping("/{productId}/reviews")
-  public ResponseEntity<?> postReview(@PathVariable final String productId,
+  public ResponseEntity<?> postReview(
+      @RequestHeader("X-User-Id") final String userId,
+      @PathVariable final String productId,
       @RequestBody final Review review) {
     try {
+      // Validate user exists
+      userAuthService.validateUser(userId);
+
       Product product = productRepository.findById(productId)
           .orElseThrow(() -> new IllegalArgumentException(
               "Product not found: " + productId));
@@ -191,6 +230,13 @@ public final class ProductController {
 
       return ResponseEntity.status(HttpStatus.CREATED)
           .body(saved);
+    } catch (IllegalStateException ise) {
+      // User validation failed or product not found
+      if (ise.getMessage().contains("does not exist")) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            .body("Authentication failed: " + ise.getMessage());
+      }
+      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ise.getMessage());
     } catch (IllegalArgumentException iae) {
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body(iae.getMessage());
     } catch (DataAccessException dae) {
@@ -207,12 +253,18 @@ public final class ProductController {
   /**
    * Retrieves reviews for a product. Not designed for extension.
    *
+   * @param userId    the authenticated user ID (required header)
    * @param productId the product ID
    * @return ResponseEntity with list of reviews or error message
    */
   @GetMapping("/{productId}/reviews")
-  public ResponseEntity<?> getReviews(@PathVariable final String productId) {
+  public ResponseEntity<?> getReviews(
+      @RequestHeader("X-User-Id") final String userId,
+      @PathVariable final String productId) {
     try {
+      // Validate user exists
+      userAuthService.validateUser(userId);
+
       Product product = productRepository.findById(productId)
           .orElseThrow(() -> new IllegalArgumentException(
               "Product not found: " + productId));
@@ -224,6 +276,9 @@ public final class ProductController {
       List<Review> reviews = reviewRepository.findByIdIn(product.getReviewIds());
       return ResponseEntity.ok(reviews);
 
+    } catch (IllegalStateException ise) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+          .body("Authentication failed: " + ise.getMessage());
     } catch (IllegalArgumentException iae) {
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body(iae.getMessage());
     } catch (Exception e) {
@@ -236,16 +291,22 @@ public final class ProductController {
   /**
    * Updates a review for a product. Not designed for extension.
    *
+   * @param userId    the authenticated user ID (required header)
    * @param productId the product ID
    * @param reviewId  the review ID
    * @param update    the review update object
    * @return ResponseEntity with updated review or error message
    */
   @PutMapping("/{productId}/reviews/{reviewId}")
-  public ResponseEntity<?> updateReview(@PathVariable final String productId,
+  public ResponseEntity<?> updateReview(
+      @RequestHeader("X-User-Id") final String userId,
+      @PathVariable final String productId,
       @PathVariable final String reviewId,
       @RequestBody final Review update) {
     try {
+      // Validate user exists
+      userAuthService.validateUser(userId);
+
       Product product = productRepository.findById(productId)
           .orElseThrow(() -> new IllegalArgumentException(
               "Product not found: " + productId));
@@ -287,6 +348,9 @@ public final class ProductController {
 
       return ResponseEntity.ok(saved);
 
+    } catch (IllegalStateException ise) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+          .body("Authentication failed: " + ise.getMessage());
     } catch (IllegalArgumentException iae) {
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body(iae.getMessage());
     } catch (DataAccessException dae) {
@@ -304,15 +368,24 @@ public final class ProductController {
    * Returns the average rating of a product (auto-updated when reviews are
    * added).
    *
+   * @param userId    the authenticated user ID (required header)
    * @param productId the unique identifier for the product
    * @return ResponseEntity with status and body depending on the result
    */
   @GetMapping("/{productId}/average-rating")
-  public ResponseEntity<?> getAverageRating(@PathVariable final String productId) {
+  public ResponseEntity<?> getAverageRating(
+      @RequestHeader("X-User-Id") final String userId,
+      @PathVariable final String productId) {
     try {
+      // Validate user exists
+      userAuthService.validateUser(userId);
+
       Product product = productRepository.findById(productId)
           .orElseThrow(() -> new RuntimeException("Product not found"));
       return ResponseEntity.ok(product.getRating());
+    } catch (IllegalStateException ise) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+          .body("Authentication failed: " + ise.getMessage());
     } catch (DataAccessException dae) {
       // Handles database-related issues
       return ResponseEntity

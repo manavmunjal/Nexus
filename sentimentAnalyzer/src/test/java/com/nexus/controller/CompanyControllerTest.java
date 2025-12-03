@@ -18,6 +18,8 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import com.nexus.auth.model.AuthUser;
+import com.nexus.auth.service.UserAuthService;
 import com.nexus.model.Company;
 import com.nexus.model.Product;
 import com.nexus.model.Review;
@@ -34,16 +36,26 @@ class CompanyControllerTest {
   private ProductRepository productRepository;
   private ReviewRepository reviewRepository;
   private UserRepository userRepository;
+  private UserAuthService userAuthService;
 
   private Company testCompany;
+
+  /** Valid user ID for authenticated requests. */
+  private static final String VALID_USER_ID = "test-user-123";
 
   @BeforeEach
   void setUp() {
     companyRepository = mock(CompanyRepository.class);
     productRepository = mock(ProductRepository.class);
     reviewRepository = mock(ReviewRepository.class);
-    companyController = new CompanyController(companyRepository, productRepository, reviewRepository);
     userRepository = mock(UserRepository.class);
+    userAuthService = mock(UserAuthService.class);
+
+    companyController = new CompanyController(companyRepository, productRepository,
+        reviewRepository, userAuthService);
+
+    // Default: user authentication succeeds
+    when(userAuthService.validateUser(VALID_USER_ID)).thenReturn(new AuthUser(VALID_USER_ID));
 
     // Reusable company instance
     testCompany = new Company();
@@ -63,7 +75,7 @@ class CompanyControllerTest {
     when(companyRepository.save(company)).thenReturn(company);
 
     // Act
-    ResponseEntity<?> response = companyController.createCompany(company);
+    ResponseEntity<?> response = companyController.createCompany(VALID_USER_ID, company);
 
     // Assert
     assertEquals(HttpStatus.CREATED, response.getStatusCode());
@@ -74,7 +86,7 @@ class CompanyControllerTest {
   @Test
   void createCompany_ShouldReturnBadRequest_WhenCompanyIsNull() {
     // Act
-    ResponseEntity<?> response = companyController.createCompany(null);
+    ResponseEntity<?> response = companyController.createCompany(VALID_USER_ID, null);
 
     // Assert
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
@@ -89,7 +101,7 @@ class CompanyControllerTest {
     company.setName("  ");
 
     // Act
-    ResponseEntity<?> response = companyController.createCompany(company);
+    ResponseEntity<?> response = companyController.createCompany(VALID_USER_ID, company);
 
     // Assert
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
@@ -107,7 +119,7 @@ class CompanyControllerTest {
         .thenThrow(new DataAccessException("DB down") {});
 
     // Act
-    ResponseEntity<?> response = companyController.createCompany(company);
+    ResponseEntity<?> response = companyController.createCompany(VALID_USER_ID, company);
 
     // Assert
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
@@ -124,7 +136,7 @@ class CompanyControllerTest {
         .thenThrow(new RuntimeException("Unexpected failure"));
 
     // Act
-    ResponseEntity<?> response = companyController.createCompany(company);
+    ResponseEntity<?> response = companyController.createCompany(VALID_USER_ID, company);
 
     // Assert
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
@@ -140,7 +152,7 @@ class CompanyControllerTest {
     when(companyRepository.findById("c1")).thenReturn(Optional.of(testCompany));
 
     // Act
-    ResponseEntity<?> response = companyController.getAllReviews("c1");
+    ResponseEntity<?> response = companyController.getAllReviews(VALID_USER_ID, "c1");
 
     // Assert
     assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -170,7 +182,7 @@ class CompanyControllerTest {
         .thenReturn(List.of(review1, review2, review3));
 
     // Act
-    ResponseEntity<?> response = companyController.getAllReviews("c1");
+    ResponseEntity<?> response = companyController.getAllReviews(VALID_USER_ID, "c1");
 
     // Assert
     assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -183,7 +195,7 @@ class CompanyControllerTest {
     when(companyRepository.findById("c1")).thenThrow(new DataAccessException("DB down") {});
 
     // Act
-    ResponseEntity<?> response = companyController.getAllReviews("c1");
+    ResponseEntity<?> response = companyController.getAllReviews(VALID_USER_ID, "c1");
 
     // Assert
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
@@ -196,7 +208,7 @@ class CompanyControllerTest {
     when(companyRepository.findById("c1")).thenThrow(new RuntimeException("Unexpected failure"));
 
     // Act
-    ResponseEntity<?> response = companyController.getAllReviews("c1");
+    ResponseEntity<?> response = companyController.getAllReviews(VALID_USER_ID, "c1");
 
     // Assert
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
@@ -209,7 +221,7 @@ class CompanyControllerTest {
     when(companyRepository.findById("c1")).thenReturn(Optional.empty());
 
     // Act
-    ResponseEntity<?> response = companyController.getAllReviews("c1");
+    ResponseEntity<?> response = companyController.getAllReviews(VALID_USER_ID, "c1");
 
     // Assert
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
@@ -223,7 +235,7 @@ class CompanyControllerTest {
     when(companyRepository.findById("c1")).thenReturn(Optional.of(testCompany));
 
     // Act
-    ResponseEntity<?> response = companyController.getAllReviews("c1");
+    ResponseEntity<?> response = companyController.getAllReviews(VALID_USER_ID, "c1");
 
     // Assert
     assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -248,7 +260,7 @@ class CompanyControllerTest {
     when(productRepository.findAllById(testCompany.getProducts())).thenReturn(List.of(p3, p4));
 
     // Act
-    ResponseEntity<?> response = companyController.getAllReviews("c1");
+    ResponseEntity<?> response = companyController.getAllReviews(VALID_USER_ID, "c1");
 
     // Assert
     assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -271,7 +283,7 @@ class CompanyControllerTest {
     when(reviewRepository.findAllById(List.of("r1"))).thenReturn(List.of(review));
 
     // Act
-    ResponseEntity<?> response = companyController.getAllReviews("c1");
+    ResponseEntity<?> response = companyController.getAllReviews(VALID_USER_ID, "c1");
 
     // Assert
     assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -297,7 +309,7 @@ class CompanyControllerTest {
     when(reviewRepository.findAllById(List.of("r1", "r2"))).thenReturn(List.of(r1, r2));
 
     // Act
-    ResponseEntity<?> response = companyController.getAllReviews("c1");
+    ResponseEntity<?> response = companyController.getAllReviews(VALID_USER_ID, "c1");
 
     // Assert
     assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -316,7 +328,7 @@ class CompanyControllerTest {
     when(companyRepository.findById("c1")).thenReturn(Optional.of(testCompany));
 
     // Act
-    ResponseEntity<?> response = companyController.getAverageRating("c1");
+    ResponseEntity<?> response = companyController.getAverageRating(VALID_USER_ID, "c1");
 
     // Assert
     assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -330,7 +342,7 @@ class CompanyControllerTest {
     when(companyRepository.findById("c1")).thenReturn(Optional.of(testCompany));
 
     // Act
-    ResponseEntity<?> response = companyController.getAverageRating("c1");
+    ResponseEntity<?> response = companyController.getAverageRating(VALID_USER_ID, "c1");
 
     // Assert
     assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -343,7 +355,7 @@ class CompanyControllerTest {
     when(companyRepository.findById("c1")).thenReturn(Optional.empty());
 
     // Act
-    ResponseEntity<?> response = companyController.getAverageRating("c1");
+    ResponseEntity<?> response = companyController.getAverageRating(VALID_USER_ID, "c1");
 
     // Assert
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
@@ -357,7 +369,7 @@ class CompanyControllerTest {
         .thenThrow(new DataAccessException("DB down") {});
 
     // Act
-    ResponseEntity<?> response = companyController.getAverageRating("c1");
+    ResponseEntity<?> response = companyController.getAverageRating(VALID_USER_ID, "c1");
 
     // Assert
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
@@ -371,7 +383,7 @@ class CompanyControllerTest {
         .thenThrow(new RuntimeException("Unexpected failure"));
 
     // Act
-    ResponseEntity<?> response = companyController.getAverageRating("c1");
+    ResponseEntity<?> response = companyController.getAverageRating(VALID_USER_ID, "c1");
 
     // Assert
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());

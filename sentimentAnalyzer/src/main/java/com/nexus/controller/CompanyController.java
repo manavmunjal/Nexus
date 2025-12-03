@@ -1,5 +1,6 @@
 package com.nexus.controller;
 
+import com.nexus.auth.service.UserAuthService;
 import com.nexus.model.Company;
 import com.nexus.model.Product;
 import com.nexus.model.Review;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 @RestController
 @RequestMapping("/api/companies")
@@ -39,30 +41,44 @@ public final class CompanyController {
   private final ReviewRepository reviewRepository;
 
   /**
-   * Constructs a CompanyController with the given repositories.
+   * Service for user authentication.
+   */
+  private final UserAuthService userAuthService;
+
+  /**
+   * Constructs a CompanyController with the given repositories and services.
    *
-   * @param companyRepo the repository for Company entities
-   * @param productRepo the repository for Product entities
-   * @param reviewRepo  the repository for Review entities
+   * @param companyRepo     the repository for Company entities
+   * @param productRepo     the repository for Product entities
+   * @param reviewRepo      the repository for Review entities
+   * @param userAuthService the service for user authentication
    */
   public CompanyController(final CompanyRepository companyRepo,
       final ProductRepository productRepo,
-      final ReviewRepository reviewRepo) {
+      final ReviewRepository reviewRepo,
+      final UserAuthService userAuthService) {
     this.companyRepository = companyRepo;
     this.productRepository = productRepo;
     this.reviewRepository = reviewRepo;
+    this.userAuthService = userAuthService;
   }
 
   /**
    * Creates a new company entity. This method is not designed for extension;
    * overriding may break request handling logic.
    *
+   * @param userId  the authenticated user ID (required header)
    * @param company the company object to be created
    * @return ResponseEntity with status and body depending on the result
    */
   @PostMapping
-  public ResponseEntity<?> createCompany(@RequestBody final Company company) {
+  public ResponseEntity<?> createCompany(
+      @RequestHeader("X-User-Id") final String userId,
+      @RequestBody final Company company) {
     try {
+      // Validate user exists
+      userAuthService.validateUser(userId);
+
       if (company == null || company.getName() == null
           || company.getName().isBlank()) {
         return ResponseEntity
@@ -73,6 +89,14 @@ public final class CompanyController {
       Company savedCompany = companyRepository.save(company);
       return ResponseEntity.status(HttpStatus.CREATED)
           .body(savedCompany);
+
+    } catch (IllegalStateException ise) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+          .body("Authentication failed: " + ise.getMessage());
+
+    } catch (IllegalArgumentException iae) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+          .body("Invalid user ID: " + iae.getMessage());
 
     } catch (DataAccessException dae) {
       // Handles database-related issues
@@ -94,15 +118,24 @@ public final class CompanyController {
    * Returns the average rating of a company (auto-updated when reviews are added
    * to products).
    *
+   * @param userId    the authenticated user ID (required header)
    * @param companyId the unique identifier for the company
    * @return ResponseEntity with status and body depending on the result
    */
   @GetMapping("/{companyId}/average-rating")
-  public ResponseEntity<?> getAverageRating(@PathVariable final String companyId) {
+  public ResponseEntity<?> getAverageRating(
+      @RequestHeader("X-User-Id") final String userId,
+      @PathVariable final String companyId) {
     try {
+      // Validate user exists
+      userAuthService.validateUser(userId);
+
       Company company = companyRepository.findById(companyId)
           .orElseThrow(() -> new RuntimeException("Company not found"));
       return ResponseEntity.ok(company.getRating());
+    } catch (IllegalStateException ise) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+          .body("Authentication failed: " + ise.getMessage());
     } catch (DataAccessException dae) {
       // Handles database-related issues
       return ResponseEntity
@@ -121,12 +154,18 @@ public final class CompanyController {
   /**
    * Return all reviews of a company.
    *
+   * @param userId    the authenticated user ID (required header)
    * @param companyId the unique identifier for the company
    * @return ResponseEntity with status and body depending on the result
    */
   @GetMapping("/{companyId}/reviews")
-  public ResponseEntity<?> getAllReviews(@PathVariable final String companyId) {
+  public ResponseEntity<?> getAllReviews(
+      @RequestHeader("X-User-Id") final String userId,
+      @PathVariable final String companyId) {
     try {
+      // Validate user exists
+      userAuthService.validateUser(userId);
+
       Company company = companyRepository.findById(companyId)
           .orElseThrow(() -> new RuntimeException("Company not found"));
 
@@ -144,6 +183,9 @@ public final class CompanyController {
 
       List<Review> reviews = reviewRepository.findAllById(reviewIds);
       return ResponseEntity.ok(reviews);
+    } catch (IllegalStateException ise) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+          .body("Authentication failed: " + ise.getMessage());
     } catch (DataAccessException dae) {
       // Handles database-related issues
       return ResponseEntity
