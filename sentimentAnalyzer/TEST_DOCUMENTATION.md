@@ -201,12 +201,6 @@ export MONGODB_PASSWORD=<your-mongodb-password>
 mvn spring-boot:run
 ```
 
-Or build and run as JAR:
-```bash
-mvn clean package -DskipTests
-java -jar target/sentiment-analyzer-0.0.1-SNAPSHOT.jar
-```
-
 Create Users
 
 ### Create a regular user
