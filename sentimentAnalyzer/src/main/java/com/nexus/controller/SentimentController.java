@@ -38,12 +38,12 @@ public final class SentimentController {
    * Constructs a SentimentController with the given services.
    *
    * @param service         the sentiment analysis service
-   * @param userAuthService the user authentication service
+   * @param newUserAuthService the user authentication service
    */
   public SentimentController(final SentimentService service,
-      final UserAuthService userAuthService) {
+      final UserAuthService newUserAuthService) {
     this.sentimentService = service;
-    this.userAuthService = userAuthService;
+    this.userAuthService = newUserAuthService;
   }
 
   /**
@@ -95,7 +95,7 @@ public final class SentimentController {
    * Only the ADMIN user is authorized to train the model.
    * All parameters are optional; defaults are used when omitted.
    *
-   * @param userId      the authenticated user ID (required header, must be "ADMIN")
+   * @param userId      the authenticated user ID (required header "ADMIN")
    * @param datasetPath optional path to CSV dataset
    * @param classAttr   optional class attribute name
    * @param textAttr    optional text attribute name

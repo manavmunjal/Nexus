@@ -61,21 +61,21 @@ public final class ProductController {
    * @param reviewRepo       the repository for Review entities
    * @param userRepo         the repository for User entities
    * @param companyRepo      the repository for Company entities
-   * @param sentimentService the service for sentiment analysis
-   * @param userAuthService  the service for user authentication
+   * @param newSentimentService the service for sentiment analysis
+   * @param newUserAuthService  the service for user authentication
    */
   public ProductController(final ProductRepository productRepo,
       final ReviewRepository reviewRepo,
       final UserRepository userRepo,
       final CompanyRepository companyRepo,
-      final SentimentService sentimentService,
-      final UserAuthService userAuthService) {
+      final SentimentService newSentimentService,
+      final UserAuthService newUserAuthService) {
     this.productRepository = productRepo;
     this.reviewRepository = reviewRepo;
     this.userRepository = userRepo;
     this.companyRepository = companyRepo;
-    this.sentimentService = sentimentService;
-    this.userAuthService = userAuthService;
+    this.sentimentService = newSentimentService;
+    this.userAuthService = newUserAuthService;
   }
 
   /**
@@ -99,7 +99,8 @@ public final class ProductController {
 
       // Add product to company's products array if companyName is specified
       if (saved.getCompanyName() != null && !saved.getCompanyName().isBlank()) {
-        companyRepository.findByName(saved.getCompanyName()).ifPresent(company -> {
+        companyRepository.findByName(saved.getCompanyName())
+        .ifPresent(company -> {
           if (company.getProducts() == null) {
             company.setProducts(new ArrayList<>());
           }
@@ -188,7 +189,8 @@ public final class ProductController {
       }
 
       // Calculate rating from comment if not provided
-      if (review.getRating() == 0 && review.getComment() != null && !review.getComment().isBlank()) {
+      if (review.getRating() == 0 && review.getComment() != null
+      && !review.getComment().isBlank()) {
         if (!sentimentService.isTrained()) {
           sentimentService.trainModel(null, null, null);
         }
@@ -206,7 +208,8 @@ public final class ProductController {
       product.getReviewIds().add(saved.getId());
 
       // Update product average rating
-      List<Review> productReviews = reviewRepository.findByIdIn(product.getReviewIds());
+      List<Review> productReviews = reviewRepository
+      .findByIdIn(product.getReviewIds());
       double productAvgRating = productReviews.stream()
           .mapToDouble(Review::getRating)
           .average()
@@ -215,10 +218,13 @@ public final class ProductController {
       productRepository.save(product);
 
       // Update company average rating if product belongs to a company
-      if (product.getCompanyName() != null && !product.getCompanyName().isBlank()) {
-        List<Company> companies = companyRepository.findByProductsContaining(productId);
+      if (product.getCompanyName() != null
+      && !product.getCompanyName().isBlank()) {
+        List<Company> companies = companyRepository
+        .findByProductsContaining(productId);
         for (Company company : companies) {
-          List<Product> companyProducts = productRepository.findAllById(company.getProducts());
+          List<Product> companyProducts = productRepository
+          .findAllById(company.getProducts());
           double companyAvgRating = companyProducts.stream()
               .mapToDouble(Product::getRating)
               .average()
@@ -273,7 +279,8 @@ public final class ProductController {
         return ResponseEntity.ok(List.of());
       }
 
-      List<Review> reviews = reviewRepository.findByIdIn(product.getReviewIds());
+      List<Review> reviews = reviewRepository
+      .findByIdIn(product.getReviewIds());
       return ResponseEntity.ok(reviews);
 
     } catch (IllegalStateException ise) {
@@ -324,7 +331,8 @@ public final class ProductController {
       Review saved = reviewRepository.save(existing);
 
       // Recalculate product average rating
-      List<Review> productReviews = reviewRepository.findByIdIn(product.getReviewIds());
+      List<Review> productReviews = reviewRepository
+      .findByIdIn(product.getReviewIds());
       double productAvgRating = productReviews.stream()
           .mapToDouble(Review::getRating)
           .average()
@@ -333,10 +341,13 @@ public final class ProductController {
       productRepository.save(product);
 
       // Recalculate company average rating if product belongs to a company
-      if (product.getCompanyName() != null && !product.getCompanyName().isBlank()) {
-        List<Company> companies = companyRepository.findByProductsContaining(productId);
+      if (product.getCompanyName() != null
+      && !product.getCompanyName().isBlank()) {
+        List<Company> companies = companyRepository
+        .findByProductsContaining(productId);
         for (Company company : companies) {
-          List<Product> companyProducts = productRepository.findAllById(company.getProducts());
+          List<Product> companyProducts = productRepository
+          .findAllById(company.getProducts());
           double companyAvgRating = companyProducts.stream()
               .mapToDouble(Product::getRating)
               .average()

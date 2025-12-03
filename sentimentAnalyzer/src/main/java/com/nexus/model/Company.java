@@ -40,12 +40,13 @@ public class Company {
    *
    * @param companyId   the unique identifier for the company
    * @param companyName the name of the company
-   * @param products    the product ids of the company
+   * @param newProducts    the product ids of the company
    */
-  public Company(final String companyId, final String companyName, final List<String> products) {
+  public Company(final String companyId, final String companyName,
+  final List<String> newProducts) {
     this.id = companyId;
     this.name = companyName;
-    this.products = products;
+    this.products = newProducts;
   }
 
   /**

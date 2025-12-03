@@ -51,16 +51,16 @@ public final class CompanyController {
    * @param companyRepo     the repository for Company entities
    * @param productRepo     the repository for Product entities
    * @param reviewRepo      the repository for Review entities
-   * @param userAuthService the service for user authentication
+   * @param newUserAuthService the service for user authentication
    */
   public CompanyController(final CompanyRepository companyRepo,
       final ProductRepository productRepo,
       final ReviewRepository reviewRepo,
-      final UserAuthService userAuthService) {
+      final UserAuthService newUserAuthService) {
     this.companyRepository = companyRepo;
     this.productRepository = productRepo;
     this.reviewRepository = reviewRepo;
-    this.userAuthService = userAuthService;
+    this.userAuthService = newUserAuthService;
   }
 
   /**
@@ -115,8 +115,8 @@ public final class CompanyController {
   }
 
   /**
-   * Returns the average rating of a company (auto-updated when reviews are added
-   * to products).
+   * Returns the average rating of a company (auto-updated
+   * when reviews are added to products).
    *
    * @param userId    the authenticated user ID (required header)
    * @param companyId the unique identifier for the company

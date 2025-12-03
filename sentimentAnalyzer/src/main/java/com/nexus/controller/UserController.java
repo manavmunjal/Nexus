@@ -39,7 +39,8 @@ public final class UserController {
    */
   @PostMapping
   public ResponseEntity<?> createUser(@RequestBody final User user) {
-    if (user == null || user.getUsername() == null || user.getUsername().isBlank()) {
+    if (user == null || user.getUsername() == null
+    || user.getUsername().isBlank()) {
       return ResponseEntity.status(HttpStatus.BAD_REQUEST)
           .body("Invalid user data");
     }

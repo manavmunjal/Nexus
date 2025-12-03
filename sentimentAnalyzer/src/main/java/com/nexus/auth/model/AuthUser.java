@@ -105,10 +105,10 @@ public class AuthUser {
     /**
      * Sets the creation timestamp.
      *
-     * @param createdAt the creation timestamp to set
+     * @param newCreatedAt the creation timestamp to set
      */
-    public void setCreatedAt(final Instant createdAt) {
-        this.createdAt = createdAt;
+    public void setCreatedAt(final Instant newCreatedAt) {
+        this.createdAt = newCreatedAt;
     }
 
     /**
@@ -123,10 +123,10 @@ public class AuthUser {
     /**
      * Sets the last access timestamp.
      *
-     * @param lastAccessedAt the last access timestamp to set
+     * @param newLastAccessedAt the last access timestamp to set
      */
-    public void setLastAccessedAt(final Instant lastAccessedAt) {
-        this.lastAccessedAt = lastAccessedAt;
+    public void setLastAccessedAt(final Instant newLastAccessedAt) {
+        this.lastAccessedAt = newLastAccessedAt;
     }
 
     /**

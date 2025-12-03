@@ -25,10 +25,10 @@ public class UserAuthService {
     /**
      * Constructs a UserAuthService with the required repository.
      *
-     * @param authUserRepository the repository for AuthUser operations
+     * @param newAuthUserRepository the repository for AuthUser operations
      */
-    public UserAuthService(final AuthUserRepository authUserRepository) {
-        this.authUserRepository = authUserRepository;
+    public UserAuthService(final AuthUserRepository newAuthUserRepository) {
+        this.authUserRepository = newAuthUserRepository;
     }
 
     /**
@@ -42,12 +42,14 @@ public class UserAuthService {
     public AuthUser createUser(final String userId) {
         // Validate user ID is not null or blank
         if (userId == null || userId.isBlank()) {
-            throw new IllegalArgumentException("User ID cannot be null or blank");
+            throw new IllegalArgumentException(
+                "User ID cannot be null or blank");
         }
 
         // Check if user already exists
         if (authUserRepository.existsByUserId(userId)) {
-            throw new IllegalStateException("User with ID '" + userId + "' already exists");
+            throw new IllegalStateException("User with ID '"
+            + userId + "' already exists");
         }
 
         AuthUser newUser = new AuthUser(userId);
@@ -65,13 +67,15 @@ public class UserAuthService {
     public AuthUser validateUser(final String userId) {
         // Validate user ID is not null or blank
         if (userId == null || userId.isBlank()) {
-            throw new IllegalArgumentException("User ID cannot be null or blank");
+            throw new IllegalArgumentException(
+                "User ID cannot be null or blank");
         }
 
         AuthUser user = authUserRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalStateException(
                         "User with ID '" + userId + "' does not exist. "
-                                + "Please call POST /api/auth/users first to create the user."));
+                        + "Please call POST /api/auth/users "
+                        + "first to create a new user."));
 
         // Update last access time
         user.updateLastAccess();
@@ -124,7 +128,8 @@ public class UserAuthService {
      */
     public void deleteUser(final String userId) {
         if (userId == null || userId.isBlank()) {
-            throw new IllegalArgumentException("User ID cannot be null or blank");
+            throw new IllegalArgumentException(
+                "User ID cannot be null or blank");
         }
 
         AuthUser user = authUserRepository.findByUserId(userId)
