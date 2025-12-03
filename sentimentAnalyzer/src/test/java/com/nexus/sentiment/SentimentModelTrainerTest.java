@@ -364,7 +364,7 @@ class SentimentModelTrainerTest {
               """;
       Files.writeString(csvFile, content);
 
-      Instances data = DatasetLoader.load(csvFile, "sentiment_label");
+      Instances data = DatasetLoader.load(csvFile, "sentiment_label", "review_text");
       
       // Convert review_text to string type for TF-IDF
       data.setClassIndex(-1); // temporarily unset

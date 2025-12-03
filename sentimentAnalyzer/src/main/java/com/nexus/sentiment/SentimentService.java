@@ -177,7 +177,7 @@ public class SentimentService {
     Path tmpToDelete = null;
     try {
       Path path = resolveDatasetPath(ds);
-      Instances data = DatasetLoader.load(path, cls);
+      Instances data = DatasetLoader.load(path, cls, txt);
       data = SentimentLabelConverter.convertTo3Class(data, cls);
       // Build mapper and train classifier
       scoreMapper = ScoreMapper.fromAttribute(data.classAttribute());

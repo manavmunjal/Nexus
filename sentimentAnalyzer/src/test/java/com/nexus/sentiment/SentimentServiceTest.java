@@ -96,7 +96,7 @@ public class SentimentServiceTest {
     try (MockedStatic<DatasetLoader> loaderMock = mockStatic(DatasetLoader.class);
         MockedStatic<ScoreMapper> mapperMock = mockStatic(ScoreMapper.class)) {
 
-      loaderMock.when(() -> DatasetLoader.load(any(), any())).thenReturn(mockInstances);
+      loaderMock.when(() -> DatasetLoader.load(any(), any(), anyString())).thenReturn(mockInstances);
       mapperMock.when(() -> ScoreMapper.fromAttribute(any())).thenReturn(mockMapper);
 
       when(mockMapper.scoreFor("negative")).thenReturn(-1.0);
@@ -119,7 +119,7 @@ public class SentimentServiceTest {
     try (MockedStatic<DatasetLoader> loaderMock = mockStatic(DatasetLoader.class);
         MockedStatic<ScoreMapper> mapperMock = mockStatic(ScoreMapper.class)) {
 
-      loaderMock.when(() -> DatasetLoader.load(any(), any())).thenReturn(mockInstances);
+      loaderMock.when(() -> DatasetLoader.load(any(), any(), anyString())).thenReturn(mockInstances);
       mapperMock.when(() -> ScoreMapper.fromAttribute(any())).thenReturn(mockMapper);
 
       when(mockMapper.scoreFor("negative")).thenReturn(-1.0);
@@ -139,7 +139,7 @@ public class SentimentServiceTest {
     try (MockedStatic<DatasetLoader> loaderMock = mockStatic(DatasetLoader.class);
          MockedStatic<ScoreMapper> mapperMock = mockStatic(ScoreMapper.class)) {
 
-      loaderMock.when(() -> DatasetLoader.load(any(), any())).thenReturn(mockInstances);
+      loaderMock.when(() -> DatasetLoader.load(any(), any(), anyString())).thenReturn(mockInstances);
       mapperMock.when(() -> ScoreMapper.fromAttribute(any())).thenReturn(mockMapper);
 
       // Train to avoid IllegalStateException
@@ -288,7 +288,7 @@ public class SentimentServiceTest {
          MockedStatic<SentimentLabelConverter> conv = mockStatic(SentimentLabelConverter.class);
          MockedStatic<ScoreMapper> mapper = mockStatic(ScoreMapper.class)) {
 
-      ld.when(() -> DatasetLoader.load(any(), any())).thenReturn(mockInstances);
+      ld.when(() -> DatasetLoader.load(any(), any(), anyString())).thenReturn(mockInstances);
       conv.when(() -> SentimentLabelConverter.convertTo3Class(any(), any())).thenReturn(mockInstances);
       mapper.when(() -> ScoreMapper.fromAttribute(any())).thenReturn(mockMapper);
 
@@ -307,7 +307,7 @@ public class SentimentServiceTest {
          MockedStatic<ScoreMapper> mapper = mockStatic(ScoreMapper.class);
          MockedStatic<SerializationHelper> io = mockStatic(SerializationHelper.class)) {
 
-        ld.when(() -> DatasetLoader.load(any(), any())).thenReturn(mockInstances);
+        ld.when(() -> DatasetLoader.load(any(), any(), anyString())).thenReturn(mockInstances);
         conv.when(() -> SentimentLabelConverter.convertTo3Class(any(), any())).thenReturn(mockInstances);
         mapper.when(() -> ScoreMapper.fromAttribute(any())).thenReturn(mockMapper);
 
@@ -327,7 +327,7 @@ public class SentimentServiceTest {
   @Test
   void trainModel_whenLoaderThrows_wrappedInRuntimeException() throws Exception {
     try (MockedStatic<DatasetLoader> loaderMock = mockStatic(DatasetLoader.class)) {
-        loaderMock.when(() -> DatasetLoader.load(any(), any()))
+        loaderMock.when(() -> DatasetLoader.load(any(), any(), anyString()))
                   .thenThrow(new IOException("Failed to load"));
 
         RuntimeException ex = assertThrows(RuntimeException.class,
@@ -346,7 +346,7 @@ public class SentimentServiceTest {
         MockedStatic<ScoreMapper> mapperMock = mockStatic(ScoreMapper.class)) {
 
         Instances dataMock = mockInstances;
-        loaderMock.when(() -> DatasetLoader.load(any(), any())).thenReturn(dataMock);
+        loaderMock.when(() -> DatasetLoader.load(any(), any(), anyString())).thenReturn(dataMock);
         converterMock.when(() -> SentimentLabelConverter.convertTo3Class(any(), any())).thenReturn(dataMock);
         mapperMock.when(() -> ScoreMapper.fromAttribute(any())).thenReturn(mockMapper);
 

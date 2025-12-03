@@ -60,7 +60,7 @@ class MainTest {
           atts.add(new weka.core.Attribute("some_attribute", (List<String>) null));
           Instances testInstances = new Instances("TestRelation", atts, 0);
 
-          datasetLoaderMock.when(() -> DatasetLoader.load(any(Path.class), anyString()))
+          datasetLoaderMock.when(() -> DatasetLoader.load(any(Path.class), anyString(), anyString()))
                   .thenReturn(testInstances);
           converterMock.when(() -> SentimentLabelConverter.convertTo3Class(any(), anyString()))
                   .thenReturn(testInstances);
