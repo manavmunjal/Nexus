@@ -19,7 +19,7 @@ class ProductTest {
         product = new Product("p1", "Test Product", "Initial Description", "InitialCompany");
     }
 
-    // ---- Getters and setters ----
+    //  Getters and setters 
 
     @Test
     void testGetId() {
@@ -60,7 +60,7 @@ class ProductTest {
         assertEquals(4.5, product.getRating(), 0.001);
     }
 
-    // ---- findAverageRating ----
+    //  findAverageRating 
 
     @Test
     void testFindAverageRating_nullReviews() {

@@ -1,8 +1,9 @@
 package com.nexus.integration;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.times;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -10,6 +11,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nexus.auth.model.AuthUser;
+import com.nexus.auth.service.UserAuthService;
 import com.nexus.controller.CompanyController;
 import com.nexus.model.Company;
 import com.nexus.repository.CompanyRepository;
@@ -45,9 +48,12 @@ public class CompanyRepositoryIntegrationTest {
   private ProductRepository productRepository;
   @MockBean
   private ReviewRepository reviewRepository;
+  @MockBean
+  private UserAuthService userAuthService;
 
   private ObjectMapper objectMapper;
   private Company company;
+  private static final String VALID_USER_ID = "test-user-123";
 
   /**
    * Sets up common test data and initializes the ObjectMapper before each test.
@@ -64,6 +70,10 @@ public class CompanyRepositoryIntegrationTest {
     company.setId("123");
     company.setName("Test Company");
     company.setRating(4.5);
+
+    // default auth success
+    when(userAuthService.validateUser(VALID_USER_ID))
+      .thenReturn(new AuthUser(VALID_USER_ID));
   }
 
   /**
@@ -83,6 +93,7 @@ public class CompanyRepositoryIntegrationTest {
     mockMvc
         .perform(
             post("/api/companies")
+          .header("X-User-Id", VALID_USER_ID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(company)))
         .andExpect(status().isCreated())
@@ -105,7 +116,7 @@ public class CompanyRepositoryIntegrationTest {
     when(companyRepository.findById("123")).thenReturn(Optional.of(company));
 
     mockMvc
-        .perform(get("/api/companies/123/average-rating"))
+      .perform(get("/api/companies/123/average-rating").header("X-User-Id", VALID_USER_ID))
         .andExpect(status().isOk())
         .andExpect(content().string("4.5"));
   }
@@ -126,8 +137,32 @@ public class CompanyRepositoryIntegrationTest {
     when(companyRepository.findById("123")).thenReturn(Optional.empty());
 
     mockMvc
-        .perform(get("/api/companies/123/average-rating"))
+      .perform(get("/api/companies/123/average-rating").header("X-User-Id", VALID_USER_ID))
         .andExpect(status().isInternalServerError())
         .andExpect(content().string("Unexpected error occurred: Company not found"));
+  }
+
+  /**
+   * Two different users access the company endpoint; both are authorized and
+   * responses are served independently.
+   */
+  @Test
+  public void testMultipleUsers_GetCompanyAverageRating() throws Exception {
+    when(companyRepository.findById("123")).thenReturn(Optional.of(company));
+
+    // Stub two users
+    when(userAuthService.validateUser("alpha")).thenReturn(new AuthUser("alpha"));
+    when(userAuthService.validateUser("beta")).thenReturn(new AuthUser("beta"));
+
+    mockMvc.perform(get("/api/companies/123/average-rating").header("X-User-Id", "alpha"))
+        .andExpect(status().isOk())
+        .andExpect(content().string("4.5"));
+
+    mockMvc.perform(get("/api/companies/123/average-rating").header("X-User-Id", "beta"))
+        .andExpect(status().isOk())
+        .andExpect(content().string("4.5"));
+
+    verify(userAuthService, times(1)).validateUser("alpha");
+    verify(userAuthService, times(1)).validateUser("beta");
   }
 }

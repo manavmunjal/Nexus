@@ -94,7 +94,7 @@ public class SentimentServiceTest {
     return data;
   }
 
-  // ---- scoreFromText ----
+  // scoreFromText 
 
   @Test
   void testScoreFromText_highConfidencePositiveReturnsFive() throws Exception {
@@ -313,7 +313,7 @@ public class SentimentServiceTest {
     assertDoesNotThrow(() -> m.invoke(sentimentService));
   }
 
-  // ---- isTrained ----
+  //  isTrained 
 
   @Test
   void isTrainedShouldReturnFalseWhenAllFieldsNull() {
@@ -346,7 +346,7 @@ public class SentimentServiceTest {
             "Expected isTrained() to be true when classifier, scoreMapper, and trainedHeader are all non-null");
   }
 
-  // ---- trainModel ----
+  //  trainModel 
 
   @Test
   void trainModel_withNullParameters_usesDefaults() throws Exception {
@@ -435,7 +435,7 @@ public class SentimentServiceTest {
     }
   }
 
-  // ---- resolveDatasetPath ----
+  //  resolveDatasetPath 
 
   @Test
   void resolveDatasetPath_existingFile_returnsPath() throws Exception {

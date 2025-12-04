@@ -11,6 +11,8 @@ import weka.filters.unsupervised.attribute.NumericToNominal;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Utility class for loading datasets from CSV files.
@@ -115,7 +117,6 @@ public final class DatasetLoader {
 
     // Ensure class attribute is nominal
     if (data.classAttribute().isString()) {
-      System.out.println("IS STRING");
       StringToNominal strToNom = new StringToNominal();
       strToNom.setAttributeRange(String.valueOf(data.classIndex() + 1));
       strToNom.setInputFormat(data);

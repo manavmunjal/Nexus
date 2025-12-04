@@ -185,10 +185,7 @@ mvn clean compile exec:java -Dexec.args="--dataset=src/main/resources/data/augme
 
 ## Test Suite
 
-### Test Coverage: **65 Unit Tests**
-
-- **26 tests passed** (DatasetLoader, DataSplitter, ScoreMapper, DistributionUtils, SentimentStatistics)
-- **39 tests with known issues** (NLP tests - require larger training datasets)
+### Test Coverage: **250 Unit Tests**
 
 ### Heavy NLP Testing in `SentimentModelTrainerTest`:
 
@@ -458,6 +455,148 @@ The project now includes a full REST API for sentiment analysis and review manag
     - Mocked repository/service dependencies
     - Boundary conditions and input validation
 
+  ---
+
+  ### Create a regular user
+  ```bash
+  curl -X POST http://localhost:8080/api/auth/users \
+    -H "Content-Type: application/json" \
+    -d '{"userId": "user123"}'
+  ```
+
+  ### Create the ADMIN user (required for training)
+  ```bash
+  curl -X POST http://localhost:8080/api/auth/users \
+    -H "Content-Type: application/json" \
+    -d '{"userId": "ADMIN"}'
+  ```
+
+  Train the Model (ADMIN only)
+
+  ### Train with default dataset
+  ```bash
+  curl -X POST "http://localhost:8080/api/sentiment/train" \
+    -H "X-User-Id: ADMIN"
+  ```
+
+  ### Train with custom dataset
+  ```bash
+  curl -X POST
+  "http://localhost:8080/api/sentiment/train?datasetPath=/path/to/data.csv&classAttr=sentiment&textAttr=text" \
+    -H "X-User-Id: ADMIN"
+  ```
+
+  Get Sentiment Score
+
+  ### Get sentiment score for text (any exisiting authenticated user)
+  ```bash
+  curl -X GET "http://localhost:8080/api/sentiment/score?text=I%20love%20this%20product" \
+    -H "X-User-Id: user123"
+  ```
+
+  Negative Review Example (frome ture Amazon comment):
+  ```bash
+  curl -X GET "http://localhost:8080/api/sentiment/score?text=I%20deeply%20regret%20purchasing%20this%20keyboard.%20It%E2%80%99s%20like%20the%20keyboard%20has%20a%20mind%20of%20its%20own%20or%20someone%20has%20hacked%20it%20and%20begins%20typing%20strange%20stuff.%20Seriously,%20really%20strange.%20At%20first%20it%20was%20wonderful%20but%20then%20all%20things%20went%20wrong.%20There%20have%20been%20several%20times%20when%20I%20was%20typing%20something%20and%20all%20was%20well,%20then%20out%20of%20nowhere%20the%20typing%20began%20to%20be%20questionable.%20For%20example,%20I%20would%20press%20the%20T%20key%20and%20a%20symbol%20or%20a%20number%20would%20appear%20instead%20of%20the%20letter%20T.%20And%20it%20would%20happen%20very%20randomly.%20One%20minute%20the%20intended%20letters%20you%20are%20typing%20are%20showing%20up%20and%20then%20less%20than%20a%20second%20later%20you%E2%80%99re%20typing%20some%20strange%20stuff.%20Sadly,%20I%20will%20be%20getting%20rid%20of%20this%20defective%20keyboard%20and%20will%20have%20to%20buy%20something%20different.%20It%E2%80%99s%20frustrating%20because%20it%20didn%E2%80%99t%20start%20happening%20until%20after%20the%2030%20day%20returned%20window.%20I%20DO%20NOT%20RECOMMEND%20PURCHASING%20THIS%20KEYBOARD%20AND%20MOUSE%20COMBO.%20Look%20elsewhere%20and%20save%20yourself%20money,%20the%20hassle%20and%20frustration.%20Ugh." \
+    -H "X-User-Id: user123"
+  ```
+
+  Positive Review Example (from ture Amazon comment):
+  ```bash
+  curl -X GET "http://localhost:8080/api/sentiment/score?text=Works%20well,%20they%20were%20a%20bit%20thick%20for%20a%20wallet%20but%20ok%20for%20a%20key%20chain%20and%20I%20use%20them%20with%20a%20Belkin%20holder%20where%20needed.%20The%20install%20was%20perfect%20and%20quick!%20Comes%20up%20great%20when%20I%20leave%20them%20behind%20from%20the%20phone." \
+    -H "X-User-Id: user123"
+  ```
+
+  Neutral Review Example:
+  ```bash
+  curl -X GET "http://localhost:8080/api/sentiment/score?
+  text=The%20Xbox%20showed%20up%20quickly%20and%20securely%20packaged.%20It%20has%20some%20cosmetic%20damage,%20and%20was%20a%20little%20dirty,%20but%20completely%20functional.%20It%20arrived%20reset%20and%20functional%20which%20is%20about%20all%20I%27m%20concerned%20with%20when%20buying%20used%20electronics." \
+    -H "X-User-Id: user123"
+  ```
+
+  Other Useful Commands
+
+  ### List all users (ADMIN only)
+  ```bash
+  curl -X GET http://localhost:8080/api/auth/users \
+    -H "X-User-Id: ADMIN"
+  ```
+
+  ### Validate a user exists (ADMIN only)
+  ```bash
+  curl -X GET http://localhost:8080/api/auth/users/user123/validate \
+    -H "X-User-Id: ADMIN"
+  ```
+
+  ### Delete a user (ADMIN only)
+  ```bash
+  curl -X DELETE http://localhost:8080/api/auth/users/user123 \
+    -H "X-User-Id: ADMIN"
+  ```
+
+---
+
+## Multi-Client Support
+
+The service supports multiple authenticated clients simultaneously. Each client is identified by a unique `X-User-Id` header, allowing the service to track and validate requests per user.
+
+### How It Works
+
+1. **User Registration**: Each client registers with a unique user ID
+2. **Request Authentication**: All API calls require the `X-User-Id` header
+3. **Isolated Access**: Users can only access resources they're authorized for
+4. **Shared Model**: All authenticated users share the same trained sentiment model
+
+### Multi-Client Example
+
+```bash
+# Register three different clients
+curl -X POST http://localhost:8080/api/auth/users \
+  -H "Content-Type: application/json" -d '{"userId": "client_alice"}'
+
+curl -X POST http://localhost:8080/api/auth/users \
+  -H "Content-Type: application/json" -d '{"userId": "client_bob"}'
+
+curl -X POST http://localhost:8080/api/auth/users \
+  -H "Content-Type: application/json" -d '{"userId": "client_charlie"}'
+
+# Each client can now make concurrent sentiment requests
+# Client Alice analyzes a product review
+curl -X GET "http://localhost:8080/api/sentiment/score?text=Amazing%20quality!" \
+  -H "X-User-Id: client_alice"
+
+# Client Bob analyzes different text simultaneously
+curl -X GET "http://localhost:8080/api/sentiment/score?text=Terrible%20experience" \
+  -H "X-User-Id: client_bob"
+
+# Client Charlie runs another analysis at the same time
+curl -X GET "http://localhost:8080/api/sentiment/score?text=It%20was%20okay" \
+  -H "X-User-Id: client_charlie"
+```
+
+### Access Control by User ID
+
+| Endpoint | ADMIN | Regular Users |
+|----------|-------|---------------|
+| `POST /api/sentiment/train` | Allowed | Denied (403 Forbidden) |
+| `GET /api/sentiment/score` | Allowed | Allowed |
+| `GET /api/auth/users` | Allowed | Denied |
+| `DELETE /api/auth/users/{id}` | Allowed | Denied |
+
+### Error Responses by User State
+
+```bash
+# Unregistered user - returns 401 Unauthorized
+curl -X GET "http://localhost:8080/api/sentiment/score?text=test" \
+  -H "X-User-Id: unknown_user"
+# Response: "Authentication failed: User not found"
+
+# Regular user attempting admin action - returns 403 Forbidden
+curl -X POST "http://localhost:8080/api/sentiment/train" \
+  -H "X-User-Id: client_alice"
+# Response: "Access denied: Insufficient privileges to train the model"
+```
+
+---
 
 # Sentiment Analyzer Unit Testing
 
@@ -479,6 +618,11 @@ The project now includes a full REST API for sentiment analysis and review manag
     - Data loader and splitter so that ill-formatted csv file can be handled properly
     - Distribution tests for the mathematical details of the sentiment analysis.
 - Sentiment analysis tests to validate the accuracy and performance of the model.
+
+## Client Code
+
+The Review Dashboard Client associated with this service is present in this repository:  
+[Review DashBoard Repository](https://github.com/manavmunjal/ReviewDashboard)
 
 
 ---

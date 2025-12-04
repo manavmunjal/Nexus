@@ -40,12 +40,13 @@ public class Company {
    *
    * @param companyId   the unique identifier for the company
    * @param companyName the name of the company
-   * @param products    the product ids of the company
+   * @param newProducts    the product ids of the company
    */
-  public Company(final String companyId, final String companyName, final List<String> products) {
+  public Company(final String companyId, final String companyName,
+  final List<String> newProducts) {
     this.id = companyId;
     this.name = companyName;
-    this.products = products;
+    this.products = newProducts;
   }
 
   /**
@@ -114,10 +115,10 @@ public class Company {
   /**
    * Sets the company's product ids.
    *
-   * @param products the company product ids to set
+   * @param newProducts the company product ids to set
    */
-  public void setProducts(final List<String> products) {
-    this.products = products;
+  public void setProducts(final List<String> newProducts) {
+    this.products = newProducts;
   }
 
   /**
@@ -139,7 +140,7 @@ public class Company {
   }
 
   /**
-   * Finds average rating of company from products
+   * Finds average rating of company from products.
    *
    * @param productList the list of products to calculate average from
    * @return the average rating of the company
@@ -149,7 +150,8 @@ public class Company {
       this.rating = 0.0;
       return 0.0;
     }
-    this.rating = productList.stream().mapToDouble(Product::getRating).average().orElse(0.0);
+    this.rating = productList.stream()
+    .mapToDouble(Product::getRating).average().orElse(0.0);
     return this.rating;
   }
 }

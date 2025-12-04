@@ -361,3 +361,98 @@ Tests are designed to be deterministic and can be integrated into CI/CD pipeline
 - All randomized operations use fixed seeds
 - No external dependencies required
 - Fast execution (<1 minute for full suite)
+
+
+## Start the Service
+
+### Set MongoDB password environment variable first
+```bash
+export MONGODB_PASSWORD=<your-mongodb-password>
+```
+
+### Start the service
+```bash
+mvn spring-boot:run
+```
+
+Create Users
+
+### Create a regular user
+```bash
+curl -X POST http://localhost:8080/api/auth/users \
+   -H "Content-Type: application/json" \
+   -d '{"userId": "user123"}'
+```
+
+### Attempt to create a user with a missing userId
+
+```bash
+curl -X POST http://localhost:8080/api/auth/users \
+   -H "Content-Type: application/json" \
+   -d ''
+```
+
+#### Expected Response:
+
+```json
+{
+  "error": "User ID is required. Please provide a valid user ID in the request body."
+}
+```
+
+### Create the ADMIN user (required for training)
+```bash
+curl -X POST http://localhost:8080/api/auth/users \
+   -H "Content-Type: application/json" \
+   -d '{"userId": "ADMIN"}'
+```
+
+Train the Model (ADMIN only)
+
+### Train with default dataset
+```bash
+curl -X POST "http://localhost:8080/api/sentiment/train" \
+   -H "X-User-Id: ADMIN"
+```
+
+### Train with custom dataset
+```bash
+curl -X POST
+"http://localhost:8080/api/sentiment/train?datasetPath=/path/to/data.csv&classAttr=sentiment&textAttr=text" \
+   -H "X-User-Id: ADMIN"
+```
+
+Get Sentiment Score
+
+### Get sentiment score for text (any authenticated user)
+```bash
+curl -X GET "http://localhost:8080/api/sentiment/score?text=I%20love%20this%20product" \
+   -H "X-User-Id: user123"
+```
+
+### Example with negative text
+```bash
+curl -X GET "http://localhost:8080/api/sentiment/score?text=This%20is%20terrible" \
+   -H "X-User-Id: user123"
+```
+
+Other Useful Commands
+
+### List all users (ADMIN only)
+```bash
+curl -X GET http://localhost:8080/api/auth/users \
+   -H "X-User-Id: ADMIN"
+```
+
+### Validate a user exists (ADMIN only)
+```bash
+curl -X GET http://localhost:8080/api/auth/users/user123/validate \
+   -H "X-User-Id: ADMIN"
+```
+
+### Delete a user (ADMIN only)
+```bash
+curl -X DELETE http://localhost:8080/api/auth/users/user123 \
+   -H "X-User-Id: ADMIN"
+```
+
