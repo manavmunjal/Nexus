@@ -9,6 +9,8 @@ import com.nexus.repository.ReviewRepository;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +24,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 @RestController
 @RequestMapping("/api/companies")
 public final class CompanyController {
+
+  private static final Logger logger = LoggerFactory.getLogger(CompanyController.class);
 
   /**
    * Repository for Company entities.
@@ -46,8 +50,8 @@ public final class CompanyController {
    * @param reviewRepo  the repository for Review entities
    */
   public CompanyController(final CompanyRepository companyRepo,
-      final ProductRepository productRepo,
-      final ReviewRepository reviewRepo) {
+                           final ProductRepository productRepo,
+                           final ReviewRepository reviewRepo) {
     this.companyRepository = companyRepo;
     this.productRepository = productRepo;
     this.reviewRepository = reviewRepo;
@@ -62,31 +66,38 @@ public final class CompanyController {
    */
   @PostMapping
   public ResponseEntity<?> createCompany(@RequestBody final Company company) {
+
+    if (logger.isInfoEnabled()) {
+      logger.info("Received request to create company: {}",
+          company != null ? company.getName() : "null");
+    }
+
     try {
-      if (company == null || company.getName() == null
-          || company.getName().isBlank()) {
-        return ResponseEntity
-            .status(HttpStatus.BAD_REQUEST)
+      if (company == null || company.getName() == null || company.getName().isBlank()) {
+        if (logger.isWarnEnabled()) {
+          logger.warn("Invalid company data received: {}", company);
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
             .body("Invalid company data. 'name' field is required.");
       }
 
       Company savedCompany = companyRepository.save(company);
-      return ResponseEntity.status(HttpStatus.CREATED)
-          .body(savedCompany);
+
+      if (logger.isInfoEnabled()) {
+        logger.info("Successfully created company with ID={}", savedCompany.getId());
+      }
+
+      return ResponseEntity.status(HttpStatus.CREATED).body(savedCompany);
 
     } catch (DataAccessException dae) {
-      // Handles database-related issues
-      return ResponseEntity
-          .status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .body("Database error while saving company: "
-              + dae.getMessage());
+      logger.error("Database error while creating company", dae);
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body("Database error while saving company: " + dae.getMessage());
 
     } catch (Exception e) {
-      // Catch-all for other unexpected exceptions
-      return ResponseEntity
-          .status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .body("Unexpected error occurred: "
-              + e.getMessage());
+      logger.error("Unexpected error while creating company", e);
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body("Unexpected error occurred: " + e.getMessage());
     }
   }
 
@@ -99,22 +110,31 @@ public final class CompanyController {
    */
   @GetMapping("/{companyId}/average-rating")
   public ResponseEntity<?> getAverageRating(@PathVariable final String companyId) {
+
+    if (logger.isInfoEnabled()) {
+      logger.info("Received request to fetch average rating for companyId={}", companyId);
+    }
+
     try {
       Company company = companyRepository.findById(companyId)
           .orElseThrow(() -> new RuntimeException("Company not found"));
+
+      if (logger.isInfoEnabled()) {
+        logger.info("Successfully fetched average rating for companyId={} rating={}",
+            companyId, company.getRating());
+      }
+
       return ResponseEntity.ok(company.getRating());
+
     } catch (DataAccessException dae) {
-      // Handles database-related issues
-      return ResponseEntity
-          .status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .body("Database error while fetching company: "
-              + dae.getMessage());
+      logger.error("Database error while fetching company rating for companyId={}", companyId, dae);
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body("Database error while fetching company: " + dae.getMessage());
+
     } catch (Exception e) {
-      // Catch-all for other unexpected exceptions
-      return ResponseEntity
-          .status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .body("Unexpected error occurred: "
-              + e.getMessage());
+      logger.error("Unexpected error fetching company rating for companyId={}", companyId, e);
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body("Unexpected error occurred: " + e.getMessage());
     }
   }
 
@@ -126,16 +146,26 @@ public final class CompanyController {
    */
   @GetMapping("/{companyId}/reviews")
   public ResponseEntity<?> getAllReviews(@PathVariable final String companyId) {
+
+    if (logger.isInfoEnabled()) {
+      logger.info("Received request to fetch all reviews for companyId={}", companyId);
+    }
+
     try {
       Company company = companyRepository.findById(companyId)
           .orElseThrow(() -> new RuntimeException("Company not found"));
 
       List<String> productIds = company.getProducts();
+
       if (productIds == null || productIds.isEmpty()) {
+        if (logger.isInfoEnabled()) {
+          logger.info("Company {} has no products -> returning empty review list", companyId);
+        }
         return ResponseEntity.ok(List.of());
       }
 
       List<Product> products = productRepository.findAllById(productIds);
+
       List<String> reviewIds = products.stream()
           .map(Product::getReviewIds)
           .filter(Objects::nonNull)
@@ -143,19 +173,22 @@ public final class CompanyController {
           .collect(Collectors.toList());
 
       List<Review> reviews = reviewRepository.findAllById(reviewIds);
+
+      if (logger.isInfoEnabled()) {
+        logger.info("Fetched {} reviews for companyId={}", reviews.size(), companyId);
+      }
+
       return ResponseEntity.ok(reviews);
+
     } catch (DataAccessException dae) {
-      // Handles database-related issues
-      return ResponseEntity
-          .status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .body("Database error while fetching company: "
-              + dae.getMessage());
+      logger.error("Database error while fetching company reviews for companyId={}", companyId, dae);
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body("Database error while fetching company: " + dae.getMessage());
+
     } catch (Exception e) {
-      // Catch-all for other unexpected exceptions
-      return ResponseEntity
-          .status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .body("Unexpected error occurred: "
-              + e.getMessage());
+      logger.error("Unexpected error fetching reviews for companyId={}", companyId, e);
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body("Unexpected error occurred: " + e.getMessage());
     }
   }
 }
