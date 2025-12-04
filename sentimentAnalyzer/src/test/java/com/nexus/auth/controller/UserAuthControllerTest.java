@@ -37,7 +37,7 @@ class UserAuthControllerTest {
         controller = new UserAuthController(userAuthService);
     }
 
-    // ---- createUser tests ----
+    //  createUser tests 
 
     @Test
     void createUser_ShouldReturnCreatedUser_WhenUserIdIsValid() {
@@ -133,7 +133,7 @@ class UserAuthControllerTest {
         assertTrue(body.get("error").contains("Unexpected error"));
     }
 
-    // ---- getAllUsers tests ----
+    //  getAllUsers tests 
 
     @Test
     void getAllUsers_ShouldReturnListOfUsers() {
@@ -198,7 +198,7 @@ class UserAuthControllerTest {
         assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
     }
 
-    // ---- getUser tests ----
+    //  getUser tests 
 
     @Test
     void getUser_ShouldReturnUser_WhenUserExists() {
@@ -247,7 +247,7 @@ class UserAuthControllerTest {
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
     }
 
-    // ---- validateUser tests ----
+    //  validateUser tests 
 
     @Test
     void validateUser_ShouldReturnValid_WhenUserExists() {
@@ -319,7 +319,7 @@ class UserAuthControllerTest {
         assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
     }
 
-    // ---- deleteUser tests ----
+    //  deleteUser tests 
 
     @Test
     void deleteUser_ShouldReturnSuccess_WhenUserDeleted() {

@@ -64,7 +64,7 @@ class CompanyControllerTest {
     testCompany.setProducts(new ArrayList<>());
   }
 
-  // ---- createCompany ----
+  //  createCompany 
 
   @Test
   void createCompany_ShouldReturnCreated_WhenValidCompany() {
@@ -143,7 +143,7 @@ class CompanyControllerTest {
     assertTrue(response.getBody().toString().contains("Unexpected error"));
   }
 
-  // ---- getAllReviews ----
+  //  getAllReviews 
 
   @Test
   void getAllReviews_ShouldReturnEmptyList_WhenCompanyHasNoProducts() {
@@ -319,7 +319,7 @@ class CompanyControllerTest {
     assertTrue(reviews.stream().anyMatch(r -> ((Review) r).getUser().getUsername().equals("Bob")));
   }
 
-  // ---- getAverageRating ----
+  //  getAverageRating 
 
   @Test
   void getAverageRating_ShouldReturnRating_WhenCompanyExists() {

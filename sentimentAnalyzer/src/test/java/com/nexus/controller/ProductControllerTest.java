@@ -70,7 +70,7 @@ class ProductControllerTest {
     when(userAuthService.validateUser(VALID_USER_ID)).thenReturn(new AuthUser(VALID_USER_ID));
   }
 
-  // ---- createProduct ----
+  //  createProduct 
 
   @Test
   void createProduct_ShouldReturnCreatedProduct() {
@@ -148,7 +148,7 @@ class ProductControllerTest {
     assertTrue(response.getBody().toString().contains("Authentication failed"));
   }
 
-  // ---- getAllProducts ----
+  //  getAllProducts 
 
   @Test
   void getAllProducts_ShouldReturnListOfProducts_WhenRepositoryReturnsData() {
@@ -194,7 +194,7 @@ class ProductControllerTest {
     assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
   }
 
-  // ---- postReview ----
+  //  postReview 
 
   @Test
   void postReview_ShouldSetUserAndCalculateRating_WhenMissingRatingAndCommentPresent() {
@@ -495,7 +495,7 @@ class ProductControllerTest {
       assertEquals(2, product.getReviewIds().size());
   }
 
-  // ---- updateReview ----
+  //  updateReview 
 
   @Test
   void updateReview_ShouldReturnInternalServerError_OnDataAccessException() {
@@ -641,7 +641,7 @@ class ProductControllerTest {
     verify(companyRepository, times(1)).save(company);
   }
 
-  // ---- getReviews ----
+  //  getReviews 
 
   @Test
   void getReviews_ShouldReturnListOfReviews() {
@@ -712,7 +712,7 @@ class ProductControllerTest {
     assertEquals(List.of(r1, r2), response.getBody());
   }
 
-  // ---- getAverageRating ----
+  //  getAverageRating 
 
   @Test
   void getAverageRating_ShouldReturnOk_WhenProductExists() {

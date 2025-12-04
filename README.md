@@ -185,10 +185,7 @@ mvn clean compile exec:java -Dexec.args="--dataset=src/main/resources/data/augme
 
 ## Test Suite
 
-### Test Coverage: **65 Unit Tests**
-
-- **26 tests passed** (DatasetLoader, DataSplitter, ScoreMapper, DistributionUtils, SentimentStatistics)
-- **39 tests with known issues** (NLP tests - require larger training datasets)
+### Test Coverage: **250 Unit Tests**
 
 ### Heavy NLP Testing in `SentimentModelTrainerTest`:
 
@@ -398,6 +395,71 @@ The project now includes a full REST API for sentiment analysis and review manag
   - Success and error cases
   - Mocked repository/service dependencies
   - Boundary conditions and input validation
+
+  ---
+
+  ### Create a regular user
+  ```bash
+  curl -X POST http://localhost:8080/api/auth/users \
+    -H "Content-Type: application/json" \
+    -d '{"userId": "user123"}'
+  ```
+
+  ### Create the ADMIN user (required for training)
+  ```bash
+  curl -X POST http://localhost:8080/api/auth/users \
+    -H "Content-Type: application/json" \
+    -d '{"userId": "ADMIN"}'
+  ```
+
+  Train the Model (ADMIN only)
+
+  ### Train with default dataset
+  ```bash
+  curl -X POST "http://localhost:8080/api/sentiment/train" \
+    -H "X-User-Id: ADMIN"
+  ```
+
+  ### Train with custom dataset
+  ```bash
+  curl -X POST
+  "http://localhost:8080/api/sentiment/train?datasetPath=/path/to/data.csv&classAttr=sentiment&textAttr=text" \
+    -H "X-User-Id: ADMIN"
+  ```
+
+  Get Sentiment Score
+
+  ### Get sentiment score for text (any authenticated user)
+  ```bash
+  curl -X GET "http://localhost:8080/api/sentiment/score?text=I%20love%20this%20product" \
+    -H "X-User-Id: user123"
+  ```
+
+  ### Example with negative text
+  ```bash
+  curl -X GET "http://localhost:8080/api/sentiment/score?text=This%20is%20terrible" \
+    -H "X-User-Id: user123"
+  ```
+
+  Other Useful Commands
+
+  ### List all users (ADMIN only)
+  ```bash
+  curl -X GET http://localhost:8080/api/auth/users \
+    -H "X-User-Id: ADMIN"
+  ```
+
+  ### Validate a user exists (ADMIN only)
+  ```bash
+  curl -X GET http://localhost:8080/api/auth/users/user123/validate \
+    -H "X-User-Id: ADMIN"
+  ```
+
+  ### Delete a user (ADMIN only)
+  ```bash
+  curl -X DELETE http://localhost:8080/api/auth/users/user123 \
+    -H "X-User-Id: ADMIN"
+  ```
 
 
   # Sentiment Analyzer Unit Testing
