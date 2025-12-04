@@ -210,6 +210,22 @@ curl -X POST http://localhost:8080/api/auth/users \
    -d '{"userId": "user123"}'
 ```
 
+### Attempt to create a user with a missing userId
+
+```bash
+curl -X POST http://localhost:8080/api/auth/users \
+   -H "Content-Type: application/json" \
+   -d ''
+```
+
+#### Expected Response:
+
+```json
+{
+  "error": "User ID is required. Please provide a valid user ID in the request body."
+}
+```
+
 ### Create the ADMIN user (required for training)
 ```bash
 curl -X POST http://localhost:8080/api/auth/users \

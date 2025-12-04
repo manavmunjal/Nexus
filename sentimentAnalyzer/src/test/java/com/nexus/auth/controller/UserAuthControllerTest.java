@@ -62,8 +62,6 @@ class UserAuthControllerTest {
     void createUser_ShouldReturnBadRequest_WhenUserIdIsInvalid() {
         // Arrange
         Map<String, String> request = Map.of("userId", "");
-        when(userAuthService.createUser(""))
-                .thenThrow(new IllegalArgumentException("User ID cannot be null or blank"));
 
         // Act
         ResponseEntity<?> response = controller.createUser(request);
@@ -73,7 +71,7 @@ class UserAuthControllerTest {
         assertTrue(response.getBody() instanceof Map);
         @SuppressWarnings("unchecked")
         Map<String, String> body = (Map<String, String>) response.getBody();
-        assertTrue(body.get("error").contains("cannot be null or blank"));
+        assertTrue(body.get("error").contains("User ID is required"));
     }
 
     @Test

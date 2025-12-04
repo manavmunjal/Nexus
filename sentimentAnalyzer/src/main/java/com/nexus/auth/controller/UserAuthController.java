@@ -55,8 +55,14 @@ public final class UserAuthController {
      */
     @PostMapping
     public ResponseEntity<?> createUser(
-        @RequestBody final Map<String, String> request) {
+        @RequestBody(required = false) final Map<String, String> request) {
         try {
+            if (request == null || request.get("userId") == null
+            || request.get("userId").isBlank()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("error",
+                        "User ID is required"));
+            }
             String userId = request.get("userId");
             AuthUser created = userAuthService.createUser(userId);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
