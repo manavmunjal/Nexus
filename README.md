@@ -533,6 +533,70 @@ The project now includes a full REST API for sentiment analysis and review manag
     -H "X-User-Id: ADMIN"
   ```
 
+---
+
+## Multi-Client Support
+
+The service supports multiple authenticated clients simultaneously. Each client is identified by a unique `X-User-Id` header, allowing the service to track and validate requests per user.
+
+### How It Works
+
+1. **User Registration**: Each client registers with a unique user ID
+2. **Request Authentication**: All API calls require the `X-User-Id` header
+3. **Isolated Access**: Users can only access resources they're authorized for
+4. **Shared Model**: All authenticated users share the same trained sentiment model
+
+### Multi-Client Example
+
+```bash
+# Register three different clients
+curl -X POST http://localhost:8080/api/auth/users \
+  -H "Content-Type: application/json" -d '{"userId": "client_alice"}'
+
+curl -X POST http://localhost:8080/api/auth/users \
+  -H "Content-Type: application/json" -d '{"userId": "client_bob"}'
+
+curl -X POST http://localhost:8080/api/auth/users \
+  -H "Content-Type: application/json" -d '{"userId": "client_charlie"}'
+
+# Each client can now make concurrent sentiment requests
+# Client Alice analyzes a product review
+curl -X GET "http://localhost:8080/api/sentiment/score?text=Amazing%20quality!" \
+  -H "X-User-Id: client_alice"
+
+# Client Bob analyzes different text simultaneously
+curl -X GET "http://localhost:8080/api/sentiment/score?text=Terrible%20experience" \
+  -H "X-User-Id: client_bob"
+
+# Client Charlie runs another analysis at the same time
+curl -X GET "http://localhost:8080/api/sentiment/score?text=It%20was%20okay" \
+  -H "X-User-Id: client_charlie"
+```
+
+### Access Control by User ID
+
+| Endpoint | ADMIN | Regular Users |
+|----------|-------|---------------|
+| `POST /api/sentiment/train` | Allowed | Denied (403 Forbidden) |
+| `GET /api/sentiment/score` | Allowed | Allowed |
+| `GET /api/auth/users` | Allowed | Denied |
+| `DELETE /api/auth/users/{id}` | Allowed | Denied |
+
+### Error Responses by User State
+
+```bash
+# Unregistered user - returns 401 Unauthorized
+curl -X GET "http://localhost:8080/api/sentiment/score?text=test" \
+  -H "X-User-Id: unknown_user"
+# Response: "Authentication failed: User not found"
+
+# Regular user attempting admin action - returns 403 Forbidden
+curl -X POST "http://localhost:8080/api/sentiment/train" \
+  -H "X-User-Id: client_alice"
+# Response: "Access denied: Insufficient privileges to train the model"
+```
+
+---
 
 # Sentiment Analyzer Unit Testing
 
