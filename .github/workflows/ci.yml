@@ -22,7 +22,7 @@ jobs:
           distribution: temurin
 
       - name: Build, run tests, and code quality checks
-        run: mvn clean verify
+        run: mvn clean verify site
         working-directory: ./sentimentAnalyzer
 
       - name: Upload reports
