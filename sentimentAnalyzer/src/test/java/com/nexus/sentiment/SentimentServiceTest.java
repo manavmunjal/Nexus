@@ -20,6 +20,8 @@ import static org.mockito.Mockito.*;
 
 import weka.classifiers.meta.FilteredClassifier;
 import weka.core.Attribute;
+import weka.core.DenseInstance;
+import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.SerializationHelper;
 
@@ -81,8 +83,14 @@ public class SentimentServiceTest {
     attributes.add(textAttr);
     attributes.add(classAttr);
 
-    Instances data = new Instances("mock_data", attributes, 0);
+    Instances data = new Instances("mock_data", attributes, 1);
     data.setClass(classAttr);
+
+    Instance inst = new DenseInstance(2);
+    inst.setValue(textAttr, "Sample review");
+    inst.setValue(classAttr, "neutral");
+    data.add(inst);
+
     return data;
   }
 
@@ -96,7 +104,7 @@ public class SentimentServiceTest {
     try (MockedStatic<DatasetLoader> loaderMock = mockStatic(DatasetLoader.class);
         MockedStatic<ScoreMapper> mapperMock = mockStatic(ScoreMapper.class)) {
 
-      loaderMock.when(() -> DatasetLoader.load(any(), any())).thenReturn(mockInstances);
+      loaderMock.when(() -> DatasetLoader.load(any(), any(), anyString())).thenReturn(mockInstances);
       mapperMock.when(() -> ScoreMapper.fromAttribute(any())).thenReturn(mockMapper);
 
       when(mockMapper.scoreFor("negative")).thenReturn(-1.0);
@@ -119,7 +127,7 @@ public class SentimentServiceTest {
     try (MockedStatic<DatasetLoader> loaderMock = mockStatic(DatasetLoader.class);
         MockedStatic<ScoreMapper> mapperMock = mockStatic(ScoreMapper.class)) {
 
-      loaderMock.when(() -> DatasetLoader.load(any(), any())).thenReturn(mockInstances);
+      loaderMock.when(() -> DatasetLoader.load(any(), any(), anyString())).thenReturn(mockInstances);
       mapperMock.when(() -> ScoreMapper.fromAttribute(any())).thenReturn(mockMapper);
 
       when(mockMapper.scoreFor("negative")).thenReturn(-1.0);
@@ -139,7 +147,7 @@ public class SentimentServiceTest {
     try (MockedStatic<DatasetLoader> loaderMock = mockStatic(DatasetLoader.class);
          MockedStatic<ScoreMapper> mapperMock = mockStatic(ScoreMapper.class)) {
 
-      loaderMock.when(() -> DatasetLoader.load(any(), any())).thenReturn(mockInstances);
+      loaderMock.when(() -> DatasetLoader.load(any(), any(), anyString())).thenReturn(mockInstances);
       mapperMock.when(() -> ScoreMapper.fromAttribute(any())).thenReturn(mockMapper);
 
       // Train to avoid IllegalStateException
@@ -149,7 +157,19 @@ public class SentimentServiceTest {
     }
   }
 
-  //  saveModel 
+  @Test
+  void testScoreFromText_emptyStringThrowsException() {
+    blankService.trainModel(null, null, null);
+    assertThrows(RuntimeException.class, () -> blankService.scoreFromText(""));
+  }
+
+  @Test
+  void testScoreFromText_whitespaceStringThrowsException() {
+    blankService.trainModel(null, null, null);
+    assertThrows(RuntimeException.class, () -> blankService.scoreFromText("   "));
+  }
+
+  // ---- saveModel ----
 
   @Test
   void saveModel_createsFiles() throws Exception {
@@ -184,7 +204,28 @@ public class SentimentServiceTest {
     }
   }
 
-  //  loadModel 
+  @Test
+  void saveModel_partialFailure_throwsRuntimeException() throws Exception {
+    try (MockedStatic<SerializationHelper> serMock = mockStatic(SerializationHelper.class)) {
+
+      String classifierPath = new File(tmpDir, "sentiment_classifier.model").getAbsolutePath();
+      String headerPath = new File(tmpDir, "sentiment_header.model").getAbsolutePath();
+      String scoresPath = new File(tmpDir, "sentiment_scores.model").getAbsolutePath();
+
+      serMock.when(() -> SerializationHelper.write(eq(blankService.getModelDir() + "sentiment_classifier.model"), any()))
+              .thenAnswer(inv -> null);
+      serMock.when(() -> SerializationHelper.write(eq(blankService.getModelDir() + "sentiment_header.model"), any()))
+              .thenThrow(new RuntimeException("Disk full"));
+      serMock.when(() -> SerializationHelper.write(eq(blankService.getModelDir() + "sentiment_scores.model"), any()))
+              .thenAnswer(inv -> null);
+
+      RuntimeException ex = assertThrows(RuntimeException.class, () -> blankService.saveModel());
+      assertTrue(ex.getMessage().contains("Failed to save sentiment model"));
+      assertTrue(ex.getCause().getMessage().contains("Disk full"));
+    }
+  }
+
+  // ---- loadModel ----
 
   @Test
   void loadModel_missingFiles_throwsRuntimeException() throws Exception {
@@ -220,7 +261,34 @@ public class SentimentServiceTest {
     assertTrue(realService.getScoreMapper() instanceof ScoreMapper);
   }
 
-  //  ensureReady 
+  @Test
+  void loadModel_corruptedFiles_throwsRuntimeException() throws Exception {
+    try (MockedStatic<SerializationHelper> serMock = mockStatic(SerializationHelper.class)) {
+
+        String classifierPath = new File(tmpDir, "sentiment_classifier.model").getAbsolutePath();
+        String headerPath = new File(tmpDir, "sentiment_header.model").getAbsolutePath();
+        String scoresPath = new File(tmpDir, "sentiment_scores.model").getAbsolutePath();
+
+        // Write dummy files to tmpDir so the service thinks files exist
+        new File(classifierPath).createNewFile();
+        new File(headerPath).createNewFile();
+        new File(scoresPath).createNewFile();
+
+        // Simulate deserialization returning wrong type for classifier
+        serMock.when(() -> SerializationHelper.read(classifierPath))
+               .thenReturn("NotAClassifier");
+        serMock.when(() -> SerializationHelper.read(headerPath)).thenReturn(mockInstances);
+        serMock.when(() -> SerializationHelper.read(scoresPath)).thenReturn(mockMapper);
+
+        SentimentService service = new SentimentService(stubTrainer, tmpDir.getAbsolutePath() + "/");
+
+        RuntimeException ex = assertThrows(RuntimeException.class, service::loadModel);
+        assertTrue(ex.getMessage().contains("Failed to load sentiment model"));
+        assertTrue(ex.getCause() instanceof ClassCastException);
+    }
+  }
+
+  // ---- ensureReady ----
 
   @Test
   void ensureReady_throwsIfNotTrained() throws Exception {
@@ -288,7 +356,7 @@ public class SentimentServiceTest {
          MockedStatic<SentimentLabelConverter> conv = mockStatic(SentimentLabelConverter.class);
          MockedStatic<ScoreMapper> mapper = mockStatic(ScoreMapper.class)) {
 
-      ld.when(() -> DatasetLoader.load(any(), any())).thenReturn(mockInstances);
+      ld.when(() -> DatasetLoader.load(any(), any(), anyString())).thenReturn(mockInstances);
       conv.when(() -> SentimentLabelConverter.convertTo3Class(any(), any())).thenReturn(mockInstances);
       mapper.when(() -> ScoreMapper.fromAttribute(any())).thenReturn(mockMapper);
 
@@ -307,7 +375,7 @@ public class SentimentServiceTest {
          MockedStatic<ScoreMapper> mapper = mockStatic(ScoreMapper.class);
          MockedStatic<SerializationHelper> io = mockStatic(SerializationHelper.class)) {
 
-        ld.when(() -> DatasetLoader.load(any(), any())).thenReturn(mockInstances);
+        ld.when(() -> DatasetLoader.load(any(), any(), anyString())).thenReturn(mockInstances);
         conv.when(() -> SentimentLabelConverter.convertTo3Class(any(), any())).thenReturn(mockInstances);
         mapper.when(() -> ScoreMapper.fromAttribute(any())).thenReturn(mockMapper);
 
@@ -327,7 +395,7 @@ public class SentimentServiceTest {
   @Test
   void trainModel_whenLoaderThrows_wrappedInRuntimeException() throws Exception {
     try (MockedStatic<DatasetLoader> loaderMock = mockStatic(DatasetLoader.class)) {
-        loaderMock.when(() -> DatasetLoader.load(any(), any()))
+        loaderMock.when(() -> DatasetLoader.load(any(), any(), anyString()))
                   .thenThrow(new IOException("Failed to load"));
 
         RuntimeException ex = assertThrows(RuntimeException.class,
@@ -346,7 +414,7 @@ public class SentimentServiceTest {
         MockedStatic<ScoreMapper> mapperMock = mockStatic(ScoreMapper.class)) {
 
         Instances dataMock = mockInstances;
-        loaderMock.when(() -> DatasetLoader.load(any(), any())).thenReturn(dataMock);
+        loaderMock.when(() -> DatasetLoader.load(any(), any(), anyString())).thenReturn(dataMock);
         converterMock.when(() -> SentimentLabelConverter.convertTo3Class(any(), any())).thenReturn(dataMock);
         mapperMock.when(() -> ScoreMapper.fromAttribute(any())).thenReturn(mockMapper);
 

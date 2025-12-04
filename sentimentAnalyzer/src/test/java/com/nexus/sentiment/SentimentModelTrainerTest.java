@@ -364,7 +364,7 @@ class SentimentModelTrainerTest {
               """;
       Files.writeString(csvFile, content);
 
-      Instances data = DatasetLoader.load(csvFile, "sentiment_label");
+      Instances data = DatasetLoader.load(csvFile, "sentiment_label", "review_text");
       
       // Convert review_text to string type for TF-IDF
       data.setClassIndex(-1); // temporarily unset
@@ -397,5 +397,59 @@ class SentimentModelTrainerTest {
           }
       }
       return maxIndex;
+  }
+
+  @Test
+  void testInsufficientInstancesAtBoundary() throws Exception {
+      Instances testData = new Instances(trainingData, 0);
+      // Add exactly MIN_INSTANCES - 1 instances (4)
+      addInstance(testData, "good", "positive");
+      addInstance(testData, "bad", "negative");
+      addInstance(testData, "ok", "neutral");
+      addInstance(testData, "meh", "neutral");
+
+      SentimentModelTrainer trainer = new SentimentModelTrainer();
+      assertThatThrownBy(() -> trainer.train(testData, "review_text"))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining("Insufficient training instances");
+  }
+
+  @Test
+  void testClassAttributeNotSet() {
+      Instances testData = new Instances(trainingData, 0);
+
+      for (int i = 0; i < 5; i++) {
+          DenseInstance inst = new DenseInstance(2);
+          inst.setDataset(trainingData);
+          inst.setValue(0, "dummy text " + i);
+          inst.setValue(1, "neutral");
+          testData.add(inst);
+      }
+
+      testData.setClassIndex(-1);
+      SentimentModelTrainer trainer = new SentimentModelTrainer();
+
+      assertThatThrownBy(() -> trainer.train(testData, "review_text"))
+              .isInstanceOf(IllegalArgumentException.class)
+              .hasMessageContaining("Class attribute not set");
+  }
+
+  @Test
+  void testTextAttributeMissingValue() {
+      Instances testData = new Instances(trainingData, 0);
+
+      for (int i = 0; i < 5; i++) {
+          DenseInstance inst = new DenseInstance(2);
+          inst.setDataset(trainingData);
+          inst.setValue(0, "dummy text " + i);
+          inst.setValue(1, "neutral");
+          testData.add(inst);
+      }
+
+      SentimentModelTrainer trainer = new SentimentModelTrainer();
+
+      assertThatThrownBy(() -> trainer.train(testData, "nonexistent_attribute"))
+              .isInstanceOf(IllegalArgumentException.class)
+              .hasMessageContaining("Unrecognized Text attribute");
   }
 }

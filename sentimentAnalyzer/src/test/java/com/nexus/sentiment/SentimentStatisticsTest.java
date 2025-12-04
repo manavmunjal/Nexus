@@ -212,4 +212,45 @@ class SentimentStatisticsTest {
       assertThat(stats1.meanScore()).isGreaterThan(stats2.meanScore());
       assertThat(stats1.labelProportions().get("positive")).isGreaterThan(stats2.labelProportions().get("positive"));
   }
+
+  @Test
+  /**
+   * Verifies behavior when some class labels are missing in predictions.
+   */
+  void testMissingLabels() {
+      Map<String, Double> labelScores = Map.of(
+              "positive", 1.0,
+              "negative", -1.0,
+              "neutral", 0.0
+      );
+      List<PredictionResult> missingLabels = List.of(
+              new PredictionResult("1", "Co", "Prod", "positive", "positive", 1.0, new double[]{1.0, 0, 0}, labelScores)
+      );
+
+      SentimentStatistics.GroupStatistics stats = SentimentStatistics.summarize("MissingLabels", missingLabels, classValues);
+
+      assertThat(stats.labelCounts().get("negative")).isZero();
+      assertThat(stats.labelProportions().get("neutral")).isZero();
+  }
+
+  @Test
+  /**
+   * Verifies that extreme score values do not break statistics calculations.
+   */
+  void testExtremeScores() {
+      Map<String, Double> labelScores = Map.of(
+              "positive", 1e12,
+              "negative", -1e12,
+              "neutral", 0.0
+      );
+      List<PredictionResult> extreme = List.of(
+              new PredictionResult("1", "Co", "Prod", "positive", "positive", 1e12, new double[]{1e12, 0, 0}, labelScores),
+              new PredictionResult("2", "Co", "Prod", "negative", "negative", -1e12, new double[]{0, 1e12, 0}, labelScores)
+      );
+
+      SentimentStatistics.GroupStatistics stats = SentimentStatistics.summarize("Extreme", extreme, classValues);
+
+      assertThat(stats.meanScore()).isCloseTo(0.0, within(1e-6));
+      assertThat(stats.variance()).isGreaterThan(0.0);
+  }
 }

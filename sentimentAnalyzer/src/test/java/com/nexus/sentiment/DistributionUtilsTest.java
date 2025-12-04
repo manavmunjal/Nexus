@@ -104,6 +104,34 @@ class DistributionUtilsTest {
   }
 
   @Test
+  void testKlDivergenceWithZeroInP() {
+    Map<String, Double> p = new HashMap<>();
+    p.put("a", 0.0);
+    p.put("b", 1.0);
+
+    Map<String, Double> q = new HashMap<>();
+    q.put("a", 0.5);
+    q.put("b", 0.5);
+
+    double div = DistributionUtils.klDivergence(p, q);
+
+    assertThat(div).isGreaterThanOrEqualTo(0.0);
+  }
+
+  @Test
+  void testKlDivergenceQHasZeroProbability() {
+    Map<String, Double> p = new HashMap<>();
+    p.put("label", 1.0);
+
+    Map<String, Double> q = new HashMap<>();
+    q.put("label", 0.0);
+
+    double div = DistributionUtils.klDivergence(p, q);
+
+    assertThat(div).isEqualTo(Double.POSITIVE_INFINITY);
+  }
+
+  @Test
   /**
    * Test the KL divergence calculation for symmetric distributions.
    **/
@@ -138,6 +166,19 @@ class DistributionUtilsTest {
       double divergence = DistributionUtils.symmetricKlDivergence(p, p);
 
       assertThat(divergence).isCloseTo(0.0, within(0.0001));
+  }
+
+  @Test
+  void testSymmetricKlDivergenceMissingKeys() {
+      Map<String, Double> p = new HashMap<>();
+      p.put("x", 1.0);
+
+      Map<String, Double> q = new HashMap<>();
+      q.put("y", 1.0);
+
+      assertThatThrownBy(() -> DistributionUtils.symmetricKlDivergence(p, q))
+              .isInstanceOf(IllegalArgumentException.class)
+              .hasMessageContaining("identical labels");
   }
 
   @Test
@@ -191,6 +232,25 @@ class DistributionUtilsTest {
   }
 
   @Test
+  void testProportionsFromCountsEmptyMap() {
+      Map<String, Long> counts = new HashMap<>();
+
+      Map<String, Double> proportions = DistributionUtils.proportionsFromCounts(counts);
+
+      assertThat(proportions).isEmpty();
+  }
+
+  @Test
+  void testProportionsFromCountsSingleLabel() {
+      Map<String, Long> counts = new HashMap<>();
+      counts.put("only", 42L);
+
+      Map<String, Double> proportions = DistributionUtils.proportionsFromCounts(counts);
+
+      assertThat(proportions.get("only")).isEqualTo(1.0);
+  }
+
+  @Test
   /**
    * Test that smoothing does not modify the original distribution.
    **/
@@ -204,5 +264,57 @@ class DistributionUtilsTest {
       // Verify original is unchanged
       assertThat(original.get("positive")).isEqualTo(0.5);
       assertThat(original.get("negative")).isEqualTo(0.5);
+  }
+
+  @Test
+  void testSmoothEmptyDistribution() {
+      Map<String, Double> distribution = new HashMap<>();
+      Map<String, Double> smoothed = DistributionUtils.smooth(distribution, 0.1);
+      assertThat(smoothed).isEmpty();
+  }
+
+  @Test
+  void testSmoothAllZeroDistribution() {
+    Map<String, Double> distribution = new HashMap<>();
+    distribution.put("pos", 0.0);
+    distribution.put("neg", 0.0);
+
+    Map<String, Double> smoothed = DistributionUtils.smooth(distribution, 0.01);
+
+    smoothed.values().forEach(v -> assertThat(v).isGreaterThan(0.0));
+  }
+
+  @Test
+  void testSmoothWithZeroEpsilon() {
+    Map<String, Double> distribution = new HashMap<>();
+    distribution.put("positive", 0.5);
+    distribution.put("negative", 0.5);
+
+    Map<String, Double> smoothed = DistributionUtils.smooth(distribution, 0.0);
+
+    assertThat(smoothed.get("positive")).isCloseTo(0.5, within(1e-9));
+    assertThat(smoothed.get("negative")).isCloseTo(0.5, within(1e-9));
+  }
+
+  @Test
+  void testSmoothWithNegativeEpsilon() {
+    Map<String, Double> distribution = new HashMap<>();
+    distribution.put("positive", 0.5);
+    distribution.put("negative", 0.5);
+
+    Map<String, Double> smoothed = DistributionUtils.smooth(distribution, -0.1);
+
+    double sum = smoothed.values().stream().mapToDouble(Double::doubleValue).sum();
+    assertThat(sum).isCloseTo(1.0, within(0.0001));
+  }
+
+  @Test
+  void testSmoothSingleLabelDistribution() {
+    Map<String, Double> distribution = new HashMap<>();
+    distribution.put("only", 1.0);
+
+    Map<String, Double> smoothed = DistributionUtils.smooth(distribution, 0.01);
+
+    assertThat(smoothed.get("only")).isEqualTo(1.0);
   }
 }
