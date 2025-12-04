@@ -215,7 +215,7 @@
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <version>3.2.0</version>
                 <configuration>
-                    <configLocation>checkstyle.xml</configLocation>
+                    <configLocation>google_checks.xml</configLocation>
                     <failOnViolation>false</failOnViolation>
                 </configuration>
             </plugin>
