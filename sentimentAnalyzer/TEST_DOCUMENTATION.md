@@ -116,9 +116,11 @@ Tests statistical distribution utilities:
 - Distribution smoothing
 - Zero value smoothing
 - KL divergence calculation
-- Symmetric divergence
+- Identical distribution divergence (should be ~0)
 - Missing keys validation
+- Symmetric KL divergence
 - Proportions from counts conversion
+- Zero total handling
 - Sum-to-one validation
 - Original data preservation
 
@@ -181,9 +183,9 @@ Tests prediction generation:
 - Unknown label handling
 - Formatted probability output
 - Debug summary generation
-- Minimal dataset handling (missing optional attributes)
-- Predicted label correctness
-- Classifier exception propagation
+- Missing attributes handling
+- Predicted label matches highest probability
+- Expected score calculation verification
 
 #### Equivalence Partitions
 
