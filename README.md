@@ -555,5 +555,10 @@ The project now includes a full REST API for sentiment analysis and review manag
     - Distribution tests for the mathematical details of the sentiment analysis.
 - Sentiment analysis tests to validate the accuracy and performance of the model.
 
+## Client Code
+
+The Review Dashboard Client associated with this service is present in this repository:  
+[Review DashBoard Repository](https://github.com/manavmunjal/ReviewDashboard)
+
 
 ---
