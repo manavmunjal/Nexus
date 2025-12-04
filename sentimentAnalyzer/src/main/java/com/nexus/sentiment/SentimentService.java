@@ -177,7 +177,6 @@ public final class SentimentService {
         if (!dir.exists()) {
           dir.mkdirs();
         }
-
         SerializationHelper.write(classifierFile, classifier);
         SerializationHelper.write(headerFile, trainedHeader);
         SerializationHelper.write(scoresFile, scoreMapper);
@@ -225,7 +224,7 @@ public final class SentimentService {
     Path tmpToDelete = null;
     try {
       Path path = resolveDatasetPath(ds);
-      Instances data = DatasetLoader.load(path, cls);
+      Instances data = DatasetLoader.load(path, cls, txt);
       data = SentimentLabelConverter.convertTo3Class(data, cls);
       // Build mapper and train classifier
       scoreMapper = ScoreMapper.fromAttribute(data.classAttribute());

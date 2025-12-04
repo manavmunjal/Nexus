@@ -34,19 +34,26 @@ class SentimentControllerTest {
   }
 
   @Test
-  void scoreShouldTrainOnDemandAndReturnScore() {
+  void scoreShouldReturnBadRequestWhenNoSavedModelAvailable() {
     String text = "I love this product!";
+
+    // Model not trained
     when(sentimentService.isTrained()).thenReturn(false);
-    doThrow(new RuntimeException("No saved model")).when(sentimentService).loadModel();
-    when(sentimentService.scoreFromText(text)).thenReturn(4.2);
+
+    // Loading model fails
+    doThrow(new RuntimeException("No saved model"))
+        .when(sentimentService).loadModel();
 
     ResponseEntity<?> response = controller.score(VALID_USER_ID, text);
 
-    assertEquals(200, response.getStatusCode().value());
-    assertEquals(4.2, response.getBody());
-    assertEquals("no", response.getHeaders().getFirst("Model-Training"));
-    verify(sentimentService, times(1)).trainModel(null, null, null);
-    verify(sentimentService, times(1)).scoreFromText(text);
+    assertEquals(400, response.getStatusCode().value());
+
+    String body = String.valueOf(response.getBody());
+    assertTrue(body.contains("No trained sentiment model available"));
+
+    // Ensure no training or scoring happens
+    verify(sentimentService, never()).trainModel(any(), any(), any());
+    verify(sentimentService, never()).scoreFromText(any());
   }
 
   @Test

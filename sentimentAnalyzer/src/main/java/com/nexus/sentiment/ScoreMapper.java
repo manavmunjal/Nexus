@@ -36,6 +36,10 @@ public final class ScoreMapper implements Serializable {
    * @return ScoreMapper with label-to-score mappings.
    */
   public static ScoreMapper fromAttribute(final Attribute classAttribute) {
+      if (classAttribute.numValues() == 0) {
+        throw new IllegalArgumentException("No valid labels provided");
+      }
+
       final double strongNeg = -1.0;
       final double weakNeg = -0.5;
       final double neutral = 0.0;

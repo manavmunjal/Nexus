@@ -65,6 +65,11 @@ public final class DistributionUtils {
       for (String key : keys) {
           final double pVal = p.get(key);
           final double qVal = q.get(key);
+
+          // KL contribution is 0 when pVal = 0
+          if (pVal == 0.0) {
+              continue;
+          }
           divergence += pVal * Math.log(pVal / qVal);
       }
 

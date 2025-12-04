@@ -6,7 +6,9 @@ import weka.core.converters.CSVLoader;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.StringToNominal;
 import weka.filters.unsupervised.attribute.NominalToString;
+import weka.filters.unsupervised.attribute.NumericToNominal;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -26,103 +28,125 @@ public final class DatasetLoader {
      *
      * @param csvPath Path to the CSV file.
      * @param classAttributeName Name of the class attribute.
+     * @param textAttributeName Name of the text attribute.
      * @return Instances object loaded from the CSV.
      * @throws Exception If loading or parsing fails.
      */
   public static Instances load(
       final Path csvPath,
-      final String classAttributeName) throws Exception {
+      final String classAttributeName,
+      final String textAttributeName) throws Exception {
+
+    if (!Files.exists(csvPath)) {
+      throw new IOException("CSV file does not exist: " + csvPath);
+    }
+
+    // First, read the CSV content as a string
+    String content = new String(Files.readAllBytes(csvPath), "UTF-8");
+    
+    // Print the raw CSV content before processing
 
     CSVLoader loader = new CSVLoader();
     loader.setFieldSeparator(",");
 
-    Path sourcePath = csvPath;
-    boolean createdTemp = false;
-
-    List<String> lines = Files.exists(csvPath)
-        ? Files.readAllLines(csvPath)
-        : List.of();
-
-    if (!lines.isEmpty()) {
-      String header = lines.get(0).trim();
-      boolean singleColumn = !header.contains(",");
-
-      if ("review_text".equals(header) && singleColumn) {
-        List<String> cleaned = new ArrayList<>(lines.size());
-        cleaned.add(header);
-        for (int i = 1; i < lines.size(); i++) {
-          String row = lines.get(i);
-          String noQuotes = row
-              .replace("\"", "")
-              .replace("'", "");
-          String sanitized = noQuotes.replace(",", "");
-          cleaned.add(sanitized);
-        }
-        Path tmp = Files.createTempFile(
-            "datasetloader_clean_", ".csv");
-        Files.write(tmp, cleaned);
-        sourcePath = tmp;
-        createdTemp = true;
-      }
+    Instances data;
+    try {
+      loader.setSource(csvPath.toFile());
+      data = loader.getDataSet();
+    } catch (IOException e) {
+      throw new IllegalArgumentException(
+          "Failed to load dataset from file: " + csvPath, e);
     }
 
-    loader.setSource(sourcePath.toFile());
-    Instances data = loader.getDataSet();
-
-    if (createdTemp) {
-      try {
-        Files.deleteIfExists(sourcePath);
-      } catch (Exception e) {
-        System.err.println(
-            "Failed to delete temp file: " + sourcePath);
-        e.printStackTrace();
-      }
+    if (data.numAttributes() < 2) {
+      throw new IllegalArgumentException(
+          "Dataset must contain at least text and class columns");
     }
 
-    if (data.attribute(classAttributeName) == null) {
+    if (data.numInstances() == 0) {
+      throw new IllegalArgumentException("Dataset contains no rows");
+    }
+
+    Attribute classAttr = data.attribute(classAttributeName);
+    if (classAttr == null) {
       throw new IllegalArgumentException(
           "Missing class attribute: " + classAttributeName);
     }
 
-    data.setClass(data.attribute(classAttributeName));
+    Attribute textAttr = data.attribute(textAttributeName);
+    if (textAttr == null) {
+      throw new IllegalArgumentException(
+          "Missing text attribute: " + textAttributeName);
+    }
 
-    // not the case for our dataset, but just to cover the scenario
+    if (textAttr.index() == classAttr.index()) {
+      throw new IllegalArgumentException(
+          "Text attribute and class attribute must be different");
+    }
+
+    boolean anyText = false;
+    for (int i = 0; i < data.numInstances(); i++) {
+      // Check text
+      String textVal = data.instance(i).stringValue(textAttr);
+      if (textVal != null && !textVal.equals("?") && !textVal.isBlank()) {
+        anyText = true;
+      }
+
+      // Check class
+      if (data.instance(i).isMissing(classAttr)) {
+        throw new IllegalArgumentException(
+            "Class attribute contains missing value at row " + (i + 1));
+      }
+    }
+
+    if (!anyText) {
+      throw new IllegalArgumentException(
+          "Text attribute contains no usable text");
+    }
+
+    data.setClass(classAttr);
+
+    // Convert numeric class to nominal if needed
     if (data.classAttribute().isNumeric()) {
-      weka.filters.unsupervised.attribute.NumericToNominal numToNom =
-          new weka.filters.unsupervised.attribute.NumericToNominal();
+      NumericToNominal numToNom = new NumericToNominal();
       numToNom.setAttributeIndices(String.valueOf(data.classIndex() + 1));
       numToNom.setInputFormat(data);
       data = Filter.useFilter(data, numToNom);
       data.setClass(data.attribute(classAttributeName));
     }
 
-    if (!data.classAttribute().isNominal()) {
+    // Ensure class attribute is nominal
+    if (data.classAttribute().isString()) {
       StringToNominal strToNom = new StringToNominal();
-      strToNom.setAttributeRange(
-          String.valueOf(data.classIndex() + 1));
+      strToNom.setAttributeRange(String.valueOf(data.classIndex() + 1));
       strToNom.setInputFormat(data);
       data = Filter.useFilter(data, strToNom);
       data.setClass(data.attribute(classAttributeName));
     }
 
-    Attribute reviewAttr = data.attribute("review_text");
-
-    if (reviewAttr != null && !reviewAttr.isString()) {
-      int textAttrIndex = reviewAttr.index() + 1;
-      NominalToString nts = new NominalToString();
-      nts.setAttributeIndexes(String.valueOf(textAttrIndex));
-      nts.setInputFormat(data);
-      data = Filter.useFilter(data, nts);
+    // Ensure text attribute is string
+    if (!textAttr.isString()) {
+      if (textAttr.isNominal()) {
+        NominalToString nts = new NominalToString();
+        nts.setAttributeIndexes(String.valueOf(textAttr.index() + 1));
+        nts.setInputFormat(data);
+        data = Filter.useFilter(data, nts);
+        textAttr = data.attribute(textAttributeName);
+      } else {
+        throw new IllegalArgumentException(
+            "Text attribute must be string or nominal");
+      }
     }
-
-    if (reviewAttr != null && reviewAttr.isString()) {
+    
+    // Clean text values
+    if (textAttr.isString()) {
       for (int i = 0; i < data.numInstances(); i++) {
-        String val = data.instance(i).stringValue(reviewAttr);
+        String val = data.instance(i).stringValue(textAttr);
         if (val != null && !val.isEmpty()) {
           String cleaned = val
               .replace("\"", "")
-              .replace("'", "");
-          data.instance(i).setValue(reviewAttr, cleaned);
+              .replace("\'", "");
+          data.instance(i).setValue(textAttr, cleaned);
         }
       }
     }

@@ -26,9 +26,16 @@ public final class DataSplitter {
           final double trainRatio,
           final long seed) {
 
+      if (data.numInstances() == 0) {
+          throw new IllegalArgumentException("Dataset cannot be empty.");
+      }
+
       if (trainRatio <= 0 || trainRatio >= 1) {
-          throw new IllegalArgumentException(
-                  "Train ratio must be within (0,1)");
+          throw new IllegalArgumentException("Train ratio must be within (0,1)");
+      }
+
+      if (seed < 0) {
+          throw new IllegalArgumentException("Seed must be non-negative.");
       }
 
       Instances shuffled = new Instances(data);
@@ -37,6 +44,7 @@ public final class DataSplitter {
       int numInstances = shuffled.numInstances();
       int trainSize = (int) Math.round(numInstances * trainRatio);
 
+      // Ensure at least one instance goes into training and testing
       if (trainSize == 0 && numInstances > 0) {
           trainSize = 1;
       }

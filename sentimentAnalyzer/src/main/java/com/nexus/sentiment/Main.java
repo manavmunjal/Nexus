@@ -97,7 +97,8 @@ public final class Main {
 
       Instances data = DatasetLoader.load(
               datasetFilePath,
-              cfg.getClassAttribute());
+              cfg.getClassAttribute(),
+              cfg.getTextAttribute());
 
       printAttributes(data);
 
