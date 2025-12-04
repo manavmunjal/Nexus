@@ -2,6 +2,8 @@ package com.nexus.integration;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.times;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -138,5 +140,29 @@ public class CompanyRepositoryIntegrationTest {
       .perform(get("/api/companies/123/average-rating").header("X-User-Id", VALID_USER_ID))
         .andExpect(status().isInternalServerError())
         .andExpect(content().string("Unexpected error occurred: Company not found"));
+  }
+
+  /**
+   * Two different users access the company endpoint; both are authorized and
+   * responses are served independently.
+   */
+  @Test
+  public void testMultipleUsers_GetCompanyAverageRating() throws Exception {
+    when(companyRepository.findById("123")).thenReturn(Optional.of(company));
+
+    // Stub two users
+    when(userAuthService.validateUser("alpha")).thenReturn(new AuthUser("alpha"));
+    when(userAuthService.validateUser("beta")).thenReturn(new AuthUser("beta"));
+
+    mockMvc.perform(get("/api/companies/123/average-rating").header("X-User-Id", "alpha"))
+        .andExpect(status().isOk())
+        .andExpect(content().string("4.5"));
+
+    mockMvc.perform(get("/api/companies/123/average-rating").header("X-User-Id", "beta"))
+        .andExpect(status().isOk())
+        .andExpect(content().string("4.5"));
+
+    verify(userAuthService, times(1)).validateUser("alpha");
+    verify(userAuthService, times(1)).validateUser("beta");
   }
 }

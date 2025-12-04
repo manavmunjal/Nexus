@@ -137,4 +137,30 @@ class SentimentControllerTest {
     assertTrue(String.valueOf(response.getBody()).contains("Authentication failed"));
     verify(sentimentService, never()).trainModel(any(), any(), any());
   }
+
+  @Test
+  void scoreShouldWorkForMultipleUsers() {
+    String textA = "great!";
+    String textB = "bad!";
+
+    // Authorize two distinct users
+    when(userAuthService.validateUser("user123")).thenReturn(new AuthUser("user123"));
+
+    when(sentimentService.isTrained()).thenReturn(true);
+    when(sentimentService.scoreFromText(textA)).thenReturn(0.9);
+    when(sentimentService.scoreFromText(textB)).thenReturn(-0.4);
+
+    ResponseEntity<?> respAdmin = controller.score(ADMIN_USER_ID, textA);
+    ResponseEntity<?> respUser = controller.score("user123", textB);
+
+    assertEquals(200, respAdmin.getStatusCode().value());
+    assertEquals(0.9, respAdmin.getBody());
+    assertEquals(200, respUser.getStatusCode().value());
+    assertEquals(-0.4, respUser.getBody());
+
+    verify(userAuthService, times(1)).validateUser(ADMIN_USER_ID);
+    verify(userAuthService, times(1)).validateUser("user123");
+    verify(sentimentService, times(1)).scoreFromText(textA);
+    verify(sentimentService, times(1)).scoreFromText(textB);
+  }
 }
