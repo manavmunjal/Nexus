@@ -323,6 +323,19 @@ public final class ProductController {
       product.setRating(productAvgRating);
       productRepository.save(product);
 
+      if (product.getCompanyName() != null && !product.getCompanyName().isBlank()) {
+        List<Company> companies = companyRepository.findByProductsContaining(productId);
+        for (Company company : companies) {
+          List<Product> companyProducts = productRepository.findAllById(company.getProducts());
+          double companyAvgRating = companyProducts.stream()
+              .mapToDouble(Product::getRating)
+              .average()
+              .orElse(0.0);
+          company.setRating(companyAvgRating);
+          companyRepository.save(company);
+        }
+      }
+
       return ResponseEntity.ok(saved);
 
     } catch (IllegalArgumentException iae) {
