@@ -22,11 +22,11 @@ jobs:
           distribution: temurin
 
       - name: Build, run tests, and code quality checks
-        run: mvn clean verify
+        run: mvn clean verify site
         working-directory: ./sentimentAnalyzer
 
       - name: Upload reports
         uses: actions/upload-artifact@v4
         with:
           name: code-quality-reports
-          path: target/site/
+          path: sentimentAnalyzer/target/site/
