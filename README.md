@@ -560,5 +560,33 @@ The project now includes a full REST API for sentiment analysis and review manag
 The Review Dashboard Client associated with this service is present in this repository:  
 [Review DashBoard Repository](https://github.com/manavmunjal/ReviewDashboard)
 
+## Database Integration Tests
 
+The project includes a suite of **integration tests** for all MongoDB repositories using **embedded/in-memory MongoDB (Flapdoodle)**.  
+These tests interact directly with the database and verify CRUD operations and custom query methods without calling any REST APIs.
+
+### 1. `ProductRepositoryDatabaseIntegrationTest`
+- Tests saving a product and retrieving it from the database.
+- Verifies retrieval of all products.
+- Ensures saved product IDs and names match expectations.
+
+### 2. `CompanyRepositoryDatabaseIntegrationTest`
+- Tests saving companies and retrieving by ID.
+- Verifies `findByProductsContaining(String productId)` returns correct companies.
+- Tests `findByName(String name)` for existing and non-existent company names.
+- Ensures empty lists are returned for non-existent product IDs.
+
+### 3. `ReviewRepositoryDatabaseIntegrationTest`
+- Tests saving a review with an associated user and retrieving it by ID.
+- Verifies `findByIdIn(List<String> ids)` returns correct reviews for multiple IDs.
+- Ensures querying non-existent IDs returns an empty list.
+
+### 4. `UserRepositoryDatabaseIntegrationTest`
+- Tests saving a user and retrieving it by ID.
+- Verifies `findByUsername(String username)` returns the correct user.
+- Ensures searching for a non-existent username returns empty.
+
+**Note:**  
+All tests use `@DataMongoTest`, which configures an **embedded MongoDB** instance for each test, ensuring isolation and no dependency on an external database.  
+Repositories are tested **directly**, providing confidence in data layer correctness and repository query methods.
 ---
