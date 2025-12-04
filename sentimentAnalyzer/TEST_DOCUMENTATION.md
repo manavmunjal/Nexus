@@ -66,7 +66,7 @@ Tests train/test data splitting:
 - Multi-class prediction (positive, negative, neutral)
 - Empty text handling
 - Long text handling (100+ sentences)
-- Special characters and Unicode
+- Special characters and Unicode (★, ☹, café, etc.)
 - Minimal training data edge cases
 - Model persistence from file
 
@@ -89,7 +89,7 @@ Tests train/test data splitting:
 
 Tests sentiment label to numeric score mapping:
 
-- Standard sentiment labels
+- Standard sentiment labels (positive=1.0, negative=-1.0, neutral=0.0)
 - Case-insensitive mapping
 - Custom label handling
 - Unknown label defaults
@@ -179,6 +179,8 @@ Tests prediction generation:
 - Probability validity (0.0 to 1.0)
 - Probability lookup by label
 - Unknown label handling
+- Formatted probability output
+- Debug summary generation
 - Minimal dataset handling (missing optional attributes)
 - Predicted label correctness
 - Classifier exception propagation
