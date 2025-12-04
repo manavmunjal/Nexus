@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
+import weka.core.Instance;
 import weka.core.Instances;
 
 import java.util.ArrayList;
@@ -114,7 +115,8 @@ class SentimentLabelConverterTest {
       data.setClassIndex(-1);  // Unset class attribute
 
       assertThatThrownBy(() -> SentimentLabelConverter.convertTo3Class(data, "sentiment"))
-              .isInstanceOf(IllegalArgumentException.class);
+              .isInstanceOf(IllegalArgumentException.class)
+              .hasMessageContaining("Class attribute not set");
   }
 
 
@@ -129,5 +131,60 @@ class SentimentLabelConverterTest {
       }
       instance.setValue(1, label);
       data.add(instance);
+  }
+
+  @Test
+  void testEmptyDataset() throws Exception {
+    Instances emptyData = new Instances(fiveClassData, 0);  // No instances, just attributes
+
+    assertThatThrownBy(() -> SentimentLabelConverter.convertTo3Class(emptyData, "sentiment"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("No instances available to convert");
+  }
+
+  @Test
+void testEmptyClassAttribute() throws Exception {
+    // Create a class attribute with no valid values
+    List<String> emptyClassValues = new ArrayList<>();
+    Attribute emptyClassAttr = new Attribute("sentiment", emptyClassValues);
+
+    ArrayList<Attribute> attributes = new ArrayList<>();
+    attributes.add(emptyClassAttr);
+
+    Instances emptyClassData = new Instances("EmptyClassData", attributes, 1);
+    emptyClassData.setClassIndex(0);  // Set the class index to the empty class attribute
+
+    Instance instance = new DenseInstance(emptyClassData.numAttributes());
+    instance.setDataset(emptyClassData); // link instance to dataset
+    emptyClassData.add(instance);
+
+    assertThatThrownBy(() -> SentimentLabelConverter.convertTo3Class(emptyClassData, "sentiment"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("No valid labels provided");
+}
+
+  @Test
+  void testUnexpectedClassValues() throws Exception {
+    // Create class values with unrecognized labels
+    List<String> classValues = new ArrayList<>();
+    classValues.add("unknown positive");
+    classValues.add("unknown negative");
+    
+    // Create a custom class attribute with the unrecognized values
+    Attribute customClassAttr = new Attribute("sentiment", classValues);
+    ArrayList<Attribute> attributes = new ArrayList<>();
+    attributes.add(customClassAttr);
+    
+    Instances customData = new Instances("CustomData", attributes, 1);
+    customData.setClassIndex(0);
+    
+    Instance instance = new DenseInstance(1);
+    instance.setValue(customClassAttr, "unknown positive");  // Set unrecognized label
+    customData.add(instance);
+
+    // Run the test expecting an IllegalArgumentException with the correct message
+    assertThatThrownBy(() -> SentimentLabelConverter.convertTo3Class(customData, "sentiment"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Unrecognized sentiment label");
   }
 }

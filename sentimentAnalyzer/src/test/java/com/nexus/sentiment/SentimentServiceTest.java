@@ -20,6 +20,8 @@ import static org.mockito.Mockito.*;
 
 import weka.classifiers.meta.FilteredClassifier;
 import weka.core.Attribute;
+import weka.core.DenseInstance;
+import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.SerializationHelper;
 
@@ -81,8 +83,14 @@ public class SentimentServiceTest {
     attributes.add(textAttr);
     attributes.add(classAttr);
 
-    Instances data = new Instances("mock_data", attributes, 0);
+    Instances data = new Instances("mock_data", attributes, 1);
     data.setClass(classAttr);
+
+    Instance inst = new DenseInstance(2);
+    inst.setValue(textAttr, "Sample review");
+    inst.setValue(classAttr, "neutral");
+    data.add(inst);
+
     return data;
   }
 

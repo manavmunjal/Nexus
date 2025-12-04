@@ -44,7 +44,16 @@ public final class SentimentLabelConverter {
           throw new IllegalArgumentException("Class attribute not set");
       }
 
+      if (data.numInstances() == 0) {
+          throw new IllegalArgumentException("No instances available to convert");
+      }
+
       Attribute oldClassAttr = data.classAttribute();
+
+      // Check if class attribute is empty
+      if (oldClassAttr.numValues() == 0) {
+          throw new IllegalArgumentException("No valid labels provided");
+      }
 
       // Check if already 3-class
       if (oldClassAttr.numValues() == THREE_CLASS
