@@ -57,7 +57,7 @@ public final class SentimentController {
   /**
    * Calculates the sentiment score for the provided text.
    * If the model is not trained, it attempts to load a saved model;
-   * if unavailable, it triggers a default training.
+   * if unavailable, it returns an error instead of training a default model.
    *
    * @param userId the authenticated user ID (required header)
    * @param text   the input text to analyze
@@ -73,8 +73,8 @@ public final class SentimentController {
     }
 
     try {
-          // Validate user exists
-          userAuthService.validateUser(userId);
+      // Validate user exists
+      userAuthService.validateUser(userId);
 
       boolean trainedBefore = sentimentService.isTrained();
 
@@ -82,7 +82,7 @@ public final class SentimentController {
         LOGGER.debug("Model trained previously: {}", trainedBefore);
       }
 
-      // Attempt to load or train model if needed
+      // Attempt to load model if not trained
       if (!trainedBefore) {
         try {
           if (LOGGER.isInfoEnabled()) {
@@ -95,15 +95,11 @@ public final class SentimentController {
           }
         } catch (Exception e) {
           if (LOGGER.isWarnEnabled()) {
-            LOGGER.warn("No saved model found."
-            + " Triggering default training.", e);
+            LOGGER.warn("No saved model found. Cannot score text.", e);
           }
 
-          sentimentService.trainModel(null, null, null);
-
-          if (LOGGER.isInfoEnabled()) {
-            LOGGER.info("Default model training completed.");
-          }
+          return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+              .body("No trained sentiment model available.");
         }
       }
 
