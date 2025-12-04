@@ -229,6 +229,22 @@ Tests the high-level sentiment service functionality:
 | **Dataset resolution – classpath resource** | Dataset path refers to classpath resource; copied to temp file. | `resolveDatasetPath_inClasspath_returnsTempCopy` |
 | **Dataset resolution – missing** | Dataset path not found on filesystem or classpath. | `resolveDatasetPath_missing_throws` |
 
+### 9. MainTest
+
+Tests the **Main** class for sentiment analysis CLI — not related to or used by API endpoints. Focuses on correct handling of inputs, argument parsing, dataset loading, and internal grouping logic.
+
+#### Equivalence Partitions
+
+| Input Partition | Description | Tests Targeting Partition |
+|-----------------|-------------|--------------------------|
+| **Arguments – valid** | All CLI arguments are present and correctly parsed (dataset path, text attribute, class attribute, train ratio, seed, epsilon, sample limit). | `parseArgsSetsAllFieldsCorrectly` |
+| **Arguments – help flag** | `--help` or `-h` sets `showHelp=true`. | `parseArgsHelpFlagSetsShowHelp`, `runAnalysisShowHelpOnlyPrintsHelp` |
+| **Dataset path – missing file** | Path points to a non-existent file; should throw `IllegalArgumentException`. | `runAnalysisFileNotExistsThrows` |
+| **Class attribute – missing** | Attribute not found in dataset; should throw exception. | `runAnalysisClassAttributeNullThrows` |
+| **Sample limit – zero/negative** | Zero or negative values; should not crash, may print no predictions. | `runAnalysisWithZeroOrNegativeSampleLimitPrintsNoPredictions` |
+| **Sample limit – exceeding predictions** | Sample limit is larger than the number of predictions; should print only available predictions. | `runAnalysisWithSampleLimitExceedingPredictionCountPrintsAll` |
+| **PredictionResult key – valid** | Non-null, non-empty, non-blank string used for grouping. | `groupByGroupsCorrectly` |
+| **PredictionResult key – null/empty/blank** | Null, empty, or whitespace string triggers fallback key. | `groupByUsesFallbackWhenKeyIsNullOrBlank` |
 
 ## Running Tests
 

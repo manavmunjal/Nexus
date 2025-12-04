@@ -138,10 +138,13 @@ public final class Main {
 
       ReportPrinter.printEvaluation(eval, classValues);
 
+      int limit = Math.max(0, cfg.getSampleLimit()); // clamp negative to 0
+      limit = Math.min(limit, predictions.size());   // ensure not exceeding prediction count
+
       ReportPrinter.printPredictions(
               predictions,
               classValues,
-              Math.min(cfg.getSampleLimit(), predictions.size())
+              limit
       );
 
       final Map<String, List<PredictionResult>> byProduct = groupBy(
