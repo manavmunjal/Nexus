@@ -112,66 +112,66 @@ class DataSplitterTest {
 
   @Test
   void testTrainSizeZeroAdjustedToOne() {
-    // Single instance dataset
-    Instances single = new Instances(instances, 0, 1);
-    DataSplitter.Split split = DataSplitter.split(single, 0.01, 42);
-    // trainSize would round to 0, should get adjusted to 1
-    assertThat(split.train().numInstances()).isEqualTo(1);
-    assertThat(split.test().numInstances()).isEqualTo(0);
+      // Single instance dataset
+      Instances single = new Instances(instances, 0, 1);
+      DataSplitter.Split split = DataSplitter.split(single, 0.01, 42);
+      // trainSize would round to 0, should get adjusted to 1
+      assertThat(split.train().numInstances()).isEqualTo(1);
+      assertThat(split.test().numInstances()).isEqualTo(0);
   }
 
   @Test
   void testTrainSizeEqualsNumInstancesAdjusted() {
-    // Two instance dataset
-    Instances two = new Instances(instances, 0, 2);
-    DataSplitter.Split split = DataSplitter.split(two, 0.99, 42);
-    // trainSize would round to 2, but adjusted to 1
-    assertThat(split.train().numInstances()).isEqualTo(1);
-    assertThat(split.test().numInstances()).isEqualTo(1);
+      // Two instance dataset
+      Instances two = new Instances(instances, 0, 2);
+      DataSplitter.Split split = DataSplitter.split(two, 0.99, 42);
+      // trainSize would round to 2, but adjusted to 1
+      assertThat(split.train().numInstances()).isEqualTo(1);
+      assertThat(split.test().numInstances()).isEqualTo(1);
   }
 
   @Test
   void testSplitWithEmptyDataset() {
-    Instances emptyData = new Instances(instances, 0);
-    assertThatThrownBy(() -> DataSplitter.split(emptyData, 0.8, 42))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Dataset cannot be empty");
+      Instances emptyData = new Instances(instances, 0);
+      assertThatThrownBy(() -> DataSplitter.split(emptyData, 0.8, 42))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining("Dataset cannot be empty");
   }
 
   @Test
   void testSplitWithInvalidSeed() {
-    assertThatThrownBy(() -> DataSplitter.split(instances, 0.8, -1))
-    .isInstanceOf(IllegalArgumentException.class)
-    .hasMessageContaining("Seed must be non-negative");
+      assertThatThrownBy(() -> DataSplitter.split(instances, 0.8, -1))
+      .isInstanceOf(IllegalArgumentException.class)
+      .hasMessageContaining("Seed must be non-negative");
   }
 
   @Test
   void testSplitWithInvalidTrainRatio() {
-    assertThatThrownBy(() -> DataSplitter.split(instances, 0.0, 42))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Train ratio must be within (0,1)");
+      assertThatThrownBy(() -> DataSplitter.split(instances, 0.0, 42))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining("Train ratio must be within (0,1)");
 
-    assertThatThrownBy(() -> DataSplitter.split(instances, 1.0, 42))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Train ratio must be within (0,1)");
+      assertThatThrownBy(() -> DataSplitter.split(instances, 1.0, 42))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining("Train ratio must be within (0,1)");
   }
 
   @Test
-    void testSplitWithTinyDataset() {
-    Instances smallData = new Instances(instances, 0, 2);
-    DataSplitter.Split split = DataSplitter.split(smallData, 0.8, 42);
+      void testSplitWithTinyDataset() {
+      Instances smallData = new Instances(instances, 0, 2);
+      DataSplitter.Split split = DataSplitter.split(smallData, 0.8, 42);
 
-    assertThat(split.train().numInstances()).isEqualTo(1);
-    assertThat(split.test().numInstances()).isEqualTo(1);
+      assertThat(split.train().numInstances()).isEqualTo(1);
+      assertThat(split.test().numInstances()).isEqualTo(1);
   }
 
   @Test
-    void testSplitWithSingleInstance() {
-    Instances single = new Instances(instances, 0, 1);
-    DataSplitter.Split split = DataSplitter.split(single, 0.8, 42);
+      void testSplitWithSingleInstance() {
+      Instances single = new Instances(instances, 0, 1);
+      DataSplitter.Split split = DataSplitter.split(single, 0.8, 42);
 
-    // single instance dataset, trainSize will be 1
-    assertThat(split.train().numInstances()).isEqualTo(1);
-    assertThat(split.test().numInstances()).isEqualTo(0);
+      // single instance dataset, trainSize will be 1
+      assertThat(split.train().numInstances()).isEqualTo(1);
+      assertThat(split.test().numInstances()).isEqualTo(0);
   }
 }

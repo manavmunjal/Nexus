@@ -157,6 +157,18 @@ public class SentimentServiceTest {
     }
   }
 
+  @Test
+  void testScoreFromText_emptyStringThrowsException() {
+    blankService.trainModel(null, null, null);
+    assertThrows(RuntimeException.class, () -> blankService.scoreFromText(""));
+  }
+
+  @Test
+  void testScoreFromText_whitespaceStringThrowsException() {
+    blankService.trainModel(null, null, null);
+    assertThrows(RuntimeException.class, () -> blankService.scoreFromText("   "));
+  }
+
   // ---- saveModel ----
 
   @Test
@@ -189,6 +201,27 @@ public class SentimentServiceTest {
           assertThrows(RuntimeException.class, () -> sentimentService.saveModel());
 
       assertTrue(ex.getMessage().contains("Failed to save sentiment model"));
+    }
+  }
+
+  @Test
+  void saveModel_partialFailure_throwsRuntimeException() throws Exception {
+    try (MockedStatic<SerializationHelper> serMock = mockStatic(SerializationHelper.class)) {
+
+      String classifierPath = new File(tmpDir, "sentiment_classifier.model").getAbsolutePath();
+      String headerPath = new File(tmpDir, "sentiment_header.model").getAbsolutePath();
+      String scoresPath = new File(tmpDir, "sentiment_scores.model").getAbsolutePath();
+
+      serMock.when(() -> SerializationHelper.write(eq(blankService.getModelDir() + "sentiment_classifier.model"), any()))
+              .thenAnswer(inv -> null);
+      serMock.when(() -> SerializationHelper.write(eq(blankService.getModelDir() + "sentiment_header.model"), any()))
+              .thenThrow(new RuntimeException("Disk full"));
+      serMock.when(() -> SerializationHelper.write(eq(blankService.getModelDir() + "sentiment_scores.model"), any()))
+              .thenAnswer(inv -> null);
+
+      RuntimeException ex = assertThrows(RuntimeException.class, () -> blankService.saveModel());
+      assertTrue(ex.getMessage().contains("Failed to save sentiment model"));
+      assertTrue(ex.getCause().getMessage().contains("Disk full"));
     }
   }
 
@@ -226,6 +259,33 @@ public class SentimentServiceTest {
 
     assertNotNull(realService.getScoreMapper());
     assertTrue(realService.getScoreMapper() instanceof ScoreMapper);
+  }
+
+  @Test
+  void loadModel_corruptedFiles_throwsRuntimeException() throws Exception {
+    try (MockedStatic<SerializationHelper> serMock = mockStatic(SerializationHelper.class)) {
+
+        String classifierPath = new File(tmpDir, "sentiment_classifier.model").getAbsolutePath();
+        String headerPath = new File(tmpDir, "sentiment_header.model").getAbsolutePath();
+        String scoresPath = new File(tmpDir, "sentiment_scores.model").getAbsolutePath();
+
+        // Write dummy files to tmpDir so the service thinks files exist
+        new File(classifierPath).createNewFile();
+        new File(headerPath).createNewFile();
+        new File(scoresPath).createNewFile();
+
+        // Simulate deserialization returning wrong type for classifier
+        serMock.when(() -> SerializationHelper.read(classifierPath))
+               .thenReturn("NotAClassifier");
+        serMock.when(() -> SerializationHelper.read(headerPath)).thenReturn(mockInstances);
+        serMock.when(() -> SerializationHelper.read(scoresPath)).thenReturn(mockMapper);
+
+        SentimentService service = new SentimentService(stubTrainer, tmpDir.getAbsolutePath() + "/");
+
+        RuntimeException ex = assertThrows(RuntimeException.class, service::loadModel);
+        assertTrue(ex.getMessage().contains("Failed to load sentiment model"));
+        assertTrue(ex.getCause() instanceof ClassCastException);
+    }
   }
 
   // ---- ensureReady ----

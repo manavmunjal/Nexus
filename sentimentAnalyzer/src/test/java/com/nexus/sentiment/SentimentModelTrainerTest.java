@@ -402,7 +402,7 @@ class SentimentModelTrainerTest {
   @Test
   void testInsufficientInstancesAtBoundary() throws Exception {
       Instances testData = new Instances(trainingData, 0);
-    // Add exactly MIN_INSTANCES - 1 instances (4)
+      // Add exactly MIN_INSTANCES - 1 instances (4)
       addInstance(testData, "good", "positive");
       addInstance(testData, "bad", "negative");
       addInstance(testData, "ok", "neutral");

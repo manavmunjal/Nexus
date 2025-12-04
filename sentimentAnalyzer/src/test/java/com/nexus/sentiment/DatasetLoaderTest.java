@@ -55,12 +55,12 @@ class DatasetLoaderTest {
    * because the dataset contains no rows.
    */
   void testLoadEmptyFile(@TempDir Path tempDir) throws Exception {
-    Path csvFilePath = tempDir.resolve("empty.csv");
-    Files.writeString(csvFilePath, "");  // empty file
+      Path csvFilePath = tempDir.resolve("empty.csv");
+      Files.writeString(csvFilePath, "");  // empty file
 
-    assertThatThrownBy(() -> DatasetLoader.load(csvFilePath, "review_text", "rating"))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Failed to load dataset from file"); // Only general message
+      assertThatThrownBy(() -> DatasetLoader.load(csvFilePath, "review_text", "rating"))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining("Failed to load dataset from file"); // Only general message
   }
 
   @Test
@@ -81,17 +81,17 @@ class DatasetLoaderTest {
    * Test when the text attribute is missing, should throw IllegalArgumentException.
    */
   void testLoadMissingTextAttribute(@TempDir Path tempDir) throws Exception {
-    Path csvFilePath = tempDir.resolve("missing_text_attribute.csv");
-    // Missing review_text column
-    Files.writeString(csvFilePath, """
-            rating,filler_column
-            5,foo
-            1,bar
-            """);
+      Path csvFilePath = tempDir.resolve("missing_text_attribute.csv");
+      // Missing review_text column
+      Files.writeString(csvFilePath, """
+              rating,filler_column
+              5,foo
+              1,bar
+              """);
 
-    assertThatThrownBy(() -> DatasetLoader.load(csvFilePath, "rating", "review_text"))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Missing text attribute: review_text");
+      assertThatThrownBy(() -> DatasetLoader.load(csvFilePath, "rating", "review_text"))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining("Missing text attribute: review_text");
   }
 
   @Test
@@ -99,17 +99,17 @@ class DatasetLoaderTest {
    * Test numeric class triggers NumericToNominal filter.
    */
   void testLoadNumericClass(@TempDir Path tempDir) throws Exception {
-    Path csvFilePath = tempDir.resolve("numeric_class.csv");
-    Files.writeString(csvFilePath, """
-            review_text,rating
-            good,5
-            bad,1
-            """);
+      Path csvFilePath = tempDir.resolve("numeric_class.csv");
+      Files.writeString(csvFilePath, """
+              review_text,rating
+              good,5
+              bad,1
+              """);
 
-    Instances data = DatasetLoader.load(csvFilePath, "rating", "review_text");
+      Instances data = DatasetLoader.load(csvFilePath, "rating", "review_text");
 
-    // After NumericToNominal, the class attribute should be nominal
-    assertThat(data.classAttribute().isNominal()).isTrue();
+      // After NumericToNominal, the class attribute should be nominal
+      assertThat(data.classAttribute().isNominal()).isTrue();
   }
 
   @Test
@@ -117,44 +117,44 @@ class DatasetLoaderTest {
    * Test that review_text values are cleaned of quotes and apostrophes
    */
   void testLoadReviewTextCleaned(@TempDir Path tempDir) throws Exception {
-    Path csvFilePath = tempDir.resolve("clean_review.csv");
-    Files.writeString(csvFilePath, """
-            review_text,rating
-            "Hello, world!",1
-            "\'Test review\'",2
-            "\\"Quoted\\" review",3
-            """);
+      Path csvFilePath = tempDir.resolve("clean_review.csv");
+      Files.writeString(csvFilePath, """
+              review_text,rating
+              "Hello, world!",1
+              "\'Test review\'",2
+              "\\"Quoted\\" review",3
+              """);
 
-    Instances data = DatasetLoader.load(csvFilePath, "rating", "review_text");
+      Instances data = DatasetLoader.load(csvFilePath, "rating", "review_text");
 
-    for (int i = 0; i < data.numInstances(); i++) {
-        String val = data.instance(i).stringValue(data.attribute("review_text"));
-        assertThat(val).doesNotContain("\"").doesNotContain("'");
-    }
+      for (int i = 0; i < data.numInstances(); i++) {
+          String val = data.instance(i).stringValue(data.attribute("review_text"));
+          assertThat(val).doesNotContain("\"").doesNotContain("'");
+      }
   }
 
   @Test
   void testLoadFileDoesNotExist(@TempDir Path tempDir) throws Exception {
-    Path nonExistent = tempDir.resolve("nonexistent.csv");
-    assertThatThrownBy(() -> DatasetLoader.load(nonExistent, "review_text", "rating"))
-        .isInstanceOf(IOException.class)
-        .hasMessageContaining("CSV file does not exist");
+      Path nonExistent = tempDir.resolve("nonexistent.csv");
+      assertThatThrownBy(() -> DatasetLoader.load(nonExistent, "review_text", "rating"))
+          .isInstanceOf(IOException.class)
+          .hasMessageContaining("CSV file does not exist");
   }
 
   @Test
   void testLoadMultiColumnHeader(@TempDir Path tempDir) throws Exception {
-    Path csvFilePath = tempDir.resolve("multi.csv");
-    // Multi-column header
-    String content = "review_text,rating\nGood,5\nBad,1";
-    Files.writeString(csvFilePath, content);
+      Path csvFilePath = tempDir.resolve("multi.csv");
+      // Multi-column header
+      String content = "review_text,rating\nGood,5\nBad,1";
+      Files.writeString(csvFilePath, content);
 
-    Instances data = DatasetLoader.load(csvFilePath, "rating", "review_text");
+      Instances data = DatasetLoader.load(csvFilePath, "rating", "review_text");
 
-    // Should load successfully
-    assertThat(data).isNotNull();
-    assertThat(data.numInstances()).isEqualTo(2);
-    assertThat(data.attribute("review_text")).isNotNull();
-    assertThat(data.classAttribute().name()).isEqualTo("rating");
+      // Should load successfully
+      assertThat(data).isNotNull();
+      assertThat(data.numInstances()).isEqualTo(2);
+      assertThat(data.attribute("review_text")).isNotNull();
+      assertThat(data.classAttribute().name()).isEqualTo("rating");
   }
 
   @Test
@@ -163,79 +163,79 @@ class DatasetLoaderTest {
    * throws an IllegalArgumentException.
    */
   void testLoadReviewAttributeMissingThrows(@TempDir Path tempDir) throws Exception {
-    Path csvFilePath = tempDir.resolve("no_review.csv");
-    Files.writeString(csvFilePath, "rating\n1\n2");
+      Path csvFilePath = tempDir.resolve("no_review.csv");
+      Files.writeString(csvFilePath, "rating\n1\n2");
 
-    assertThatThrownBy(() -> DatasetLoader.load(csvFilePath, "rating", "review_text"))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Dataset must contain at least text and class columns");
+      assertThatThrownBy(() -> DatasetLoader.load(csvFilePath, "rating", "review_text"))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining("Dataset must contain at least text and class columns");
   }
 
   @Test
   void testLoadReviewTextCleanedQuotesAndApostrophes(@TempDir Path tempDir) throws Exception {
-    Path csvFilePath = tempDir.resolve("review_text_quotes.csv");
-    Files.writeString(csvFilePath, """
-                                   review_text,rating
-                                   "Great product",5
-                                   'Bad review',1
-                                   """);
+      Path csvFilePath = tempDir.resolve("review_text_quotes.csv");
+      Files.writeString(csvFilePath, """
+                                     review_text,rating
+                                     "Great product",5
+                                     'Bad review',1
+                                     """);
 
-    Instances data = DatasetLoader.load(csvFilePath, "rating", "review_text");
+      Instances data = DatasetLoader.load(csvFilePath, "rating", "review_text");
 
-    for (int i = 0; i < data.numInstances(); i++) {
-        String val = data.instance(i).stringValue(data.attribute("review_text"));
-        assertThat(val).doesNotContain("\"").doesNotContain("'");
-    }
+      for (int i = 0; i < data.numInstances(); i++) {
+          String val = data.instance(i).stringValue(data.attribute("review_text"));
+          assertThat(val).doesNotContain("\"").doesNotContain("'");
+      }
   }
 
   @Test
   void testLoadSingleColumnOnlyClass(@TempDir Path tempDir) throws Exception {
-    Path csvFilePath = tempDir.resolve("single_class.csv");
-    Files.writeString(csvFilePath, "rating\n5\n1");
+      Path csvFilePath = tempDir.resolve("single_class.csv");
+      Files.writeString(csvFilePath, "rating\n5\n1");
 
-    assertThatThrownBy(() -> DatasetLoader.load(csvFilePath, "rating", "review_text"))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Dataset must contain at least text and class columns"); // Specific message
+      assertThatThrownBy(() -> DatasetLoader.load(csvFilePath, "rating", "review_text"))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining("Dataset must contain at least text and class columns"); // Specific message
   }
 
   @Test
   void testLoadNoRows(@TempDir Path tempDir) throws Exception {
-    Path csvFilePath = tempDir.resolve("no_rows.csv");
-    Files.writeString(csvFilePath, "review_text,rating\n");
+      Path csvFilePath = tempDir.resolve("no_rows.csv");
+      Files.writeString(csvFilePath, "review_text,rating\n");
 
-    assertThatThrownBy(() -> DatasetLoader.load(csvFilePath, "rating", "review_text"))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Dataset contains no rows"); // Specific message
+      assertThatThrownBy(() -> DatasetLoader.load(csvFilePath, "rating", "review_text"))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining("Dataset contains no rows"); // Specific message
   }
 
   @Test
   void testLoadTextAndClassSame(@TempDir Path tempDir) throws Exception {
-    Path csvFilePath = tempDir.resolve("same_text_class.csv");
-    Files.writeString(csvFilePath, "review_text,rating\nGood,1\nBad,2");
+      Path csvFilePath = tempDir.resolve("same_text_class.csv");
+      Files.writeString(csvFilePath, "review_text,rating\nGood,1\nBad,2");
 
-    assertThatThrownBy(() -> DatasetLoader.load(csvFilePath, "review_text", "review_text"))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Text attribute and class attribute must be different"); // Specific message
+      assertThatThrownBy(() -> DatasetLoader.load(csvFilePath, "review_text", "review_text"))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining("Text attribute and class attribute must be different"); // Specific message
   }
 
   @Test
   void testLoadTextOnlyEmpty(@TempDir Path tempDir) throws Exception {
-    Path csvFilePath = tempDir.resolve("empty_text.csv");
-    Files.writeString(csvFilePath, "review_text,rating\n?,5\n?,1");
+      Path csvFilePath = tempDir.resolve("empty_text.csv");
+      Files.writeString(csvFilePath, "review_text,rating\n?,5\n?,1");
 
-    assertThatThrownBy(() -> DatasetLoader.load(csvFilePath, "rating", "review_text"))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Text attribute contains no usable text"); // Specific message
+      assertThatThrownBy(() -> DatasetLoader.load(csvFilePath, "rating", "review_text"))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining("Text attribute contains no usable text"); // Specific message
   }
 
   @Test
   void testLoadMissingClassValues(@TempDir Path tempDir) throws Exception {
-    Path csvFilePath = tempDir.resolve("missing_class_values.csv");
-    Files.writeString(csvFilePath, "review_text,rating\nGood,?\nBad,?");
+      Path csvFilePath = tempDir.resolve("missing_class_values.csv");
+      Files.writeString(csvFilePath, "review_text,rating\nGood,?\nBad,?");
 
-    assertThatThrownBy(() -> DatasetLoader.load(csvFilePath, "rating", "review_text"))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Class attribute contains missing value at row"); // Specific message
+      assertThatThrownBy(() -> DatasetLoader.load(csvFilePath, "rating", "review_text"))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining("Class attribute contains missing value at row"); // Specific message
   }
 
   @Test
@@ -243,18 +243,18 @@ class DatasetLoaderTest {
    * Test when the class attribute is String, it should trigger StringToNominal conversion.
    */
   void testLoadClassAttributeString(@TempDir Path tempDir) throws Exception {
-    Path csvFilePath = tempDir.resolve("non_nominal_class.csv");
-    // Numeric class attribute
-    Files.writeString(csvFilePath, """
-            review_text,rating
-            good,"5"
-            bad,"1"
-            """);
+      Path csvFilePath = tempDir.resolve("non_nominal_class.csv");
+      // Numeric class attribute
+      Files.writeString(csvFilePath, """
+              review_text,rating
+              good,"5"
+              bad,"1"
+              """);
 
-    Instances data = DatasetLoader.load(csvFilePath, "rating", "review_text");
+      Instances data = DatasetLoader.load(csvFilePath, "rating", "review_text");
 
-    // After StringToNominal conversion, the class attribute should be nominal
-    assertThat(data.classAttribute().isNominal()).isTrue();
+      // After StringToNominal conversion, the class attribute should be nominal
+      assertThat(data.classAttribute().isNominal()).isTrue();
   }
 
   @Test
@@ -262,17 +262,17 @@ class DatasetLoaderTest {
    * Test when the text attribute is not of type string, it should trigger NominalToString conversion.
    */
   void testLoadTextAttributeNotString(@TempDir Path tempDir) throws Exception {
-    Path csvFilePath = tempDir.resolve("non_string_text.csv");
-    // Nominal text attribute
-    Files.writeString(csvFilePath, """
-            review_text,rating
-            "good",5
-            "bad",1
-            """);
+      Path csvFilePath = tempDir.resolve("non_string_text.csv");
+      // Nominal text attribute
+      Files.writeString(csvFilePath, """
+              review_text,rating
+              "good",5
+              "bad",1
+              """);
 
-    Instances data = DatasetLoader.load(csvFilePath, "rating", "review_text");
+      Instances data = DatasetLoader.load(csvFilePath, "rating", "review_text");
 
-    // After NominalToString conversion, the text attribute should be string
-    assertThat(data.attribute("review_text").isString()).isTrue();
+      // After NominalToString conversion, the text attribute should be string
+      assertThat(data.attribute("review_text").isString()).isTrue();
   }
 }
