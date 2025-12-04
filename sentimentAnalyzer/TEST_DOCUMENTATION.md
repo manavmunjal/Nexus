@@ -59,10 +59,10 @@ Tests train/test data splitting:
 - Trainer initialization
 - Model training with valid data
 - Missing text attribute validation
-- Tokenization (mixed case, punctuation, special characters)
-- Stop word removal
-- Stemming
-- TF-IDF weighting
+- Tokenization testing (mixed case, punctuation, special characters)
+- Stop word removal (the, a, is, etc.)
+- Stemming (running→run, breaks→break)
+- TF-IDF weighting (unique vs common word importance)
 - Multi-class prediction (positive, negative, neutral)
 - Empty text handling
 - Long text handling (100+ sentences)
