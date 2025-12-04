@@ -197,7 +197,7 @@ class DatasetLoaderTest {
 
       assertThatThrownBy(() -> DatasetLoader.load(csvFilePath, "rating", "review_text"))
           .isInstanceOf(IllegalArgumentException.class)
-          .hasMessageContaining("Dataset must contain at least text and class columns"); // Specific message
+          .hasMessageContaining("Dataset must contain at least text and class columns");
   }
 
   @Test
@@ -207,7 +207,7 @@ class DatasetLoaderTest {
 
       assertThatThrownBy(() -> DatasetLoader.load(csvFilePath, "rating", "review_text"))
           .isInstanceOf(IllegalArgumentException.class)
-          .hasMessageContaining("Dataset contains no rows"); // Specific message
+          .hasMessageContaining("Dataset contains no rows");
   }
 
   @Test
@@ -217,7 +217,7 @@ class DatasetLoaderTest {
 
       assertThatThrownBy(() -> DatasetLoader.load(csvFilePath, "review_text", "review_text"))
           .isInstanceOf(IllegalArgumentException.class)
-          .hasMessageContaining("Text attribute and class attribute must be different"); // Specific message
+          .hasMessageContaining("Text attribute and class attribute must be different");
   }
 
   @Test
