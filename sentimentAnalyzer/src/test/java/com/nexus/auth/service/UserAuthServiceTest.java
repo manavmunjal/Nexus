@@ -35,7 +35,7 @@ class UserAuthServiceTest {
         userAuthService = new UserAuthService(authUserRepository);
     }
 
-    // ---- createUser tests ----
+    //  createUser tests 
 
     @Test
     void createUser_ShouldCreateAndReturnUser_WhenUserIdIsValid() {
@@ -109,7 +109,7 @@ class UserAuthServiceTest {
         verify(authUserRepository, never()).save(any());
     }
 
-    // ---- validateUser tests ----
+    //  validateUser tests 
 
     @Test
     void validateUser_ShouldReturnUser_WhenUserExists() {
@@ -170,7 +170,7 @@ class UserAuthServiceTest {
         assertTrue(exception.getMessage().contains("POST /api/auth/users"));
     }
 
-    // ---- userExists tests ----
+    //  userExists tests 
 
     @Test
     void userExists_ShouldReturnTrue_WhenUserExists() {
@@ -219,7 +219,7 @@ class UserAuthServiceTest {
         verify(authUserRepository, never()).existsByUserId(any());
     }
 
-    // ---- findByUserId tests ----
+    //  findByUserId tests 
 
     @Test
     void findByUserId_ShouldReturnUser_WhenUserExists() {
@@ -269,7 +269,7 @@ class UserAuthServiceTest {
         verify(authUserRepository, never()).findByUserId(any());
     }
 
-    // ---- getAllUsers tests ----
+    //  getAllUsers tests 
 
     @Test
     void getAllUsers_ShouldReturnAllUsers() {
@@ -300,7 +300,7 @@ class UserAuthServiceTest {
         assertTrue(result.isEmpty());
     }
 
-    // ---- deleteUser tests ----
+    //  deleteUser tests 
 
     @Test
     void deleteUser_ShouldDeleteUser_WhenUserExists() {
