@@ -455,7 +455,104 @@ The project now includes a full REST API for sentiment analysis and review manag
     - Mocked repository/service dependencies
     - Boundary conditions and input validation
 
-  ---
+---
+
+# REST API Calls
+
+Base URL: http://localhost:8080
+Cloud URL: https://sentiment-analyzer-service-321275563168.us-central1.run.app
+
+0. Pass in MongoDB Credentials (Replce "..." with actual database password)
+```bash
+export MONGODB_PASSWORD="..."
+```
+
+1. Create a Regular User
+
+```bash
+curl -X POST http://localhost:8080/api/auth/users \
+  -H "Content-Type: application/json" \
+  -d '{"userId": "testuser1"}'
+```
+
+2. Create Companies
+
+For Example Company 3 - Sony
+```bash
+curl -X POST http://localhost:8080/api/companies \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: testuser1" \
+  -d '{"name": "Sony Corporation"}'
+```
+
+3. Create Clients (for reviews)
+
+```bash
+curl -X POST http://localhost:8080/api/users \
+  -H "Content-Type: application/json" \
+  -d '{"username": "john_doe", "email": "john@example.com"}'
+
+curl -X POST http://localhost:8080/api/users \
+  -H "Content-Type: application/json" \
+  -d '{"username": "jane_smith", "email": "jane@example.com"}'
+
+curl -X POST http://localhost:8080/api/users \
+  -H "Content-Type: application/json" \
+  -d '{"username": "bob_wilson", "email": "bob@example.com"}'
+```
+
+4. Create Products
+
+Sony products
+```bash
+curl -X POST http://localhost:8080/api/products \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: testuser1" \
+  -d '{"name": "PlayStation 5", "description": "Next-gen gaming console", "companyName": "Sony Corporation"}'
+```
+
+5. Create Reviews (replace {productId} with actual IDs from step 5)
+
+Positive review
+```bash
+curl -X POST http://localhost:8080/api/products/{productId}/reviews \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: testuser1" \
+  -d '{
+    "comment": "Absolutely love this product! Best purchase I have ever made. The quality is outstanding and it 
+exceeded all my expectations.",
+    "rating": 5.0,
+    "user": {"username": "john_doe", "email": "john@example.com"}
+  }'
+```
+
+6. Get Data (verification)
+
+Get all products
+```bash
+curl -X GET http://localhost:8080/api/products \
+  -H "X-User-Id: testuser1"
+```
+
+Get product reviews (replace {productId})
+```bash
+curl -X GET http://localhost:8080/api/products/{productId}/reviews \
+  -H "X-User-Id: testuser1"
+```
+
+Get company reviews (replace {companyId})
+```bash
+curl -X GET http://localhost:8080/api/companies/{companyId}/reviews \
+  -H "X-User-Id: testuser1"
+```
+
+Get sentiment score
+```bash
+curl -X GET "http://localhost:8080/api/sentiment/score?text=This%20is%20amazing" \
+  -H "X-User-Id: testuser1"
+```
+
+---
 
   ### Create a regular user
   ```bash

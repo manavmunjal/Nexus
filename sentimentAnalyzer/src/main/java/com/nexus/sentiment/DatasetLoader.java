@@ -11,8 +11,6 @@ import weka.filters.unsupervised.attribute.NumericToNominal;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Utility class for loading datasets from CSV files.
@@ -43,7 +41,7 @@ public final class DatasetLoader {
 
     // First, read the CSV content as a string
     String content = new String(Files.readAllBytes(csvPath), "UTF-8");
-    
+
     // Print the raw CSV content before processing
 
     CSVLoader loader = new CSVLoader();
@@ -137,7 +135,7 @@ public final class DatasetLoader {
             "Text attribute must be string or nominal");
       }
     }
-    
+
     // Clean text values
     if (textAttr.isString()) {
       for (int i = 0; i < data.numInstances(); i++) {

@@ -31,7 +31,8 @@ public final class DataSplitter {
       }
 
       if (trainRatio <= 0 || trainRatio >= 1) {
-          throw new IllegalArgumentException("Train ratio must be within (0,1)");
+          throw new IllegalArgumentException(
+            "Train ratio must be within (0,1)");
       }
 
       if (seed < 0) {
