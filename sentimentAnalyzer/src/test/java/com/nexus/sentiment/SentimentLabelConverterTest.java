@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * Comprehensive tests for SentimentLabelConverter.
@@ -143,7 +145,21 @@ class SentimentLabelConverterTest {
   }
 
   @Test
-void testEmptyClassAttribute() throws Exception {
+  void testSingleInstanceDataset() throws Exception {
+    Instances singleInstanceData = new Instances(fiveClassData, 0);
+    Instance inst = new DenseInstance(singleInstanceData.numAttributes());
+    inst.setDataset(singleInstanceData);
+    inst.setValue(singleInstanceData.classAttribute(), singleInstanceData.classAttribute().value(0));
+    singleInstanceData.add(inst);
+
+    // Should not throw, should convert to 3-class
+    Instances converted = SentimentLabelConverter.convertTo3Class(singleInstanceData, "sentiment");
+    assertNotNull(converted);
+    assertEquals(1, converted.numInstances());
+  }
+
+  @Test
+  void testEmptyClassAttribute() throws Exception {
     // Create a class attribute with no valid values
     List<String> emptyClassValues = new ArrayList<>();
     Attribute emptyClassAttr = new Attribute("sentiment", emptyClassValues);
