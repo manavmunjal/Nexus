@@ -1,5 +1,6 @@
 package com.nexus.controller;
 
+import com.nexus.auth.service.UserAuthService;
 import com.nexus.sentiment.SentimentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 /**
  * REST controller providing endpoints for sentiment analysis operations.
@@ -18,6 +20,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 @RestController
 @RequestMapping("/api/sentiment")
 public final class SentimentController {
+
+  /**
+   * The user ID that has admin privileges for model training.
+   */
+  private static final String ADMIN_USER_ID = "ADMIN";
 
   /**
    * Logger instance for SentimentController.
@@ -31,12 +38,20 @@ public final class SentimentController {
   private final SentimentService sentimentService;
 
   /**
-   * Constructs a new SentimentController with the provided sentiment service.
-   *
-   * @param service the sentiment analysis service
+   * Service for user authentication.
    */
-  public SentimentController(final SentimentService service) {
+  private final UserAuthService userAuthService;
+
+  /**
+   * Constructs a new SentimentController with the provided sentiment services.
+   *
+   * @param service         the sentiment analysis service
+   * @param newUserAuthService the user authentication service
+   */
+  public SentimentController(final SentimentService service,
+      final UserAuthService newUserAuthService) {
     this.sentimentService = service;
+    this.userAuthService = newUserAuthService;
   }
 
   /**
@@ -44,17 +59,23 @@ public final class SentimentController {
    * If the model is not trained, it attempts to load a saved model;
    * if unavailable, it triggers a default training.
    *
-   * @param text the input text to analyze
+   * @param userId the authenticated user ID (required header)
+   * @param text   the input text to analyze
    * @return ResponseEntity containing the sentiment score or an error message
    */
   @GetMapping("/score")
-  public ResponseEntity<?> score(@RequestParam("text") final String text) {
+  public ResponseEntity<?> score(
+      @RequestHeader("X-User-Id") final String userId,
+      @RequestParam("text") final String text) {
     if (LOGGER.isInfoEnabled()) {
       LOGGER.info("Received sentiment score request for text length={}",
           text != null ? text.length() : 0);
     }
 
     try {
+          // Validate user exists
+          userAuthService.validateUser(userId);
+
       boolean trainedBefore = sentimentService.isTrained();
 
       if (LOGGER.isDebugEnabled()) {
@@ -74,7 +95,8 @@ public final class SentimentController {
           }
         } catch (Exception e) {
           if (LOGGER.isWarnEnabled()) {
-            LOGGER.warn("No saved model found. Triggering default training.", e);
+            LOGGER.warn("No saved model found."
+            + " Triggering default training.", e);
           }
 
           sentimentService.trainModel(null, null, null);
@@ -95,10 +117,15 @@ public final class SentimentController {
           .header("Model-Training", trainedBefore ? "performed" : "no")
           .body(score);
 
+    } catch (IllegalStateException ise) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+          .body("Authentication failed: " + ise.getMessage());
+
     } catch (IllegalArgumentException iae) {
 
       if (LOGGER.isErrorEnabled()) {
-        LOGGER.error("Invalid input for sentiment scoring: {}", iae.getMessage());
+        LOGGER.error("Invalid input for sentiment scoring: {}",
+        iae.getMessage());
       }
 
       return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -117,16 +144,19 @@ public final class SentimentController {
 
   /**
    * Trains (or retrains) the sentiment model using the provided dataset
+   * Only the ADMIN user is authorized to train the model.
    * and attribute names. If parameters are not supplied, default values
    * inside the sentiment service will be used.
    *
+   * @param userId      the authenticated user ID (required header "ADMIN")
    * @param datasetPath optional file path to the training dataset
-   * @param classAttr   optional name of the class label attribute
-   * @param textAttr    optional name of the text attribute
+   * @param classAttr     optional name of the class label attribute
+   * @param textAttr       optional name of the text attribute
    * @return ResponseEntity indicating success or failure
    */
   @PostMapping("/train")
   public ResponseEntity<?> train(
+      @RequestHeader("X-User-Id") final String userId,
       @RequestParam(value = "datasetPath", required = false)
       final String datasetPath,
       @RequestParam(value = "classAttr", required = false)
@@ -135,11 +165,21 @@ public final class SentimentController {
       final String textAttr) {
 
     if (LOGGER.isInfoEnabled()) {
-      LOGGER.info("Training request received: datasetPath={}, classAttr={}, textAttr={}",
+      LOGGER.info("Training request received:"
+      + " datasetPath={}, classAttr={}, textAttr={}",
           datasetPath, classAttr, textAttr);
     }
 
     try {
+      // Validate user exists
+      userAuthService.validateUser(userId);
+
+      // Check if user has admin privileges
+      if (!ADMIN_USER_ID.equals(userId)) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            .body("Access denied: Insufficient privileges to train the model");
+      }
+
       sentimentService.trainModel(datasetPath, classAttr, textAttr);
 
       if (LOGGER.isInfoEnabled()) {
@@ -147,6 +187,9 @@ public final class SentimentController {
       }
 
       return ResponseEntity.ok("Model trained successfully");
+    } catch (IllegalStateException ise) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+          .body("Authentication failed: " + ise.getMessage());
 
     } catch (IllegalArgumentException iae) {
 

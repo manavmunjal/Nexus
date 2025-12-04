@@ -9,7 +9,8 @@ import org.springframework.data.mongodb.repository.MongoRepository;
  */
 public interface CompanyRepository extends MongoRepository<Company, String> {
   /**
-   * Finds companies that contain the specified product ID in their products list.
+   * Finds companies that contain the specified product ID
+   * in their products list.
    *
    * @param productId the product ID to search for
    * @return list of companies containing the product

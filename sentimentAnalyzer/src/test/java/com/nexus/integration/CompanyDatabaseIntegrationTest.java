@@ -7,12 +7,15 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.nexus.controller.CompanyController;
+import com.nexus.auth.model.AuthUser;
+import com.nexus.auth.service.UserAuthService;
 import com.nexus.model.Company;
 import com.nexus.repository.CompanyRepository;
 import com.nexus.repository.ProductRepository;
 import com.nexus.repository.ReviewRepository;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -36,8 +39,19 @@ public class CompanyDatabaseIntegrationTest {
   @Mock
   private ReviewRepository reviewRepository;
 
+  @Mock
+  private UserAuthService userAuthService;
+
   @InjectMocks
   private CompanyController companyController;
+
+  private static final String VALID_USER_ID = "test-user-123";
+
+  @BeforeEach
+  void setUp() {
+    when(userAuthService.validateUser(VALID_USER_ID))
+        .thenReturn(new AuthUser(VALID_USER_ID));
+  }
 
   @Test
   public void testCreateCompany_CallsDatabaseSave() {
@@ -46,7 +60,7 @@ public class CompanyDatabaseIntegrationTest {
 
     when(companyRepository.save(any(Company.class))).thenReturn(company);
 
-    companyController.createCompany(company);
+    companyController.createCompany(VALID_USER_ID, company);
 
     verify(companyRepository, times(1)).save(company);
   }
@@ -60,7 +74,7 @@ public class CompanyDatabaseIntegrationTest {
         .thenThrow(new DataAccessException("Connection refused") {
         });
 
-    ResponseEntity<?> response = companyController.createCompany(company);
+    ResponseEntity<?> response = companyController.createCompany(VALID_USER_ID, company);
 
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
     verify(companyRepository, times(1)).save(company);
@@ -75,7 +89,7 @@ public class CompanyDatabaseIntegrationTest {
 
     when(companyRepository.findById(companyId)).thenReturn(Optional.of(mockCompany));
 
-    companyController.getAverageRating(companyId);
+    companyController.getAverageRating(VALID_USER_ID, companyId);
 
     verify(companyRepository).findById(companyId);
   }

@@ -1,7 +1,6 @@
 package com.nexus.integration;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -10,6 +9,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nexus.auth.model.AuthUser;
+import com.nexus.auth.service.UserAuthService;
 import com.nexus.controller.ProductController;
 import com.nexus.model.Product;
 import com.nexus.repository.CompanyRepository;
@@ -52,9 +53,12 @@ public class ProductRepositoryIntegrationTest {
   private CompanyRepository companyRepository;
   @MockBean
   private SentimentService sentimentService;
+  @MockBean
+  private UserAuthService userAuthService;
 
   private ObjectMapper objectMapper;
   private Product product;
+  private static final String VALID_USER_ID = "test-user-123";
 
   /**
    * Sets up common test data and initializes the ObjectMapper before each test.
@@ -72,6 +76,10 @@ public class ProductRepositoryIntegrationTest {
     product.setName("Test Product");
     product.setRating(4.5);
     product.setReviewIds(new ArrayList<>());
+
+    // default auth success
+    when(userAuthService.validateUser(VALID_USER_ID))
+      .thenReturn(new AuthUser(VALID_USER_ID));
   }
 
   /**
@@ -91,6 +99,7 @@ public class ProductRepositoryIntegrationTest {
     mockMvc
         .perform(
             post("/api/products")
+          .header("X-User-Id", VALID_USER_ID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(product)))
         .andExpect(status().isCreated())
@@ -113,7 +122,7 @@ public class ProductRepositoryIntegrationTest {
     when(productRepository.findById("123")).thenReturn(Optional.of(product));
 
     mockMvc
-        .perform(get("/api/products/123/average-rating"))
+      .perform(get("/api/products/123/average-rating").header("X-User-Id", VALID_USER_ID))
         .andExpect(status().isOk())
         .andExpect(content().string("4.5"));
   }
@@ -134,7 +143,7 @@ public class ProductRepositoryIntegrationTest {
     when(productRepository.findById("123")).thenReturn(Optional.empty());
 
     mockMvc
-        .perform(get("/api/products/123/average-rating"))
+      .perform(get("/api/products/123/average-rating").header("X-User-Id", VALID_USER_ID))
         .andExpect(status().isInternalServerError())
         .andExpect(content().string("Unexpected error occurred: Product not found"));
   }

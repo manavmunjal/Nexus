@@ -20,7 +20,7 @@ class CompanyTest {
         company = new Company("c1", "Acme Inc.", new ArrayList<>(Arrays.asList("p1", "p2")));
     }
 
-    // ---- Getters and setters ----
+    //  Getters and setters 
 
     @Test
     void testGetId() {
@@ -66,7 +66,7 @@ class CompanyTest {
         assertThat(company.getProducts()).containsExactly("p3", "p4");
     }
 
-    // ---- Add and remove product ----
+    //  Add and remove product 
 
     @Test
     void testAddAndRemoveProduct() {
@@ -77,7 +77,7 @@ class CompanyTest {
         assertThat(company.getProducts()).containsExactly("p1", "p3");
     }
 
-    // ---- Find average rating ----
+    //  Find average rating 
 
     @Test
     void testFindAverageRating_withProducts() {

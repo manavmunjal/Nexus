@@ -52,7 +52,8 @@ public class Product {
    * @param pD  the description of the product
    * @param pCN the company name of the product
    */
-  public Product(final String pId, final String pN, final String pD, final String pCN) {
+  public Product(final String pId, final String pN,
+  final String pD, final String pCN) {
     this.id = pId;
     this.name = pN;
     this.description = pD;
@@ -168,7 +169,7 @@ public class Product {
   }
 
   /**
-   * Finds average rating of product from reviews
+   * Finds average rating of product from reviews.
    *
    * @param reviews the list of reviews to calculate average from
    * @return the average rating of the product
@@ -178,7 +179,8 @@ public class Product {
       this.rating = 0.0;
       return 0.0;
     }
-    this.rating = reviews.stream().mapToDouble(Review::getRating).average().orElse(0.0);
+    this.rating = reviews.stream().mapToDouble(Review::getRating)
+    .average().orElse(0.0);
     return this.rating;
   }
 }

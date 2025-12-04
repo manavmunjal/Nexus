@@ -5,7 +5,6 @@ import weka.classifiers.functions.SMO;
 import weka.classifiers.Evaluation;
 import weka.classifiers.meta.FilteredClassifier;
 import weka.core.Instances;
-import weka.core.Utils;
 import weka.classifiers.functions.supportVector.RBFKernel;
 import weka.core.stemmers.IteratedLovinsStemmer;
 import weka.filters.Filter;
@@ -44,6 +43,12 @@ public class SentimentModelTrainer {
    * Number of folds used for cross-validation tuning.
    */
   private static final int CV_FOLDS = 5;
+
+    /**
+     * Candidate C values to evaluate during tuning.
+     */
+    private static final double[] CANDIDATE_C_VALUES
+    = {0.1, 1.0, 2.0, 3.0, 5.0};
 
   /**
    * Trains a Support Vector Machine model on the dataset
@@ -121,12 +126,11 @@ public class SentimentModelTrainer {
       Instances filteredTrainData =
               Filter.useFilter(trainData, multiFilter);
 
-      // Find best C value through manual cross-validation to avoid Weka class loading issues
+      // Find best C value through manual cross-validation
+      // to avoid Weka class loading issues
       double bestC = 1.0;
       double bestAccuracy = 0.0;
-      double[] cValues = {0.1, 1.0, 2.0, 3.0, 5.0};
-
-      for (double c : cValues) {
+      for (double c : CANDIDATE_C_VALUES) {
           SMO testSmo = new SMO();
           RBFKernel testRbf = new RBFKernel();
           testRbf.setGamma(DEFAULT_GAMMA);
@@ -134,7 +138,8 @@ public class SentimentModelTrainer {
           testSmo.setC(c);
 
           Evaluation eval = new Evaluation(filteredTrainData);
-          eval.crossValidateModel(testSmo, filteredTrainData, CV_FOLDS, new java.util.Random(1));
+          eval.crossValidateModel(testSmo, filteredTrainData,
+          CV_FOLDS, new java.util.Random(1));
           double accuracy = eval.pctCorrect();
 
           if (accuracy > bestAccuracy) {
@@ -143,7 +148,8 @@ public class SentimentModelTrainer {
           }
       }
 
-      System.out.println("Best C value found: " + bestC + " with accuracy: " + bestAccuracy + "%");
+      System.out.println("Best C value found: "
+      + bestC + " with accuracy: " + bestAccuracy + "%");
 
       SMO tunedSmo = new SMO();
       RBFKernel tunedRbf = new RBFKernel();
