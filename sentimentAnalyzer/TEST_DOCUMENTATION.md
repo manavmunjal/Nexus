@@ -167,6 +167,52 @@ The test suite includes extensive NLP validation:
    - Neutral sentiment detection
    - Probability distributions
 
+## Integration Tests
+
+The suite includes integration tests that verify the interaction between controllers, services, and repositories.
+
+### 1. Review Workflow Integration
+**File:** `ReviewWorkflowIntegrationTest.java`
+- **Scope:** Verifies the end-to-end flow of posting a review via `ProductController`.
+- **Scenarios:**
+    - Successful review posting (201 Created).
+    - Handling non-existent products (404 Not Found).
+    - Verifies JSON response structure and content.
+
+### 2. Controller Component Tests
+**Files:** `RepositoryIntegrationTest.java`, `DatabaseIntegrationTest.java`
+- **Scope:** Tests individual controller endpoints and their interaction with the service layer.
+- **Key Tests:**
+    - **CompanyController:** Create company, Get average rating, Error handling (500 on DB failure).
+    - **ProductController:** Create product, Get reviews, Post reviews.
+    - **UserController:** Create user, Get user details.
+- **Methodology:** Uses `@WebMvcTest` with `MockMvc` to simulate HTTP requests and `Mockito` to mock repository responses.
+
+## Input Partitions
+
+Unit tests utilize specific input partitions to ensure robust coverage:
+
+### 1. Text Content Partitions
+- **Length:** Empty string, Single word, Short sentence, Long paragraph (100+ sentences).
+- **Characters:** Alphanumeric, Special characters (@, #, $).
+- **Formatting:** Mixed case (GrEaT), All caps, All lowercase.
+- **Punctuation:** Heavy punctuation (!!!), No punctuation, Mixed.
+
+### 2. Dataset Attribute Partitions
+- **Completeness:** All attributes present, Missing optional attributes (ID, Company, Product), Missing mandatory attributes (Text, Class).
+- **Validity:** Valid CSV format, Malformed CSV, Empty file, Non-existent file.
+
+### 3. Class Label Partitions
+- **Standard:** "positive", "negative", "neutral".
+- **Custom:** User-defined labels (e.g., "joy", "anger").
+- **Unknown:** Labels not present in training data (should return 0 probability).
+- **Distribution:** Balanced classes, Skewed distribution (e.g., 90% positive), Single class only.
+
+### 4. Numerical Input Partitions
+- **Split Ratios:** Valid (0.0 < r < 1.0), Boundary (0.0, 1.0), Invalid (< 0.0, > 1.0).
+- **Probabilities:** Valid (0.0 to 1.0), Sum to 1.0.
+- **Scores:** Standard range (-1.0 to 1.0).
+
 ## Test Data
 
 Test datasets are located in:
