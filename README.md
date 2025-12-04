@@ -619,5 +619,10 @@ curl -X POST "http://localhost:8080/api/sentiment/train" \
     - Distribution tests for the mathematical details of the sentiment analysis.
 - Sentiment analysis tests to validate the accuracy and performance of the model.
 
+## Client Code
+
+The Review Dashboard Client associated with this service is present in this repository:  
+[Review DashBoard Repository](https://github.com/manavmunjal/ReviewDashboard)
+
 
 ---
