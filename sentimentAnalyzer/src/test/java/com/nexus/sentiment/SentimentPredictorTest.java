@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import weka.classifiers.meta.FilteredClassifier;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
+import weka.core.Instance;
 import weka.core.Instances;
 
 import java.util.ArrayList;
@@ -317,4 +318,61 @@ class SentimentPredictorTest {
           assertThat(result.expectedScore()).isCloseTo(expectedScore, within(0.001));
       }
   }
+
+  @Test
+  void testActualLabelUnknownWhenClassMissing() throws Exception {
+      // Copy testData schema but create 1 instance with missing class
+      Instances data = new Instances(testData, 0);
+
+      DenseInstance inst = new DenseInstance(data.numAttributes());
+      inst.setDataset(data);
+      inst.setValue(data.attribute("review_id"), "x");
+      inst.setValue(data.attribute("company"), "C");
+      inst.setValue(data.attribute("product"), "P");
+      inst.setValue(data.attribute("review_text"), "great product");
+      // class not set -> classIsMissing = true
+      data.add(inst);
+
+      List<PredictionResult> results = SentimentPredictor.predict(classifier, data, scoreMapper);
+
+      assertThat(results).hasSize(1);
+      assertThat(results.get(0).actualLabel()).isEqualTo("unknown");
+  }
+
+  @Test
+  void testPredictOnEmptyDatasetReturnsEmptyList() throws Exception {
+      Instances empty = new Instances(testData, 0); // no instances
+      List<PredictionResult> results = SentimentPredictor.predict(classifier, empty, scoreMapper);
+
+      assertThat(results).isEmpty();
+  }
+  
+  @Test
+  void testPredictPropagatesClassifierException() {
+      // Stub classifier that always throws
+      FilteredClassifier badClf = new ThrowingClassifier();
+
+      // Create tiny dataset (1 instance)
+      Instances data = new Instances(testData, 0);
+      DenseInstance inst = new DenseInstance(testData.numAttributes());
+      inst.setDataset(data);
+      inst.setValue(data.attribute("review_id"), "1");
+      inst.setValue(data.attribute("company"), "C");
+      inst.setValue(data.attribute("product"), "P");
+      inst.setValue(data.attribute("review_text"), "text");
+      inst.setValue(data.classAttribute(), "positive");
+      data.add(inst);
+
+      assertThatThrownBy(() -> SentimentPredictor.predict(badClf, data, scoreMapper))
+          .isInstanceOf(Exception.class)
+          .hasMessageContaining("Boom");
+  }
+
+  static class ThrowingClassifier extends FilteredClassifier {
+    @Override
+    public double[] distributionForInstance(Instance instance) throws Exception {
+        throw new Exception("Boom");
+    }
+  }
 }
+
