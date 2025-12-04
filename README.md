@@ -185,7 +185,21 @@ mvn clean compile exec:java -Dexec.args="--dataset=src/main/resources/data/augme
 
 ## Test Suite
 
-### Test Coverage: **250 Unit Tests**
+### Test Coverage: **254 Unit Tests**
+
+### Logging Tests
+We have implemented specific tests to verify that our controllers log important events and errors correctly. These tests use Spring Boot's `OutputCaptureExtension` to capture console output and assert that the expected log messages are present.
+
+**Key Logging Tests:**
+- `ProductControllerLoggingTest`: Verifies logs for product creation and error handling.
+- `CompanyControllerLoggingTest`: Verifies logs for company creation and database errors.
+- `UserControllerLoggingTest`: Verifies logs for user profile creation.
+- `SentimentControllerLoggingTest`: Verifies logs for sentiment scoring requests and exceptions.
+
+**Run Logging Tests:**
+```bash
+mvn test -Dtest="*ControllerLoggingTest"
+```
 
 ### Heavy NLP Testing in `SentimentModelTrainerTest`:
 
@@ -389,33 +403,171 @@ To add new features:
 
 # REST API Endpoints (Spring Boot)
 
-The project now includes a full REST API for sentiment analysis and review management, built with Spring Boot and MongoDB.
+The project includes a full REST API for sentiment analysis, user management, and review operations. Below is the detailed documentation of all endpoints and their input partitions.
 
-## Endpoints
+## 0. General
 
-- `GET    /api`                      — Welcome message and endpoint list
-- `GET    /api/sentiment/score?text=...` — Get sentiment score (0–5) for input text (Yet to be implemented)
-- `POST   /api/users`                — Create a user
-- `GET    /api/users`                — List all users
-- `POST   /api/companies`            — Create a company
-- `POST   /api/products`             — Create a product
-- `GET    /api/products`             — List all products
-- `POST   /api/products/{id}/reviews` — Post a review to a product
-- `GET    /api/products/{id}/reviews` — Get all reviews for a product
-- `PUT    /api/products/{id}/reviews/{reviewId}` — Update a review
+### Welcome & Endpoint List
+- **URL:** `GET /api`
+- **Description:** Returns a welcome message and a summary of available endpoints.
+- **Input Partitions:**
+  - **Valid:** No parameters required.
+  - **Invalid:** N/A.
+  - **Edge Cases:** N/A.
 
-## Example Usage (with Postman)
+## 1. Authentication & User Management
 
-- Create a user:
-    - POST `http://localhost:8080/api/users`
-    - Body (JSON):
-      ```json
-      { "username": "manav", "email": "mm6840@columbia.edu" }
-      ```
-- Get all products:
-    - GET `http://localhost:8080/api/products`
-- Get sentiment score:
-    - GET `http://localhost:8080/api/sentiment/score?text=This%20product%20is%20great` (To do)
+### Create Auth User
+- **URL:** `POST /api/auth/users`
+- **Description:** Creates a new authenticated user for the system.
+- **Input Partitions:**
+  - **Valid:** JSON body with unique, non-empty `userId` (e.g., `{"userId": "user123"}`).
+  - **Invalid:** Missing `userId`, empty string, null body, or existing `userId`.
+  - **Edge Cases:** `userId` with maximum allowed length, special characters.
+
+### Get All Auth Users
+- **URL:** `GET /api/auth/users`
+- **Description:** Retrieves all authenticated users (Admin only).
+- **Input Partitions:**
+  - **Valid:** Header `X-User-Id: ADMIN`.
+  - **Invalid:** Missing header, non-admin `X-User-Id`.
+  - **Edge Cases:** No users registered (returns empty list).
+
+### Get Auth User
+- **URL:** `GET /api/auth/users/{userId}`
+- **Description:** Retrieves a specific authenticated user.
+- **Input Partitions:**
+  - **Valid:** Existing `userId` in path.
+  - **Invalid:** Non-existent `userId`.
+  - **Edge Cases:** `userId` with URL-encoded characters.
+
+### Validate Auth User
+- **URL:** `GET /api/auth/users/{userId}/validate`
+- **Description:** Checks if a user exists (Admin only).
+- **Input Partitions:**
+  - **Valid:** Header `X-User-Id: ADMIN`, existing/non-existing `userId`.
+  - **Invalid:** Missing header, non-admin `X-User-Id`.
+  - **Edge Cases:** `userId` same as requester.
+
+### Delete Auth User
+- **URL:** `DELETE /api/auth/users/{userId}`
+- **Description:** Deletes a user (Admin only).
+- **Input Partitions:**
+  - **Valid:** Header `X-User-Id: ADMIN`, existing `userId`.
+  - **Invalid:** Missing header, non-admin `X-User-Id`, non-existent `userId`.
+  - **Edge Cases:** Deleting the last user.
+
+## 2. User Profiles
+
+### Create User Profile
+- **URL:** `POST /api/users`
+- **Description:** Creates a user profile with details like username and email.
+- **Input Partitions:**
+  - **Valid:** JSON with `username` and `email`.
+  - **Invalid:** Missing `username`, empty strings.
+  - **Edge Cases:** Duplicate username/email (if enforced).
+
+### List All User Profiles
+- **URL:** `GET /api/users`
+- **Description:** Lists all user profiles.
+- **Input Partitions:**
+  - **Valid:** No parameters required.
+  - **Invalid:** N/A.
+  - **Edge Cases:** Empty database.
+
+## 3. Companies
+
+### Create Company
+- **URL:** `POST /api/companies`
+- **Description:** Creates a new company.
+- **Input Partitions:**
+  - **Valid:** Header `X-User-Id` (valid user), JSON with `name`.
+  - **Invalid:** Missing/Invalid `X-User-Id`, missing `name`, empty body.
+  - **Edge Cases:** Company name with max length.
+
+### Get Company Average Rating
+- **URL:** `GET /api/companies/{companyId}/average-rating`
+- **Description:** Gets the auto-calculated average rating for a company.
+- **Input Partitions:**
+  - **Valid:** Header `X-User-Id` (valid user), existing `companyId`.
+  - **Invalid:** Missing/Invalid `X-User-Id`, non-existent `companyId`.
+  - **Edge Cases:** Company with no products/reviews (returns 0.0 or null).
+
+### Get Company Reviews
+- **URL:** `GET /api/companies/{companyId}/reviews`
+- **Description:** Retrieves all reviews for a company's products.
+- **Input Partitions:**
+  - **Valid:** Header `X-User-Id` (valid user), existing `companyId`.
+  - **Invalid:** Missing/Invalid `X-User-Id`, non-existent `companyId`.
+  - **Edge Cases:** Company with no reviews (returns empty list).
+
+## 4. Products
+
+### Create Product
+- **URL:** `POST /api/products`
+- **Description:** Creates a new product.
+- **Input Partitions:**
+  - **Valid:** Header `X-User-Id` (valid user), JSON with `name` and optional `companyName`.
+  - **Invalid:** Missing/Invalid `X-User-Id`, missing `name`.
+  - **Edge Cases:** Product linked to non-existent company (might fail or create loose).
+
+### List All Products
+- **URL:** `GET /api/products`
+- **Description:** Lists all products.
+- **Input Partitions:**
+  - **Valid:** Header `X-User-Id` (valid user).
+  - **Invalid:** Missing/Invalid `X-User-Id`.
+  - **Edge Cases:** Empty database.
+
+### Post Review
+- **URL:** `POST /api/products/{productId}/reviews`
+- **Description:** Adds a review to a product. Auto-calculates sentiment if rating is 0.
+- **Input Partitions:**
+  - **Valid:** Header `X-User-Id` (valid user), existing `productId`, JSON with `comment` and/or `rating`.
+  - **Invalid:** Missing/Invalid `X-User-Id`, non-existent `productId`, empty body.
+  - **Edge Cases:** Rating=0 (triggers sentiment analysis), Rating provided (skips analysis).
+
+### Get Product Reviews
+- **URL:** `GET /api/products/{productId}/reviews`
+- **Description:** Retrieves reviews for a product.
+- **Input Partitions:**
+  - **Valid:** Header `X-User-Id` (valid user), existing `productId`.
+  - **Invalid:** Missing/Invalid `X-User-Id`, non-existent `productId`.
+  - **Edge Cases:** Product with no reviews.
+
+### Update Review
+- **URL:** `PUT /api/products/{productId}/reviews/{reviewId}`
+- **Description:** Updates an existing review.
+- **Input Partitions:**
+  - **Valid:** Header `X-User-Id` (valid user), existing `productId` and `reviewId`, JSON with updates.
+  - **Invalid:** Missing/Invalid `X-User-Id`, mismatched IDs.
+  - **Edge Cases:** Updating comment triggers re-rating? (Logic check: code says `existing.setComment(update.getComment()); existing.setRating(update.getRating());` - it doesn't seem to auto-recalculate sentiment on update unless logic is hidden).
+
+### Get Product Average Rating
+- **URL:** `GET /api/products/{productId}/average-rating`
+- **Description:** Gets the average rating of a product.
+- **Input Partitions:**
+  - **Valid:** Header `X-User-Id` (valid user), existing `productId`.
+  - **Invalid:** Missing/Invalid `X-User-Id`, non-existent `productId`.
+  - **Edge Cases:** Product with no reviews.
+
+## 5. Sentiment Analysis
+
+### Get Sentiment Score
+- **URL:** `GET /api/sentiment/score`
+- **Description:** Analyzes text and returns a sentiment score.
+- **Input Partitions:**
+  - **Valid:** Header `X-User-Id` (valid user), query param `text`.
+  - **Invalid:** Missing/Invalid `X-User-Id`, missing `text`.
+  - **Edge Cases:** Empty text, very long text, special characters.
+
+### Train Model
+- **URL:** `POST /api/sentiment/train`
+- **Description:** Trains the sentiment model (Admin only).
+- **Input Partitions:**
+  - **Valid:** Header `X-User-Id: ADMIN`, optional query params (`datasetPath`, etc.).
+  - **Invalid:** Non-admin user, invalid dataset path.
+  - **Edge Cases:** Training with empty dataset, concurrent training requests.
 
 ---
 
@@ -455,7 +607,104 @@ The project now includes a full REST API for sentiment analysis and review manag
     - Mocked repository/service dependencies
     - Boundary conditions and input validation
 
-  ---
+---
+
+# REST API Calls
+
+Base URL: http://localhost:8080
+Cloud URL: https://sentiment-analyzer-service-321275563168.us-central1.run.app
+
+0. Pass in MongoDB Credentials (Replce "..." with actual database password)
+```bash
+export MONGODB_PASSWORD="..."
+```
+
+1. Create a Regular User
+
+```bash
+curl -X POST http://localhost:8080/api/auth/users \
+  -H "Content-Type: application/json" \
+  -d '{"userId": "testuser1"}'
+```
+
+2. Create Companies
+
+For Example Company 3 - Sony
+```bash
+curl -X POST http://localhost:8080/api/companies \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: testuser1" \
+  -d '{"name": "Sony Corporation"}'
+```
+
+3. Create Clients (for reviews)
+
+```bash
+curl -X POST http://localhost:8080/api/users \
+  -H "Content-Type: application/json" \
+  -d '{"username": "john_doe", "email": "john@example.com"}'
+
+curl -X POST http://localhost:8080/api/users \
+  -H "Content-Type: application/json" \
+  -d '{"username": "jane_smith", "email": "jane@example.com"}'
+
+curl -X POST http://localhost:8080/api/users \
+  -H "Content-Type: application/json" \
+  -d '{"username": "bob_wilson", "email": "bob@example.com"}'
+```
+
+4. Create Products
+
+Sony products
+```bash
+curl -X POST http://localhost:8080/api/products \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: testuser1" \
+  -d '{"name": "PlayStation 5", "description": "Next-gen gaming console", "companyName": "Sony Corporation"}'
+```
+
+5. Create Reviews (replace {productId} with actual IDs from step 5)
+
+Positive review
+```bash
+curl -X POST http://localhost:8080/api/products/{productId}/reviews \
+  -H "Content-Type: application/json" \
+  -H "X-User-Id: testuser1" \
+  -d '{
+    "comment": "Absolutely love this product! Best purchase I have ever made. The quality is outstanding and it 
+exceeded all my expectations.",
+    "rating": 5.0,
+    "user": {"username": "john_doe", "email": "john@example.com"}
+  }'
+```
+
+6. Get Data (verification)
+
+Get all products
+```bash
+curl -X GET http://localhost:8080/api/products \
+  -H "X-User-Id: testuser1"
+```
+
+Get product reviews (replace {productId})
+```bash
+curl -X GET http://localhost:8080/api/products/{productId}/reviews \
+  -H "X-User-Id: testuser1"
+```
+
+Get company reviews (replace {companyId})
+```bash
+curl -X GET http://localhost:8080/api/companies/{companyId}/reviews \
+  -H "X-User-Id: testuser1"
+```
+
+Get sentiment score
+```bash
+curl -X GET "http://localhost:8080/api/sentiment/score?text=This%20is%20amazing" \
+  -H "X-User-Id: testuser1"
+```
+
+---
 
   ### Create a regular user
   ```bash

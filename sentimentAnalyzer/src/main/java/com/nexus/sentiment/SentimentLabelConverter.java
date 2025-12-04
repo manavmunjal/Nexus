@@ -45,7 +45,8 @@ public final class SentimentLabelConverter {
       }
 
       if (data.numInstances() == 0) {
-          throw new IllegalArgumentException("No instances available to convert");
+          throw new IllegalArgumentException(
+            "No instances available to convert");
       }
 
       Attribute oldClassAttr = data.classAttribute();
