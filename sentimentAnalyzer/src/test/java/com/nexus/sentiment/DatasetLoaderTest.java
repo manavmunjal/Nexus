@@ -145,7 +145,9 @@ class DatasetLoaderTest {
   void testLoadMultiColumnHeader(@TempDir Path tempDir) throws Exception {
       Path csvFilePath = tempDir.resolve("multi.csv");
       // Multi-column header
-      String content = "review_text,rating\nGood,5\nBad,1";
+      String content = "review_text,rating,company,product\n" +
+                     "Good,5,CompanyA,ProductX\n" +
+                     "Bad,1,CompanyB,ProductY";
       Files.writeString(csvFilePath, content);
 
       Instances data = DatasetLoader.load(csvFilePath, "rating", "review_text");
