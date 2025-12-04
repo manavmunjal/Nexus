@@ -173,16 +173,10 @@ public final class SentimentService {
    */
   public synchronized void saveModel() {
     try {
-        System.out.println("REACHED SAVE MODEL");
         File dir = new File(modelDir);
         if (!dir.exists()) {
           dir.mkdirs();
-          System.out.println("Made directory");
         }
-        System.out.println("Writing to these files");
-        System.out.println(classifierFile);
-        System.out.println(headerFile);
-        System.out.println(scoreMapper);
         SerializationHelper.write(classifierFile, classifier);
         SerializationHelper.write(headerFile, trainedHeader);
         SerializationHelper.write(scoresFile, scoreMapper);
