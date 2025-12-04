@@ -1,0 +1,10 @@
+spring:
+  data:
+    mongodb:
+      database: test
+
+de:
+  flapdoodle:
+    mongodb:
+      embedded:
+        version: 7.0.0

@@ -201,6 +201,20 @@ We have implemented specific tests to verify that our controllers log important 
 mvn test -Dtest="*ControllerLoggingTest"
 ```
 
+### Repository Integration Testing with Embedded MongoDB
+We use `de.flapdoodle.embed.mongo` to run repository tests against an in-memory MongoDB instance, ensuring isolation from the external database.
+
+**Run Repository Tests:**
+```bash
+mvn test -Dtest="*RepositoryEmbeddedTest"
+```
+
+**Key Repository Tests:**
+- `ReviewRepositoryEmbeddedTest`: Verifies CRUD operations and custom finders for Reviews.
+- `CompanyRepositoryEmbeddedTest`: Verifies company persistence and product-based searches.
+- `ProductRepositoryEmbeddedTest`: Verifies product storage and retrieval.
+- `UserRepositoryEmbeddedTest`: Verifies user management and username lookups.
+
 ### Heavy NLP Testing in `SentimentModelTrainerTest`:
 
 1. **Tokenization Tests**
