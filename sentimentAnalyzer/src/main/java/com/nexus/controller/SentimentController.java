@@ -95,7 +95,8 @@ public final class SentimentController {
           }
         } catch (Exception e) {
           if (LOGGER.isWarnEnabled()) {
-            LOGGER.warn("No saved model found. Triggering default training.", e);
+            LOGGER.warn("No saved model found."
+            + " Triggering default training.", e);
           }
 
           sentimentService.trainModel(null, null, null);
@@ -123,7 +124,8 @@ public final class SentimentController {
     } catch (IllegalArgumentException iae) {
 
       if (LOGGER.isErrorEnabled()) {
-        LOGGER.error("Invalid input for sentiment scoring: {}", iae.getMessage());
+        LOGGER.error("Invalid input for sentiment scoring: {}",
+        iae.getMessage());
       }
 
       return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -163,7 +165,8 @@ public final class SentimentController {
       final String textAttr) {
 
     if (LOGGER.isInfoEnabled()) {
-      LOGGER.info("Training request received: datasetPath={}, classAttr={}, textAttr={}",
+      LOGGER.info("Training request received:"
+      + " datasetPath={}, classAttr={}, textAttr={}",
           datasetPath, classAttr, textAttr);
     }
 

@@ -26,18 +26,39 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 
-import java.util.ArrayList;
-
 @RestController
 @RequestMapping("/api/products")
 public final class ProductController {
 
-  private static final Logger log = LoggerFactory.getLogger(ProductController.class);
+  /**
+   * Logger instance for ProductController.
+   */
+  private static final Logger LOGGER =
+  LoggerFactory.getLogger(ProductController.class);
 
+  /**
+   * Repository for Product entities.
+   */
   private final ProductRepository productRepository;
+
+  /**
+   * Repository for Review entities.
+   */
   private final ReviewRepository reviewRepository;
+
+  /**
+   * Repository for User entities.
+   */
   private final UserRepository userRepository;
+
+  /**
+   * Repository for Company entities.
+   */
   private final CompanyRepository companyRepository;
+
+  /**
+   * Service responsible for performing sentiment analysis operations.
+   */
   private final SentimentService sentimentService;
 
   /**
@@ -73,15 +94,15 @@ public final class ProductController {
    * Creates a new product.
    *
    * @param userId  the authenticated user ID (required header)
-   * @param product Product to create
+   * @param product the product object to be created
    * @return ResponseEntity containing created product or error message
    */
   @PostMapping
   public ResponseEntity<?> createProduct(
       @RequestHeader("X-User-Id") final String userId,
       @RequestBody final Product product) {
-    if (log.isInfoEnabled()) {
-      log.info("Received request to create product: {}", product);
+    if (LOGGER.isInfoEnabled()) {
+      LOGGER.info("Received request to create product: {}", product);
     }
 
     try {
@@ -91,8 +112,8 @@ public final class ProductController {
         product.setReviewIds(new ArrayList<>());
       }
 
-      if (log.isDebugEnabled()) {
-        log.debug("Saving product to database");
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Saving product to database");
       }
       Product saved = productRepository.save(product);
 
@@ -100,8 +121,9 @@ public final class ProductController {
       if (saved.getCompanyName() != null && !saved.getCompanyName().isBlank()) {
         companyRepository.findByName(saved.getCompanyName())
         .ifPresent(company -> {
-          if (log.isInfoEnabled()) {
-            log.info("Associating product {} with company {}", saved.getId(), company.getName());
+          if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("Associating product {} with company {}",
+            saved.getId(), company.getName());
           }
 
           if (company.getProducts() == null) {
@@ -125,11 +147,11 @@ public final class ProductController {
           .body("Invalid user ID: " + iae.getMessage());
 
     } catch (DataAccessException dae) {
-      log.error("Database error while saving product", dae);
+      LOGGER.error("Database error while saving product", dae);
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body("Database error while saving product: " + dae.getMessage());
     } catch (Exception e) {
-      log.error("Unexpected error while creating product", e);
+      LOGGER.error("Unexpected error while creating product", e);
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body("Unexpected error: " + e.getMessage());
     }
@@ -144,15 +166,15 @@ public final class ProductController {
   @GetMapping
   public ResponseEntity<?> getAllProducts(
       @RequestHeader("X-User-Id") final String userId) {
-    if (log.isInfoEnabled()) {
-      log.info("Received request to fetch all products");
+    if (LOGGER.isInfoEnabled()) {
+      LOGGER.info("Received request to fetch all products");
     }
 
     try {
       List<Product> products = productRepository.findAll();
 
-      if (log.isDebugEnabled()) {
-        log.debug("Fetched {} products", products.size());
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Fetched {} products", products.size());
       }
       // Validate user exists
       userAuthService.validateUser(userId);
@@ -165,7 +187,7 @@ public final class ProductController {
           .body("Invalid user ID: " + iae.getMessage());
 
     } catch (Exception e) {
-      log.error("Unexpected error while fetching products", e);
+      LOGGER.error("Unexpected error while fetching products", e);
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body(List.of());
     }
@@ -185,8 +207,9 @@ public final class ProductController {
       @PathVariable final String productId,
                                       @RequestBody final Review review) {
 
-    if (log.isInfoEnabled()) {
-      log.info("Posting review for productId={} review={}", productId, review);
+    if (LOGGER.isInfoEnabled()) {
+      LOGGER.info("Posting review for productId={} review={}",
+      productId, review);
     }
 
     try {
@@ -194,14 +217,16 @@ public final class ProductController {
       userAuthService.validateUser(userId);
 
       Product product = productRepository.findById(productId)
-          .orElseThrow(() -> new IllegalArgumentException("Product not found: " + productId));
+          .orElseThrow(() -> new IllegalArgumentException(
+            "Product not found: " + productId));
 
       // Save user if needed
-      if (review.getUser() != null &&
-          (review.getUser().getId() == null || review.getUser().getId().isBlank())) {
+      if (review.getUser() != null
+      && (review.getUser().getId() == null
+          || review.getUser().getId().isBlank())) {
 
-        if (log.isDebugEnabled()) {
-          log.debug("Review contains new user: {}", review.getUser());
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("Review contains new user: {}", review.getUser());
         }
 
         userRepository.findByUsername(review.getUser().getUsername())
@@ -211,14 +236,15 @@ public final class ProductController {
       }
 
       // Sentiment rating calculation
-      if (review.getRating() == 0 &&
+      if (review.getRating() == 0
+      &&
           review.getComment() != null
       &&
           !review.getComment().isBlank()) {
 
         if (!sentimentService.isTrained()) {
-          if (log.isInfoEnabled()) {
-            log.info("Sentiment model not trained. Training...");
+          if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("Sentiment model not trained. Training...");
           }
           sentimentService.trainModel(null, null, null);
         }
@@ -263,8 +289,9 @@ public final class ProductController {
           company.setRating(companyAvgRating);
           companyRepository.save(company);
 
-          if (log.isDebugEnabled()) {
-            log.debug("Updated company {} average rating to {}", company.getName(), companyAvgRating);
+          if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Updated company {} average rating to {}",
+            company.getName(), companyAvgRating);
           }
         }
       }
@@ -279,14 +306,14 @@ public final class ProductController {
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ise.getMessage());
 
     } catch (IllegalArgumentException iae) {
-      log.warn("Invalid request: {}", iae.getMessage());
+      LOGGER.warn("Invalid request: {}", iae.getMessage());
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body(iae.getMessage());
     } catch (DataAccessException dae) {
-      log.error("Database error while posting review", dae);
+      LOGGER.error("Database error while posting review", dae);
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body("Database error while posting review: " + dae.getMessage());
     } catch (Exception e) {
-      log.error("Unexpected error while posting review", e);
+      LOGGER.error("Unexpected error while posting review", e);
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body("Unexpected error: " + e.getMessage());
     }
@@ -304,8 +331,8 @@ public final class ProductController {
       @RequestHeader("X-User-Id") final String userId,
       @PathVariable final String productId) {
 
-    if (log.isInfoEnabled()) {
-      log.info("Fetching reviews for productId={}", productId);
+    if (LOGGER.isInfoEnabled()) {
+      LOGGER.info("Fetching reviews for productId={}", productId);
     }
 
     try {
@@ -313,7 +340,8 @@ public final class ProductController {
       userAuthService.validateUser(userId);
 
       Product product = productRepository.findById(productId)
-          .orElseThrow(() -> new IllegalArgumentException("Product not found: " + productId));
+          .orElseThrow(() -> new IllegalArgumentException(
+            "Product not found: " + productId));
 
       if (product.getReviewIds() == null || product.getReviewIds().isEmpty()) {
         return ResponseEntity.ok(List.of());
@@ -327,10 +355,10 @@ public final class ProductController {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
           .body("Authentication failed: " + ise.getMessage());
     } catch (IllegalArgumentException iae) {
-      log.warn("Invalid request: {}", iae.getMessage());
+      LOGGER.warn("Invalid request: {}", iae.getMessage());
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body(iae.getMessage());
     } catch (Exception e) {
-      log.error("Unexpected error while fetching reviews", e);
+      LOGGER.error("Unexpected error while fetching reviews", e);
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body("Unexpected error: " + e.getMessage());
     }
@@ -352,8 +380,8 @@ public final class ProductController {
                                         @PathVariable final String reviewId,
                                         @RequestBody final Review update) {
 
-    if (log.isInfoEnabled()) {
-      log.info("Updating review {} for product {}", reviewId, productId);
+    if (LOGGER.isInfoEnabled()) {
+      LOGGER.info("Updating review {} for product {}", reviewId, productId);
     }
 
     try {
@@ -361,10 +389,12 @@ public final class ProductController {
       userAuthService.validateUser(userId);
 
       Product product = productRepository.findById(productId)
-          .orElseThrow(() -> new IllegalArgumentException("Product not found: " + productId));
+          .orElseThrow(() -> new IllegalArgumentException(
+            "Product not found: " + productId));
 
       Review existing = reviewRepository.findById(reviewId)
-          .orElseThrow(() -> new IllegalArgumentException("Review not found: " + reviewId));
+          .orElseThrow(() -> new IllegalArgumentException(
+            "Review not found: " + reviewId));
 
       existing.setComment(update.getComment());
       existing.setRating(update.getRating());
@@ -407,14 +437,14 @@ public final class ProductController {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
           .body("Authentication failed: " + ise.getMessage());
     } catch (IllegalArgumentException iae) {
-      log.warn("Invalid input while updating review: {}", iae.getMessage());
+      LOGGER.warn("Invalid input while updating review: {}", iae.getMessage());
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body(iae.getMessage());
     } catch (DataAccessException dae) {
-      log.error("Database error while updating review", dae);
+      LOGGER.error("Database error while updating review", dae);
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body("Database error while updating review: " + dae.getMessage());
     } catch (Exception e) {
-      log.error("Unexpected error while updating review", e);
+      LOGGER.error("Unexpected error while updating review", e);
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body("Unexpected error: " + e.getMessage());
     }
@@ -432,8 +462,8 @@ public final class ProductController {
       @RequestHeader("X-User-Id") final String userId,
       @PathVariable final String productId) {
 
-    if (log.isInfoEnabled()) {
-      log.info("Fetching average rating for productId={}", productId);
+    if (LOGGER.isInfoEnabled()) {
+      LOGGER.info("Fetching average rating for productId={}", productId);
     }
 
     try {
@@ -449,11 +479,11 @@ public final class ProductController {
           .body("Authentication failed: " + ise.getMessage());
 
     } catch (DataAccessException dae) {
-      log.error("Database error while fetching product rating", dae);
+      LOGGER.error("Database error while fetching product rating", dae);
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body("Database error while fetching product: " + dae.getMessage());
     } catch (Exception e) {
-      log.error("Unexpected error while fetching product rating", e);
+      LOGGER.error("Unexpected error while fetching product rating", e);
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body("Unexpected error occurred: " + e.getMessage());
     }

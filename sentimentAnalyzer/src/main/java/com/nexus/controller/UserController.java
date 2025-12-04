@@ -26,7 +26,8 @@ public final class UserController {
   /**
    * Logger instance for UserController.
    */
-  private static final Logger LOGGER = LoggerFactory.getLogger(UserController.class);
+  private static final Logger LOGGER =
+  LoggerFactory.getLogger(UserController.class);
 
   /**
    * Repository for User entities.
@@ -44,7 +45,8 @@ public final class UserController {
 
   /**
    * Creates a new user.
-   * Validates input before saving. Returns appropriate HTTP status on success or failure.
+   * Validates input before saving. Returns appropriate HTTP status
+   * on success or failure.
    *
    * @param user the user object to create
    * @return ResponseEntity containing the created user or an error message
@@ -52,7 +54,8 @@ public final class UserController {
   @PostMapping
   public ResponseEntity<?> createUser(@RequestBody final User user) {
     if (LOGGER.isInfoEnabled()) {
-      LOGGER.info("Received request to create user: {}", user != null ? user.getUsername() : null);
+      LOGGER.info("Received request to create user: {}",
+      user != null ? user.getUsername() : null);
     }
 
     if (user == null || user.getUsername() == null
@@ -75,14 +78,16 @@ public final class UserController {
 
     } catch (DataAccessException dae) {
       if (LOGGER.isErrorEnabled()) {
-        LOGGER.error("Database error while saving user: {}", user.getUsername(), dae);
+        LOGGER.error("Database error while saving user: {}",
+        user.getUsername(), dae);
       }
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body("Database error while saving user: " + dae.getMessage());
 
     } catch (Exception e) {
       if (LOGGER.isErrorEnabled()) {
-        LOGGER.error("Unexpected error while creating user: {}", user.getUsername(), e);
+        LOGGER.error("Unexpected error while creating user: {}",
+        user.getUsername(), e);
       }
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body("Unexpected error: " + e.getMessage());
@@ -93,7 +98,8 @@ public final class UserController {
    * Retrieves all users.
    * Returns an empty list if an unexpected error occurs.
    *
-   * @return ResponseEntity containing the list of users or an empty list in case of error
+   * @return ResponseEntity containing the list of users or an empty
+   * list in case of error
    */
   @GetMapping
   public ResponseEntity<List<User>> getAllUsers() {
