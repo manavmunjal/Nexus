@@ -2,9 +2,11 @@ spring:
   data:
     mongodb:
       database: test
+      port: 0
+      auto-index-creation: true
 
 de:
   flapdoodle:
     mongodb:
       embedded:
-        version: 7.0.0
+        version: 6.0.6
