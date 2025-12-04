@@ -190,27 +190,27 @@ mvn clean compile exec:java -Dexec.args="--dataset=src/main/resources/data/augme
 ### Heavy NLP Testing in `SentimentModelTrainerTest`:
 
 1. **Tokenization Tests**
-   - Mixed case handling (GREAT → great)
-   - Punctuation (!!!, ???, ...)
-   - Numbers (5 stars, 100%)
-   - Special characters (@, #, &)
+    - Mixed case handling (GREAT → great)
+    - Punctuation (!!!, ???, ...)
+    - Numbers (5 stars, 100%)
+    - Special characters (@, #, &)
 
 2. **Text Preprocessing**
-   - Stop word removal
-   - Stemming (running→run, breaks→break)
-   - Empty text handling
-   - Long text (100+ sentences)
-   - Unicode characters (★, café, ☹)
+    - Stop word removal
+    - Stemming (running→run, breaks→break)
+    - Empty text handling
+    - Long text (100+ sentences)
+    - Unicode characters (★, café, ☹)
 
 3. **TF-IDF Features**
-   - Rare word weighting
-   - Common word downweighting
-   - Document frequency impact
+    - Rare word weighting
+    - Common word downweighting
+    - Document frequency impact
 
 4. **Classification**
-   - Multi-class predictions
-   - Probability distributions
-   - Confidence scores
+    - Multi-class predictions
+    - Probability distributions
+    - Confidence scores
 
 ## Use Cases
 
@@ -269,6 +269,65 @@ Map<String, Double> defaults = Map.of(
 );
 ```
 
+## Third-Party Client Development
+
+This section provides instructions for third-party developers who want to interact with the sentiment analysis service.
+
+### API Endpoints
+
+The service exposes the following RESTful endpoints for sentiment analysis.
+
+#### 1. Get Sentiment Score
+
+Analyzes the sentiment of a given text and returns a numerical score.
+
+- **URL:** `/api/sentiment/score`
+- **Method:** `GET`
+- **Query Parameters:**
+    - `text` (required): The string of text you want to analyze.
+
+- **Success Response (200 OK):**
+    - **Content-Type:** `application/json`
+    - **Body:** A `double` value representing the sentiment score. A more positive value indicates more positive sentiment.
+
+- **Example Request (using cURL):**
+  ```bash
+  curl -X GET "http://localhost:8080/api/sentiment/score?text=This%20is%20a%20great%20product!"
+  ```
+
+- **Error Responses:**
+    - `400 Bad Request`: If the `text` parameter is missing or invalid.
+    - `500 Internal Server Error`: If an unexpected error occurs during analysis.
+
+#### 2. Train the Model
+
+Triggers the training or retraining of the sentiment analysis model. This is an advanced feature and should be used with caution.
+
+- **URL:** `/api/sentiment/train`
+- **Method:** `POST`
+- **Query Parameters (all optional):**
+    - `datasetPath`: The file path to a CSV dataset for training. If not provided, a default dataset will be used.
+    - `classAttr`: The name of the attribute in the CSV that contains the sentiment label (e.g., 'sentiment_label').
+    - `textAttr`: The name of the attribute in the CSV that contains the text to be analyzed (e.g., 'review_text').
+
+- **Success Response (200 OK):**
+    - **Content-Type:** `text/plain`
+    - **Body:** A confirmation message, e.g., "Model trained successfully".
+
+- **Example Request (using cURL with optional parameters):**
+  ```bash
+  curl -X POST "http://localhost:8080/api/sentiment/train?datasetPath=path/to/your/data.csv&classAttr=sentiment&textAttr=review"
+  ```
+
+- **Example Request (using cURL with defaults):**
+  ```bash
+  curl -X POST "http://localhost:8080/api/sentiment/train"
+  ```
+
+- **Error Responses:**
+    - `400 Bad Request`: If the provided parameters are invalid.
+    - `500 Internal Server Error`: If an error occurs during the training process.
+
 ## Style Checking
 
 ## Testing Requirements
@@ -285,7 +344,7 @@ Rightnow, our test coverage is 69% in total with 86 unit tests.
 ## External Documentation
 We did not use any external third-party codes.
 
-## Style Checking 
+## Style Checking
 Run the following command to check code style:
 ```bash
 cd sentimentAnalyzer
@@ -294,17 +353,17 @@ mvn checkstyle:check
 ![Checkstyle Report](static/img/checkstyle.png)
 
 ## AI Usage
-1. We used Claude Code on Copilot to determine the hyper-parameter range for the 
-`gamma` in the SVM implementations.
-Prompt: what is an ideal range of gamma for SVM classifier in weka library for 3-class text classification?
+1. We used Claude Code on Copilot to determine the hyper-parameter range for the
+   `gamma` in the SVM implementations.
+   Prompt: what is an ideal range of gamma for SVM classifier in weka library for 3-class text classification?
 
 2. We used mobile version of ChatGPT to discuss the potential limitations of SVM classifier
-for text classification tasks.
+   for text classification tasks.
 
 Prompt: What are the limitations of SVM classifier for text classification tasks?
 
 3. We used Copilot to discuss the SVM stemmer implementation in Weka library.
-Prompt: How to use SVM stemmer in Weka library for text classification tasks?
+   Prompt: How to use SVM stemmer in Weka library for text classification tasks?
 
 ## Notes
 
@@ -324,7 +383,7 @@ To add new features:
 
 ## Authors
 - Development Team: Nexus Project Contributors - Manav, Sreenivas, Sindhu, Song
-We used the [Trello](https://trello.com/b/GtJUzHHj/nexus) to keep track of our tasks and progress.
+  We used the [Trello](https://trello.com/b/GtJUzHHj/nexus) to keep track of our tasks and progress.
 
 ---
 
@@ -348,15 +407,15 @@ The project now includes a full REST API for sentiment analysis and review manag
 ## Example Usage (with Postman)
 
 - Create a user:
-  - POST `http://localhost:8080/api/users`
-  - Body (JSON):
-    ```json
-    { "username": "manav", "email": "mm6840@columbia.edu" }
-    ```
+    - POST `http://localhost:8080/api/users`
+    - Body (JSON):
+      ```json
+      { "username": "manav", "email": "mm6840@columbia.edu" }
+      ```
 - Get all products:
-  - GET `http://localhost:8080/api/products`
+    - GET `http://localhost:8080/api/products`
 - Get sentiment score:
-  - GET `http://localhost:8080/api/sentiment/score?text=This%20product%20is%20great` (To do)
+    - GET `http://localhost:8080/api/sentiment/score?text=This%20product%20is%20great` (To do)
 
 ---
 
@@ -381,20 +440,20 @@ The project now includes a full REST API for sentiment analysis and review manag
 
 - All controllers and services have unit tests using JUnit 5 and Mockito.
 - Example test classes:
-  - `UserControllerTest`
-  - `ProductControllerTest`
-  - `CompanyControllerTest`
-  - `SentimentControllerTest`
-  - `SentimentServiceTest`
-  - `IndexControllerTest`
+    - `UserControllerTest`
+    - `ProductControllerTest`
+    - `CompanyControllerTest`
+    - `SentimentControllerTest`
+    - `SentimentServiceTest`
+    - `IndexControllerTest`
 - Run all tests:
   ```powershell
   mvn test
   ```
 - Tests cover:
-  - Success and error cases
-  - Mocked repository/service dependencies
-  - Boundary conditions and input validation
+    - Success and error cases
+    - Mocked repository/service dependencies
+    - Boundary conditions and input validation
 
   ---
 
@@ -475,26 +534,26 @@ The project now includes a full REST API for sentiment analysis and review manag
   ```
 
 
-  # Sentiment Analyzer Unit Testing
+# Sentiment Analyzer Unit Testing
 
 - All controllers and services have unit tests using JUnit 5 and Mockito.
 - Example test classes:
-  - `DatasetLoaderTest`
-  - `DataSplitterTest`
-  - `SentimentModelTrainerTest`
-  - `ScoreMapperTest`
-  - `DistributionUtilsTest`
-  - `SentimentStatisticsTest`
-  ...
+    - `DatasetLoaderTest`
+    - `DataSplitterTest`
+    - `SentimentModelTrainerTest`
+    - `ScoreMapperTest`
+    - `DistributionUtilsTest`
+    - `SentimentStatisticsTest`
+      ...
 - Run individual unit test:
   ```bash
   mvn test -Dtest=DatasetLoaderTest#testLoadIllFormattedDataset
   ```
 - Tests cover:
-  - Edge cases for text input for the sentiment analyzer
-  - Data loader and splitter so that ill-formatted csv file can be handled properly
-  - Distribution tests for the mathematical details of the sentiment analysis.
- - Sentiment analysis tests to validate the accuracy and performance of the model.
- 
+    - Edge cases for text input for the sentiment analyzer
+    - Data loader and splitter so that ill-formatted csv file can be handled properly
+    - Distribution tests for the mathematical details of the sentiment analysis.
+- Sentiment analysis tests to validate the accuracy and performance of the model.
+
 
 ---
