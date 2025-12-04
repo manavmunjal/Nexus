@@ -7,6 +7,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.nexus.controller.ProductController;
+import com.nexus.auth.model.AuthUser;
+import com.nexus.auth.service.UserAuthService;
 import com.nexus.model.Product;
 import com.nexus.model.Review;
 import com.nexus.repository.CompanyRepository;
@@ -17,6 +19,7 @@ import com.nexus.sentiment.SentimentService;
 import java.util.ArrayList;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -47,8 +50,19 @@ public class ReviewDatabaseIntegrationTest {
   @Mock
   private SentimentService sentimentService;
 
+  @Mock
+  private UserAuthService userAuthService;
+
   @InjectMocks
   private ProductController productController;
+
+  private static final String VALID_USER_ID = "test-user-123";
+
+  @BeforeEach
+  void setUp() {
+    when(userAuthService.validateUser(VALID_USER_ID))
+        .thenReturn(new AuthUser(VALID_USER_ID));
+  }
 
   @Test
   public void testPostReview_CallsDatabaseSave() {
@@ -65,7 +79,7 @@ public class ReviewDatabaseIntegrationTest {
     when(reviewRepository.save(any(Review.class))).thenReturn(review);
     when(productRepository.save(any(Product.class))).thenReturn(product);
 
-    productController.postReview(productId, review);
+    productController.postReview(VALID_USER_ID, productId, review);
 
     verify(reviewRepository, times(1)).save(review);
     verify(productRepository, times(1)).save(product);
@@ -84,7 +98,7 @@ public class ReviewDatabaseIntegrationTest {
         .thenThrow(new DataAccessException("Connection refused") {
         });
 
-    ResponseEntity<?> response = productController.postReview(productId, review);
+    ResponseEntity<?> response = productController.postReview(VALID_USER_ID, productId, review);
 
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
   }

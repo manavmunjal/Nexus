@@ -7,6 +7,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.nexus.controller.ProductController;
+import com.nexus.auth.model.AuthUser;
+import com.nexus.auth.service.UserAuthService;
 import com.nexus.model.Product;
 import com.nexus.repository.CompanyRepository;
 import com.nexus.repository.ProductRepository;
@@ -15,6 +17,7 @@ import com.nexus.repository.UserRepository;
 import com.nexus.sentiment.SentimentService;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -44,8 +47,19 @@ public class ProductDatabaseIntegrationTest {
   @Mock
   private SentimentService sentimentService;
 
+  @Mock
+  private UserAuthService userAuthService;
+
   @InjectMocks
   private ProductController productController;
+
+  private static final String VALID_USER_ID = "test-user-123";
+
+  @BeforeEach
+  void setUp() {
+    when(userAuthService.validateUser(VALID_USER_ID))
+        .thenReturn(new AuthUser(VALID_USER_ID));
+  }
 
   /**
    * Verifies that the 'save' method of the repository is actually called
@@ -60,7 +74,7 @@ public class ProductDatabaseIntegrationTest {
     when(productRepository.save(any(Product.class))).thenReturn(product);
 
     // Act
-    productController.createProduct(product);
+    productController.createProduct(VALID_USER_ID, product);
 
     // Assert: Verify the database 'save' method was called exactly once
     verify(productRepository, times(1)).save(product);
@@ -82,7 +96,7 @@ public class ProductDatabaseIntegrationTest {
         });
 
     // Act
-    ResponseEntity<?> response = productController.createProduct(product);
+    ResponseEntity<?> response = productController.createProduct(VALID_USER_ID, product);
 
     // Assert
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
@@ -102,7 +116,7 @@ public class ProductDatabaseIntegrationTest {
     when(productRepository.findById(productId)).thenReturn(Optional.of(mockProduct));
 
     // Act
-    productController.getAverageRating(productId);
+    productController.getAverageRating(VALID_USER_ID, productId);
 
     // Assert: Verify we asked the repository for the specific ID
     verify(productRepository).findById(productId);

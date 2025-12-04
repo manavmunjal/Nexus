@@ -9,7 +9,6 @@ import static org.mockito.Mockito.when;
 import com.nexus.controller.UserController;
 import com.nexus.model.User;
 import com.nexus.repository.UserRepository;
-import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
