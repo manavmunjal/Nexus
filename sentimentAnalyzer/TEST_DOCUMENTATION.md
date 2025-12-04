@@ -180,7 +180,7 @@ The suite includes integration tests that verify the interaction between control
     - Verifies JSON response structure and content.
 
 ### 2. Controller Component Tests
-**Files:** `*RepositoryIntegrationTest.java`, `*DatabaseIntegrationTest.java`
+**Files:** `RepositoryIntegrationTest.java`, `DatabaseIntegrationTest.java`
 - **Scope:** Tests individual controller endpoints and their interaction with the service layer.
 - **Key Tests:**
     - **CompanyController:** Create company, Get average rating, Error handling (500 on DB failure).
