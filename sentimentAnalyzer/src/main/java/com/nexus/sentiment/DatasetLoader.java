@@ -117,7 +117,6 @@ public final class DatasetLoader {
 
     // Ensure class attribute is nominal
     if (data.classAttribute().isString()) {
-      System.out.println("IS STRING");
       StringToNominal strToNom = new StringToNominal();
       strToNom.setAttributeRange(String.valueOf(data.classIndex() + 1));
       strToNom.setInputFormat(data);
