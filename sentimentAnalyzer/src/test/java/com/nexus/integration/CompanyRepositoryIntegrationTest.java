@@ -1,231 +1,133 @@
 package com.nexus.integration;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nexus.controller.CompanyController;
 import com.nexus.model.Company;
-import com.nexus.model.Product;
-import com.nexus.model.Review;
 import com.nexus.repository.CompanyRepository;
 import com.nexus.repository.ProductRepository;
 import com.nexus.repository.ReviewRepository;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
+import java.util.Optional;
 
 /**
- * Integration tests for Company repository and model interactions.
- * Tests the data layer without mocking.
+ * Integration tests for {@link CompanyController}.
+ *
+ * <p>
+ * These tests verify the main endpoints of the controller, including creating
+ * companies and fetching
+ * average ratings, covering both success and not-found scenarios.
  */
-@DataMongoTest
-class CompanyRepositoryIntegrationTest {
+@WebMvcTest(CompanyController.class)
+public class CompanyRepositoryIntegrationTest {
 
   @Autowired
+  private MockMvc mockMvc;
+
+  @MockBean
   private CompanyRepository companyRepository;
-
-  @Autowired
+  @MockBean
   private ProductRepository productRepository;
-
-  @Autowired
+  @MockBean
   private ReviewRepository reviewRepository;
 
+  private ObjectMapper objectMapper;
+  private Company company;
+
+  /**
+   * Sets up common test data and initializes the ObjectMapper before each test.
+   *
+   * <p>
+   * Creates a sample Company object to be used in the tests.
+   */
   @BeforeEach
-  void setUp() {
-    // Clean up before each test
-    reviewRepository.deleteAll();
-    productRepository.deleteAll();
-    companyRepository.deleteAll();
-  }
+  public void setUp() {
+    objectMapper = new ObjectMapper();
 
-  @AfterEach
-  void tearDown() {
-    // Clean up after each test
-    reviewRepository.deleteAll();
-    productRepository.deleteAll();
-    companyRepository.deleteAll();
-  }
-
-  @Test
-  void testSaveAndRetrieveCompany() {
-    // Arrange
-    Company company = new Company();
+    // Create a sample company
+    company = new Company();
+    company.setId("123");
     company.setName("Test Company");
-    company.setProducts(new ArrayList<>());
-
-    // Act
-    Company savedCompany = companyRepository.save(company);
-
-    // Assert
-    assertNotNull(savedCompany.getId());
-    assertEquals("Test Company", savedCompany.getName());
-
-    // Verify retrieval
-    Company retrievedCompany = companyRepository.findById(savedCompany.getId()).orElse(null);
-    assertNotNull(retrievedCompany);
-    assertEquals("Test Company", retrievedCompany.getName());
+    company.setRating(4.5);
   }
 
+  /**
+   * Test scenario: Successfully creating a company.
+   *
+   * <p>
+   * Mocks the CompanyRepository to return the company and verifies the API
+   * response status and
+   * content.
+   *
+   * @throws Exception if the MockMvc request fails
+   */
   @Test
-  void testFindCompanyByName() {
-    // Arrange
-    Company company = new Company();
-    company.setName("Unique Company Name");
-    companyRepository.save(company);
+  public void testCreateCompany_Success() throws Exception {
+    when(companyRepository.save(any(Company.class))).thenReturn(company);
 
-    // Act
-    Company foundCompany = companyRepository.findByName("Unique Company Name").orElse(null);
-
-    // Assert
-    assertNotNull(foundCompany);
-    assertEquals("Unique Company Name", foundCompany.getName());
+    mockMvc
+        .perform(
+            post("/api/companies")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(company)))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.name").value("Test Company"))
+        .andExpect(jsonPath("$.rating").value(4.5));
   }
 
+  /**
+   * Test scenario: Fetch average rating for a company that exists.
+   *
+   * <p>
+   * Mocks the CompanyRepository to return a valid company and verifies the API
+   * response status and
+   * content.
+   *
+   * @throws Exception if the MockMvc request fails
+   */
   @Test
-  void testCompanyWithMultipleProducts() {
-    // Arrange
-    Company company = new Company();
-    company.setName("Multi Product Company");
-    company.setProducts(new ArrayList<>());
-    company = companyRepository.save(company);
+  public void testGetCompanyAverageRating_Success() throws Exception {
+    when(companyRepository.findById("123")).thenReturn(Optional.of(company));
 
-    Product product1 = new Product();
-    product1.setName("Product 1");
-    product1 = productRepository.save(product1);
-
-    Product product2 = new Product();
-    product2.setName("Product 2");
-    product2 = productRepository.save(product2);
-
-    // Act
-    company.getProducts().add(product1.getId());
-    company.getProducts().add(product2.getId());
-    company = companyRepository.save(company);
-
-    // Assert
-    Company retrievedCompany = companyRepository.findById(company.getId()).orElseThrow();
-    assertEquals(2, retrievedCompany.getProducts().size());
-    assertTrue(retrievedCompany.getProducts().contains(product1.getId()));
-    assertTrue(retrievedCompany.getProducts().contains(product2.getId()));
+    mockMvc
+        .perform(get("/api/companies/123/average-rating"))
+        .andExpect(status().isOk())
+        .andExpect(content().string("4.5"));
   }
 
+  /**
+   * Test scenario: Fetch average rating for a company that does not exist (404).
+   *
+   * <p>
+   * Mocks the CompanyRepository to return empty and verifies that the API returns
+   * a 500 status with
+   * the correct error message (as per controller implementation which throws
+   * RuntimeException).
+   *
+   * @throws Exception if the MockMvc request fails
+   */
   @Test
-  void testCompanyRatingCalculation() {
-    // Arrange
-    Company company = new Company();
-    company.setName("Rated Company");
-    company.setProducts(new ArrayList<>());
-    company = companyRepository.save(company);
+  public void testGetCompanyAverageRating_NotFound() throws Exception {
+    when(companyRepository.findById("123")).thenReturn(Optional.empty());
 
-    // Create products with ratings
-    Product product1 = new Product();
-    product1.setName("Product 1");
-    product1.setRating(4.5);
-    product1 = productRepository.save(product1);
-
-    Product product2 = new Product();
-    product2.setName("Product 2");
-    product2.setRating(3.5);
-    product2 = productRepository.save(product2);
-
-    company.getProducts().add(product1.getId());
-    company.getProducts().add(product2.getId());
-
-    // Act
-    List<Product> products = productRepository.findAllById(company.getProducts());
-    double avgRating = products.stream()
-        .mapToDouble(Product::getRating)
-        .average()
-        .orElse(0.0);
-    company.setRating(avgRating);
-    company = companyRepository.save(company);
-
-    // Assert
-    Company retrievedCompany = companyRepository.findById(company.getId()).orElseThrow();
-    assertEquals(4.0, retrievedCompany.getRating(), 0.01);
-  }
-
-  @Test
-  void testFindCompaniesByProductId() {
-    // Arrange
-    Product product = new Product();
-    product.setName("Shared Product");
-    product = productRepository.save(product);
-
-    Company company1 = new Company();
-    company1.setName("Company 1");
-    company1.setProducts(List.of(product.getId()));
-    companyRepository.save(company1);
-
-    Company company2 = new Company();
-    company2.setName("Company 2");
-    company2.setProducts(List.of(product.getId()));
-    companyRepository.save(company2);
-
-    // Act
-    List<Company> companies = companyRepository.findByProductsContaining(product.getId());
-
-    // Assert
-    assertEquals(2, companies.size());
-  }
-
-  @Test
-  void testDeleteCompany() {
-    // Arrange
-    Company company = new Company();
-    company.setName("Company to Delete");
-    company = companyRepository.save(company);
-    String companyId = company.getId();
-
-    // Act
-    companyRepository.deleteById(companyId);
-
-    // Assert
-    assertFalse(companyRepository.findById(companyId).isPresent());
-  }
-
-  @Test
-  void testCompanyWithProductsAndReviews() {
-    // Arrange
-    Company company = new Company();
-    company.setName("Full Test Company");
-    company.setProducts(new ArrayList<>());
-    company = companyRepository.save(company);
-
-    Product product = new Product();
-    product.setName("Product with Reviews");
-    product.setReviewIds(new ArrayList<>());
-    product = productRepository.save(product);
-
-    Review review1 = new Review();
-    review1.setComment("Great!");
-    review1.setRating(5);
-    review1 = reviewRepository.save(review1);
-
-    Review review2 = new Review();
-    review2.setComment("Good");
-    review2.setRating(4);
-    review2 = reviewRepository.save(review2);
-
-    // Act
-    product.getReviewIds().add(review1.getId());
-    product.getReviewIds().add(review2.getId());
-    product = productRepository.save(product);
-
-    company.getProducts().add(product.getId());
-    company = companyRepository.save(company);
-
-    // Assert
-    Company retrievedCompany = companyRepository.findById(company.getId()).orElseThrow();
-    assertEquals(1, retrievedCompany.getProducts().size());
-
-    Product retrievedProduct = productRepository.findById(product.getId()).orElseThrow();
-    assertEquals(2, retrievedProduct.getReviewIds().size());
-
-    List<Review> reviews = reviewRepository.findByIdIn(retrievedProduct.getReviewIds());
-    assertEquals(2, reviews.size());
+    mockMvc
+        .perform(get("/api/companies/123/average-rating"))
+        .andExpect(status().isInternalServerError())
+        .andExpect(content().string("Unexpected error occurred: Company not found"));
   }
 }

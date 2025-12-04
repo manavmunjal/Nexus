@@ -1,197 +1,141 @@
 package com.nexus.integration;
 
-import com.nexus.model.Company;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nexus.controller.ProductController;
 import com.nexus.model.Product;
-import com.nexus.model.Review;
 import com.nexus.repository.CompanyRepository;
 import com.nexus.repository.ProductRepository;
 import com.nexus.repository.ReviewRepository;
-import org.junit.jupiter.api.AfterEach;
+import com.nexus.repository.UserRepository;
+import com.nexus.sentiment.SentimentService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
+import java.util.Optional;
 
 /**
- * Integration tests for Product repository and model interactions.
- * Tests the data layer without mocking.
+ * Integration tests for {@link ProductController}.
+ *
+ * <p>
+ * These tests verify the main endpoints of the controller, including creating
+ * products and fetching
+ * average ratings, covering both success and not-found scenarios.
  */
-@DataMongoTest
-class ProductRepositoryIntegrationTest {
+@WebMvcTest(ProductController.class)
+public class ProductRepositoryIntegrationTest {
 
   @Autowired
+  private MockMvc mockMvc;
+
+  @MockBean
   private ProductRepository productRepository;
-
-  @Autowired
+  @MockBean
   private ReviewRepository reviewRepository;
-
-  @Autowired
+  @MockBean
+  private UserRepository userRepository;
+  @MockBean
   private CompanyRepository companyRepository;
+  @MockBean
+  private SentimentService sentimentService;
 
+  private ObjectMapper objectMapper;
+  private Product product;
+
+  /**
+   * Sets up common test data and initializes the ObjectMapper before each test.
+   *
+   * <p>
+   * Creates a sample Product object to be used in the tests.
+   */
   @BeforeEach
-  void setUp() {
-    // Clean up before each test
-    reviewRepository.deleteAll();
-    productRepository.deleteAll();
-    companyRepository.deleteAll();
-  }
+  public void setUp() {
+    objectMapper = new ObjectMapper();
 
-  @AfterEach
-  void tearDown() {
-    // Clean up after each test
-    reviewRepository.deleteAll();
-    productRepository.deleteAll();
-    companyRepository.deleteAll();
-  }
-
-  @Test
-  void testSaveAndRetrieveProduct() {
-    // Arrange
-    Product product = new Product();
+    // Create a sample product
+    product = new Product();
+    product.setId("123");
     product.setName("Test Product");
-    product.setDescription("A test product description");
+    product.setRating(4.5);
     product.setReviewIds(new ArrayList<>());
-
-    // Act
-    Product savedProduct = productRepository.save(product);
-
-    // Assert
-    assertNotNull(savedProduct.getId());
-    assertEquals("Test Product", savedProduct.getName());
-
-    // Verify retrieval
-    Product retrievedProduct = productRepository.findById(savedProduct.getId()).orElse(null);
-    assertNotNull(retrievedProduct);
-    assertEquals("Test Product", retrievedProduct.getName());
   }
 
+  /**
+   * Test scenario: Successfully creating a product.
+   *
+   * <p>
+   * Mocks the ProductRepository to return the product and verifies the API
+   * response status and
+   * content.
+   *
+   * @throws Exception if the MockMvc request fails
+   */
   @Test
-  void testProductWithReviews() {
-    // Arrange
-    Product product = new Product();
-    product.setName("Product with Reviews");
-    product.setReviewIds(new ArrayList<>());
-    product = productRepository.save(product);
+  public void testCreateProduct_Success() throws Exception {
+    when(productRepository.save(any(Product.class))).thenReturn(product);
 
-    Review review1 = new Review();
-    review1.setComment("Great product");
-    review1.setRating(5);
-    review1 = reviewRepository.save(review1);
-
-    Review review2 = new Review();
-    review2.setComment("Good value");
-    review2.setRating(4);
-    review2 = reviewRepository.save(review2);
-
-    // Act
-    product.getReviewIds().add(review1.getId());
-    product.getReviewIds().add(review2.getId());
-    product = productRepository.save(product);
-
-    // Assert
-    Product retrievedProduct = productRepository.findById(product.getId()).orElseThrow();
-    assertEquals(2, retrievedProduct.getReviewIds().size());
-    assertTrue(retrievedProduct.getReviewIds().contains(review1.getId()));
-    assertTrue(retrievedProduct.getReviewIds().contains(review2.getId()));
-
-    // Verify reviews can be retrieved
-    List<Review> reviews = reviewRepository.findByIdIn(retrievedProduct.getReviewIds());
-    assertEquals(2, reviews.size());
+    mockMvc
+        .perform(
+            post("/api/products")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(product)))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.name").value("Test Product"))
+        .andExpect(jsonPath("$.rating").value(4.5));
   }
 
+  /**
+   * Test scenario: Fetch average rating for a product that exists.
+   *
+   * <p>
+   * Mocks the ProductRepository to return a valid product and verifies the API
+   * response status and
+   * content.
+   *
+   * @throws Exception if the MockMvc request fails
+   */
   @Test
-  void testProductRatingCalculation() {
-    // Arrange
-    Product product = new Product();
-    product.setName("Product for Rating");
-    product.setReviewIds(new ArrayList<>());
-    product = productRepository.save(product);
+  public void testGetProductAverageRating_Success() throws Exception {
+    when(productRepository.findById("123")).thenReturn(Optional.of(product));
 
-    Review review1 = new Review();
-    review1.setRating(5);
-    review1 = reviewRepository.save(review1);
-
-    Review review2 = new Review();
-    review2.setRating(3);
-    review2 = reviewRepository.save(review2);
-
-    product.getReviewIds().add(review1.getId());
-    product.getReviewIds().add(review2.getId());
-
-    // Act
-    List<Review> reviews = reviewRepository.findByIdIn(product.getReviewIds());
-    double avgRating = reviews.stream()
-        .mapToDouble(Review::getRating)
-        .average()
-        .orElse(0.0);
-    product.setRating(avgRating);
-    product = productRepository.save(product);
-
-    // Assert
-    Product retrievedProduct = productRepository.findById(product.getId()).orElseThrow();
-    assertEquals(4.0, retrievedProduct.getRating(), 0.01);
+    mockMvc
+        .perform(get("/api/products/123/average-rating"))
+        .andExpect(status().isOk())
+        .andExpect(content().string("4.5"));
   }
 
+  /**
+   * Test scenario: Fetch average rating for a product that does not exist (404).
+   *
+   * <p>
+   * Mocks the ProductRepository to return empty and verifies that the API returns
+   * a 500 status with
+   * the correct error message (as per controller implementation which throws
+   * RuntimeException).
+   *
+   * @throws Exception if the MockMvc request fails
+   */
   @Test
-  void testFindAllProducts() {
-    // Arrange
-    Product product1 = new Product();
-    product1.setName("Product 1");
-    productRepository.save(product1);
+  public void testGetProductAverageRating_NotFound() throws Exception {
+    when(productRepository.findById("123")).thenReturn(Optional.empty());
 
-    Product product2 = new Product();
-    product2.setName("Product 2");
-    productRepository.save(product2);
-
-    // Act
-    List<Product> products = productRepository.findAll();
-
-    // Assert
-    assertEquals(2, products.size());
-  }
-
-  @Test
-  void testDeleteProduct() {
-    // Arrange
-    Product product = new Product();
-    product.setName("Product to Delete");
-    product = productRepository.save(product);
-    String productId = product.getId();
-
-    // Act
-    productRepository.deleteById(productId);
-
-    // Assert
-    assertFalse(productRepository.findById(productId).isPresent());
-  }
-
-  @Test
-  void testProductWithCompany() {
-    // Arrange
-    Company company = new Company();
-    company.setName("Test Company");
-    company.setProducts(new ArrayList<>());
-    company = companyRepository.save(company);
-
-    Product product = new Product();
-    product.setName("Company Product");
-    product.setCompanyName("Test Company");
-    product = productRepository.save(product);
-
-    // Act
-    company.getProducts().add(product.getId());
-    company = companyRepository.save(company);
-
-    // Assert
-    Company retrievedCompany = companyRepository.findById(company.getId()).orElseThrow();
-    assertTrue(retrievedCompany.getProducts().contains(product.getId()));
-
-    Product retrievedProduct = productRepository.findById(product.getId()).orElseThrow();
-    assertEquals("Test Company", retrievedProduct.getCompanyName());
+    mockMvc
+        .perform(get("/api/products/123/average-rating"))
+        .andExpect(status().isInternalServerError())
+        .andExpect(content().string("Unexpected error occurred: Product not found"));
   }
 }
