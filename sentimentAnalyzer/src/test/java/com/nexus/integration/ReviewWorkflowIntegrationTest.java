@@ -8,6 +8,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nexus.auth.model.AuthUser;
+import com.nexus.auth.service.UserAuthService;
 import com.nexus.controller.ProductController;
 import com.nexus.model.Product;
 import com.nexus.model.Review;
@@ -51,10 +53,13 @@ public class ReviewWorkflowIntegrationTest {
   private CompanyRepository companyRepository;
   @MockBean
   private SentimentService sentimentService;
+  @MockBean
+  private UserAuthService userAuthService;
 
   private ObjectMapper objectMapper;
   private Product product;
   private Review review;
+  private static final String VALID_USER_ID = "test-user-123";
 
   /**
    * Sets up common test data and initializes the ObjectMapper before each test.
@@ -76,6 +81,10 @@ public class ReviewWorkflowIntegrationTest {
     review.setComment("Great product!");
     review.setRating(5);
     review.setUser(user);
+
+    // default auth success
+    when(userAuthService.validateUser(VALID_USER_ID))
+      .thenReturn(new AuthUser(VALID_USER_ID));
   }
 
   /**
@@ -96,6 +105,7 @@ public class ReviewWorkflowIntegrationTest {
     mockMvc
         .perform(
             post("/api/products/123/reviews")
+          .header("X-User-Id", VALID_USER_ID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(review)))
         .andExpect(status().isCreated())
@@ -119,6 +129,7 @@ public class ReviewWorkflowIntegrationTest {
     mockMvc
         .perform(
             post("/api/products/999/reviews")
+          .header("X-User-Id", VALID_USER_ID)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(review)))
         .andExpect(status().isNotFound())
