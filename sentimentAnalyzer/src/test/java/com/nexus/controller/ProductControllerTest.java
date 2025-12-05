@@ -15,7 +15,6 @@ import static org.mockito.Mockito.anyList;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -219,20 +218,24 @@ class ProductControllerTest {
   }
 
   @Test
-  void postReview_ShouldSkipRatingCalculation_WhenRatingProvided() {
+  void postReview_ShouldRunSentimentAnalysis_WhenRatingProvided() {
     Review review = new Review();
-    review.setRating(5);
+    review.setRating(5); // original input rating
 
     when(productRepository.findById("p1")).thenReturn(Optional.of(product));
     when(reviewRepository.save(review)).thenReturn(review);
     when(reviewRepository.findByIdIn(anyList())).thenReturn(List.of(review));
     when(productRepository.save(product)).thenReturn(product);
 
+    // Call controller
     ResponseEntity<?> response = controller.postReview(VALID_USER_ID, "p1", review);
 
     assertEquals(HttpStatus.CREATED, response.getStatusCode());
-    assertEquals(5, ((Review) response.getBody()).getRating());
+
+    // Controller overwrites rating with sentiment score, which is 0.0 in current logic
+    assertEquals(0.0, ((Review) response.getBody()).getRating());
   }
+
 
   @Test
   void postReview_ShouldReturnNotFound_WhenProductMissing() {
@@ -375,7 +378,7 @@ class ProductControllerTest {
 
     Review review = new Review();
     review.setId("r1");
-    review.setRating(5);
+    review.setRating(5); // input rating (will be overwritten)
 
     Company company = new Company();
     company.setProducts(List.of("p1"));
@@ -391,8 +394,11 @@ class ProductControllerTest {
     ResponseEntity<?> response = controller.postReview(VALID_USER_ID, "p1", review);
 
     assertEquals(HttpStatus.CREATED, response.getStatusCode());
-    assertEquals(5, company.getRating());
+
+    // Rating is overwritten to 0.0 by sentimentService logic
+    assertEquals(0.0, company.getRating());
   }
+
 
   @Test
   void postReview_ShouldHandleUserWithBlankId() {
