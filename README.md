@@ -201,6 +201,35 @@ sentimentAnalyzer/
 └── TEST_DOCUMENTATION.md                      # Detailed test documentation
 ```
 
+### Repository Integration Testing with Embedded MongoDB
+We use `de.flapdoodle.embed.mongo` to run repository tests against an in-memory MongoDB instance, ensuring isolation from the external database. The embedded MongoDB is pinned to version 4.0.2 to ensure stability and compatibility across different environments (including CI).
+
+**Run Repository Tests:**
+```bash
+mvn test -Dtest="*RepositoryEmbeddedTest"
+```
+
+**Key Repository Tests:**
+- `ReviewRepositoryEmbeddedTest`: Verifies CRUD operations and custom finders for Reviews.
+- `CompanyRepositoryEmbeddedTest`: Verifies company persistence and product-based searches.
+- `ProductRepositoryEmbeddedTest`: Verifies product storage and retrieval.
+- `UserRepositoryEmbeddedTest`: Verifies user management and username lookups.
+
+### Heavy NLP Testing in `SentimentModelTrainerTest`:
+
+1. **Tokenization Tests**
+    - Mixed case handling (GREAT → great)
+    - Punctuation (!!!, ???, ...)
+    - Numbers (5 stars, 100%)
+    - Special characters (@, #, &)
+
+2. **Text Preprocessing**
+    - Stop word removal
+    - Stemming (running→run, breaks→break)
+    - Empty text handling
+    - Long text (100+ sentences)
+    - Unicode characters (★, café, ☹)
+
 3. **TF-IDF Features**
     - Rare word weighting
     - Common word downweighting
