@@ -239,7 +239,7 @@ public final class ProductController {
       // Sentiment rating calculation
 
       if (!sentimentService.isTrained()) {
-        if (userId != "ADMIN") {
+        if (!"ADMIN".equals(userId)) {
           if (LOGGER.isInfoEnabled()) {
             LOGGER.warn("Sentiment model untrained. "
                 + "Only ADMIN can trigger training. "
@@ -252,9 +252,11 @@ public final class ProductController {
           sentimentService.trainModel(null, null, null);
           score = sentimentService.scoreFromText(review.getComment());
         }
+      } else {
+        score = sentimentService.scoreFromText(review.getComment());
       }
 
-        review.setRating(score);
+      review.setRating(score);
 
       Review saved = reviewRepository.save(review);
 
