@@ -167,4 +167,73 @@ class MainTest {
 
       Main.runAnalysis(helpConfig);  // No exception expected
   }
+
+  @Test
+  void runAnalysisWithZeroOrNegativeSampleLimitPrintsNoPredictions() throws Exception {
+      config.setDatasetPath("src/test/resources/data/test_reviews.csv");
+
+      try (MockedStatic<DatasetLoader> datasetLoaderMock = mockStatic(DatasetLoader.class);
+          MockedStatic<SentimentLabelConverter> converterMock = mockStatic(SentimentLabelConverter.class)) {
+
+          // Attributes
+          ArrayList<weka.core.Attribute> atts = new ArrayList<>();
+          atts.add(new weka.core.Attribute("review_text", (List<String>) null));
+          atts.add(new weka.core.Attribute("sentiment_label", List.of("positive", "neutral", "negative")));
+
+          Instances testInstances = new Instances("TestRelation", atts, 5);
+
+          for (int i = 0; i < 7; i++) {
+              double[] vals = new double[testInstances.numAttributes()];
+              vals[0] = testInstances.attribute(0).addStringValue("Review " + i);
+              vals[1] = i % 3; // cycle through positive/neutral/negative
+              testInstances.add(new weka.core.DenseInstance(1.0, vals));
+          }
+
+          datasetLoaderMock.when(() -> DatasetLoader.load(any(Path.class), anyString(), anyString()))
+                  .thenReturn(testInstances);
+          converterMock.when(() -> SentimentLabelConverter.convertTo3Class(any(), anyString()))
+                  .thenReturn(testInstances);
+
+          // Zero limit
+          config.setSampleLimit(0);
+          assertDoesNotThrow(() -> Main.runAnalysis(config));
+
+          // Negative limit
+          config.setSampleLimit(-5);
+          assertDoesNotThrow(() -> Main.runAnalysis(config));
+      }
+  }
+
+  @Test
+  void runAnalysisWithSampleLimitExceedingPredictionCountPrintsAll() throws Exception {
+      // Use a valid dataset path in test resources
+      config.setDatasetPath("src/test/resources/data/test_reviews.csv");
+      config.setSampleLimit(100); // larger than number of predictions
+
+      try (MockedStatic<DatasetLoader> datasetLoaderMock = mockStatic(DatasetLoader.class);
+          MockedStatic<SentimentLabelConverter> converterMock = mockStatic(SentimentLabelConverter.class)) {
+
+          ArrayList<weka.core.Attribute> atts = new ArrayList<>();
+          atts.add(new weka.core.Attribute("review_text", (List<String>) null));
+          atts.add(new weka.core.Attribute("sentiment_label", List.of("positive", "neutral", "negative")));
+
+          Instances testInstances = new Instances("TestRelation", atts, 5);
+          testInstances.setClass(atts.get(1));
+
+          for (int i = 0; i < 7; i++) {
+              weka.core.Instance inst = new weka.core.DenseInstance(2);
+              inst.setValue(atts.get(0), "dummy text " + i);
+              inst.setValue(atts.get(1), "positive");
+              testInstances.add(inst);
+          }
+
+          datasetLoaderMock.when(() -> DatasetLoader.load(any(Path.class), anyString(), anyString()))
+                  .thenReturn(testInstances);
+          converterMock.when(() -> SentimentLabelConverter.convertTo3Class(any(), anyString()))
+                  .thenReturn(testInstances);
+
+          // No exception should be thrown, sampleLimit > predictions.size() is clamped
+          assertDoesNotThrow(() -> Main.runAnalysis(config));
+      }
+  }
 }

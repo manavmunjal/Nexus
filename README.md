@@ -35,39 +35,6 @@ A comprehensive Java-based sentiment analysis system using Weka's machine learni
 - **Statistical Summary**: Comprehensive metrics for each group (product/company)
 - **Distribution Smoothing**: Handles zero probabilities for robust KL-divergence
 
-## Project Structure
-
-```
-sentimentAnalyzer/
-├── src/
-│   ├── main/
-│   │   ├── java/com/nexus/sentiment/
-│   │   │   ├── Main.java                      # Entry point
-│   │   │   ├── DatasetLoader.java             # CSV data loading
-│   │   │   ├── DataSplitter.java              # Train/test splitting
-│   │   │   ├── SentimentModelTrainer.java     # TF-IDF + SVM training
-│   │   │   ├── SentimentPredictor.java        # Generate predictions
-│   │   │   ├── ScoreMapper.java               # Label→score mapping
-│   │   │   ├── SentimentStatistics.java       # Statistical computations
-│   │   │   ├── DistributionUtils.java         # KL-divergence, smoothing
-│   │   │   ├── PredictionResult.java          # Prediction data class
-│   │   │   └── ReportPrinter.java             # Console output formatting
-│   │   └── resources/data/
-│   │       └── sample_reviews.csv             # Sample dataset
-│   └── test/
-│       ├── java/com/nexus/sentiment/
-│       │   ├── DatasetLoaderTest.java         # 4 tests
-│       │   ├── DataSplitterTest.java          # 6 tests
-│       │   ├── SentimentModelTrainerTest.java # 14 NLP-focused tests
-│       │   ├── ScoreMapperTest.java           # 7 tests
-│       │   ├── DistributionUtilsTest.java     # 11 tests
-│       │   ├── SentimentStatisticsTest.java   # 11 tests
-│       │   └── SentimentPredictorTest.java    # 12 tests
-│       └── resources/data/
-│           └── test_reviews.csv               # Test dataset
-├── pom.xml                                    # Maven configuration
-└── TEST_DOCUMENTATION.md                      # Detailed test documentation
-
 ## Technologies Used
 
 - **Java 17**: Modern Java with records and text blocks
@@ -183,22 +150,55 @@ default test files provided in the `src/test/resources/data/` folder.
 mvn clean compile exec:java -Dexec.args="--dataset=src/main/resources/data/augmented_cleaned_data.csv --text-attr=review_text --class-attr=sentiment_label --train-ratio=0.8 --seed=42 --limit=5"
 ```
 
-## Test Suite
+## Project Structure
 
-### Test Coverage: **254 Unit Tests**
-
-### Logging Tests
-We have implemented specific tests to verify that our controllers log important events and errors correctly. These tests use Spring Boot's `OutputCaptureExtension` to capture console output and assert that the expected log messages are present.
-
-**Key Logging Tests:**
-- `ProductControllerLoggingTest`: Verifies logs for product creation and error handling.
-- `CompanyControllerLoggingTest`: Verifies logs for company creation and database errors.
-- `UserControllerLoggingTest`: Verifies logs for user profile creation.
-- `SentimentControllerLoggingTest`: Verifies logs for sentiment scoring requests and exceptions.
-
-**Run Logging Tests:**
-```bash
-mvn test -Dtest="*ControllerLoggingTest"
+```
+sentimentAnalyzer/
+├── Dockerfile                       # Container build for service
+├── pom.xml                          # Maven build configuration
+├── src/
+│   ├── main/
+│   │   ├── java/com/nexus/
+│   │   │   ├── SentimentApplicationMain.java  # Spring Boot application entry
+│   │   │   ├── controller/
+│   │   │   │   ├── IndexController.java       # API root welcome and endpoints
+│   │   │   │   ├── SentimentController.java   # Score and train endpoints
+│   │   │   │   ├── CompanyController.java     # Company APIs and reviews aggregation
+│   │   │   │   ├── ProductController.java     # Products and reviews endpoints
+│   │   │   │   └── UserController.java        # Basic user CRUD APIs
+│   │   │   ├── auth/
+│   │   │   │   ├── controller/UserAuthController.java # Auth user management APIs
+│   │   │   │   ├── model/AuthUser.java        # Auth user entity
+│   │   │   │   ├── repository/AuthUserRepository.java # Auth user Mongo repository
+│   │   │   │   └── service/UserAuthService.java # Auth user business logic
+│   │   │   ├── config/
+│   │   │   │   └── GlobalExceptionHandler.java # Global REST exception mapping
+│   │   │   ├── model/
+│   │   │   │   ├── Company.java               # Company entity and rating helper
+│   │   │   │   ├── Product.java               # Product entity and rating helper
+│   │   │   │   ├── Review.java                # Review entity with user
+│   │   │   │   └── User.java                  # User profile entity
+│   │   │   ├── repository/
+│   │   │   │   ├── CompanyRepository.java     # Company Mongo repository
+│   │   │   │   ├── ProductRepository.java     # Product Mongo repository
+│   │   │   │   ├── ReviewRepository.java      # Review Mongo repository
+│   │   │   │   └── UserRepository.java        # User Mongo repository
+│   │   │   └── sentiment/
+│   │   │       ├── Main.java                  # CLI training and demo runner
+│   │   │       ├── DatasetLoader.java         # CSV loading and preprocessing
+│   │   │       ├── DataSplitter.java          # Train/test dataset splitting
+│   │   │       ├── SentimentModelTrainer.java # TF‑IDF + SVM training
+│   │   │       ├── SentimentPredictor.java    # Predictions and probabilities
+│   │   │       ├── ScoreMapper.java           # Label-to-score mapping
+│   │   │       ├── SentimentStatistics.java   # Statistics on predictions
+│   │   │       ├── DistributionUtils.java     # KL divergence and smoothing
+│   │   │       ├── PredictionResult.java      # Prediction result DTO
+│   │   │       └── ReportPrinter.java         # Console report formatting
+│   │   └── resources/
+│   │       ├── application.yaml               # Spring Boot configuration
+│   │       └── data/sample_reviews.csv        # Example dataset
+│   └── test/                                  # Unit and integration test suites
+└── TEST_DOCUMENTATION.md                      # Detailed test documentation
 ```
 
 ### Repository Integration Testing with Embedded MongoDB
@@ -285,76 +285,170 @@ vectorizer.setNormalizeDocLength(true); // Document length normalization
 vectorizer.setStemmer(new LovinsStemmer()); // Alternative stemmer
 ```
 
-### Modify Score Mapping
-In `ScoreMapper.java`, adjust the defaults:
-```java
-Map<String, Double> defaults = Map.of(
-    "very_negative", -1.0,
-    "negative", -0.5,
-    "neutral", 0.0,
-    "positive", 0.5,
-    "very_positive", 1.0
-);
-```
-
 ## Third-Party Client Development
 
 This section provides instructions for third-party developers who want to interact with the sentiment analysis service.
 
-### API Endpoints
+### API Reference
 
-The service exposes the following RESTful endpoints for sentiment analysis.
+- Base path: `http://localhost:8080`
+- Auth header (most endpoints): `X-User-Id: <userId>`
+- Create users for this header via `/api/auth/users` first.
 
-#### 1. Get Sentiment Score
+#### Common Models
+- `User`: `{ id?, username, email? }`
+- `AuthUser`: `{ id?, userId, createdAt, lastAccessedAt }`
+- `Company`: `{ id?, name, products?: string[], rating?: number }`
+- `Product`: `{ id?, name, description?, reviewIds?: string[], rating?: number, companyName? }`
+- `Review`: `{ id?, comment, rating?, user?: User }` (rating auto-computed from `comment` if omitted)
 
-Analyzes the sentiment of a given text and returns a numerical score.
+#### Index
+- `GET /api`
+  - Headers: none
+  - 200: plain text welcome and endpoint list
+  - 500: `"Error occurred while processing the request: ..."`
 
-- **URL:** `/api/sentiment/score`
-- **Method:** `GET`
-- **Query Parameters:**
-    - `text` (required): The string of text you want to analyze.
+#### Authentication (Auth Users)
+- `POST /api/auth/users`
+  - Body: `{ userId: string }`
+  - 201: `AuthUser`
+  - 400: `{ error }` (invalid userId)
+  - 409: `{ error }` (already exists)
+  - 500: `{ error }`
 
-- **Success Response (200 OK):**
-    - **Content-Type:** `application/json`
-    - **Body:** A `double` value representing the sentiment score. A more positive value indicates more positive sentiment.
+- `GET /api/auth/users`
+  - Headers: `X-User-Id` (must exist and be `ADMIN`)
+  - 200: `AuthUser[]`
+  - 403: `{ error: "Access denied" }`
+  - 500: `{ error }`
 
-- **Example Request (using cURL):**
-  ```bash
-  curl -X GET "http://localhost:8080/api/sentiment/score?text=This%20is%20a%20great%20product!"
-  ```
+- `GET /api/auth/users/{userId}`
+  - 200: `AuthUser`
+  - 404: `{ error: "User not found: {userId} ..." }`
+  - 500: `{ error }`
 
-- **Error Responses:**
-    - `400 Bad Request`: If the `text` parameter is missing or invalid.
-    - `500 Internal Server Error`: If an unexpected error occurs during analysis.
+- `GET /api/auth/users/{userId}/validate`
+  - Headers: `X-User-Id` (must exist and be `ADMIN`)
+  - 200: `{ userId, valid: boolean }`
+  - 403: `{ error: "Access denied" }`
+  - 500: `{ error }`
 
-#### 2. Train the Model
+- `DELETE /api/auth/users/{userId}`
+  - Headers: `X-User-Id` (must exist and be `ADMIN`)
+  - 200: `{ message: "User deleted successfully" }`
+  - 400: `{ error }`
+  - 404: `{ error }`
+  - 500: `{ error }`
 
-Triggers the training or retraining of the sentiment analysis model. This is an advanced feature and should be used with caution.
+#### Users (Profile Storage)
+- `POST /api/users`
+  - Body: `User`
+  - 201: created `User`
+  - 400: `"Invalid user data"`
+  - 500: `"Database error while saving user: ..." | "Unexpected error: ..."`
 
-- **URL:** `/api/sentiment/train`
-- **Method:** `POST`
-- **Query Parameters (all optional):**
-    - `datasetPath`: The file path to a CSV dataset for training. If not provided, a default dataset will be used.
-    - `classAttr`: The name of the attribute in the CSV that contains the sentiment label (e.g., 'sentiment_label').
-    - `textAttr`: The name of the attribute in the CSV that contains the text to be analyzed (e.g., 'review_text').
+- `GET /api/users`
+  - 200: `User[]`
+  - 500: `[]` (empty list on error)
 
-- **Success Response (200 OK):**
-    - **Content-Type:** `text/plain`
-    - **Body:** A confirmation message, e.g., "Model trained successfully".
+#### Companies
+- `POST /api/companies`
+  - Headers: `X-User-Id`
+  - Body: `Company` (requires `name`)
+  - 201: created `Company`
+  - 401: `"Authentication failed: ..."`
+  - 400: `"Invalid user ID: ..." | "Invalid company data. 'name' field is required."`
+  - 500: `"Database error while saving company: ..." | "Unexpected error occurred: ..."`
 
-- **Example Request (using cURL with optional parameters):**
-  ```bash
-  curl -X POST "http://localhost:8080/api/sentiment/train?datasetPath=path/to/your/data.csv&classAttr=sentiment&textAttr=review"
-  ```
+- `GET /api/companies/{companyId}/average-rating`
+  - Headers: `X-User-Id`
+  - 200: `number` (company.rating)
+  - 401: `"Authentication failed: ..."`
+  - 500: `"Database error while fetching company: ..." | "Unexpected error occurred: ..."`
 
-- **Example Request (using cURL with defaults):**
-  ```bash
-  curl -X POST "http://localhost:8080/api/sentiment/train"
-  ```
+- `GET /api/companies/{companyId}/reviews`
+  - Headers: `X-User-Id`
+  - 200: `Review[]` (may be empty)
+  - 401: `"Authentication failed: ..."`
+  - 500: `"Database error while fetching company: ..." | "Unexpected error occurred: ..."`
 
-- **Error Responses:**
-    - `400 Bad Request`: If the provided parameters are invalid.
-    - `500 Internal Server Error`: If an error occurs during the training process.
+#### Products
+- `POST /api/products`
+  - Headers: `X-User-Id`
+  - Body: `Product` (creates with `reviewIds: []` if null; links to company by `companyName` if provided)
+  - 201: created `Product`
+  - 401: `"Authentication failed: ..."`
+  - 400: `"Invalid user ID: ..."`
+  - 500: `"Database error while saving product: ..." | "Unexpected error: ..."`
+
+- `GET /api/products`
+  - Headers: `X-User-Id`
+  - 200: `Product[]`
+  - 401: `"Authentication failed: ..."`
+  - 400: `"Invalid user ID: ..."`
+  - 500: `[]` (empty list on error)
+
+- `POST /api/products/{productId}/reviews`
+  - Headers: `X-User-Id`
+  - Body: `Review` (if `rating` is 0 and `comment` present, system computes rating using sentiment)
+  - 201: created `Review`
+  - 401: `"Authentication failed: ..."` (invalid user)
+  - 404: `"Product not found: {productId}"`
+  - 500: `"Database error while posting review: ..." | "Unexpected error: ..."`
+
+- `GET /api/products/{productId}/reviews`
+  - Headers: `X-User-Id`
+  - 200: `Review[]`
+  - 401: `"Authentication failed: ..."`
+  - 404: `"Product not found: {productId}"`
+  - 500: `"Unexpected error: ..."`
+
+- `PUT /api/products/{productId}/reviews/{reviewId}`
+  - Headers: `X-User-Id`
+  - Body: `Review` (fields to update: `comment`, `rating`, optional `user`)
+  - 200: updated `Review`
+  - 401: `"Authentication failed: ..."`
+  - 404: `"Product not found: ..." | "Review not found: ..."`
+  - 500: `"Database error while updating review: ..." | "Unexpected error: ..."`
+
+- `GET /api/products/{productId}/average-rating`
+  - Headers: `X-User-Id`
+  - 200: `number` (product.rating)
+  - 401: `"Authentication failed: ..."`
+  - 500: `"Database error while fetching product: ..." | "Unexpected error occurred: ..."`
+
+#### Sentiment
+- `GET /api/sentiment/score?text=...`
+  - Headers: `X-User-Id`
+  - Query: `text` (string, required)
+  - 200: `number` (score), response header `Model-Training: performed|no`
+  - 401: `"Authentication failed: ..."`
+  - 400: `"Invalid input: ..."`
+  - 500: `"Error calculating sentiment score: ..."`
+  - Example:
+    - `curl -G http://localhost:8080/api/sentiment/score --data-urlencode "text=This is great!" -H "X-User-Id: user123"`
+
+- `POST /api/sentiment/train`
+  - Headers: `X-User-Id: ADMIN` (admin only)
+  - Query (optional): `datasetPath`, `classAttr`, `textAttr`
+  - 200: `"Model trained successfully"`
+  - 401: `"Authentication failed: ..."`
+  - 403: `"Access denied: Insufficient privileges to train the model"`
+  - 400: `"Invalid training parameters: ..."`
+  - 500: `"Error training model: ..."`
+  - Example: `curl -X POST "http://localhost:8080/api/sentiment/train?datasetPath=src/main/resources/data/sample_reviews.csv&classAttr=sentiment_label&textAttr=review_text" -H "X-User-Id: ADMIN"`
+
+#### Multi-User Usage Examples
+- Two users calling the same endpoint concurrently is supported; each request is authorized independently by `X-User-Id`.
+  - Score endpoint:
+    - `curl -G \
+       -H "X-User-Id: ADMIN" \
+       --data-urlencode "text=awesome" \
+       http://localhost:8080/api/sentiment/score`
+    - `curl -G \
+       -H "X-User-Id: user123" \
+       --data-urlencode "text=terrible" \
+       http://localhost:8080/api/sentiment/score`
 
 ## Style Checking
 
@@ -407,11 +501,6 @@ To add new features:
 2. Write comprehensive unit tests
 3. Update documentation
 4. Run full test suite
-
-
-## Authors
-- Development Team: Nexus Project Contributors - Manav, Sreenivas, Sindhu, Song
-  We used the [Trello](https://trello.com/b/GtJUzHHj/nexus) to keep track of our tasks and progress.
 
 ---
 
@@ -535,7 +624,7 @@ The project includes a full REST API for sentiment analysis, user management, an
 
 ### Post Review
 - **URL:** `POST /api/products/{productId}/reviews`
-- **Description:** Adds a review to a product. Auto-calculates sentiment if rating is 0.
+- **Description:** Adds a review to a product. Auto-calculates sentiment if rating is 0, if the model is already trained by the ADMIN user, otherwise sentiment score stays 0.
 - **Input Partitions:**
   - **Valid:** Header `X-User-Id` (valid user), existing `productId`, JSON with `comment` and/or `rating`.
   - **Invalid:** Missing/Invalid `X-User-Id`, non-existent `productId`, empty body.
@@ -887,5 +976,8 @@ curl -X POST "http://localhost:8080/api/sentiment/train" \
 The Review Dashboard Client associated with this service is present in this repository:  
 [Review DashBoard Repository](https://github.com/manavmunjal/ReviewDashboard)
 
-
 ---
+
+## Authors
+- Development Team: Nexus Project Contributors - Manav, Sreenivas, Sindhu, Song
+  We used the [Trello](https://trello.com/b/GtJUzHHj/nexus) to keep track of our tasks and progress.
