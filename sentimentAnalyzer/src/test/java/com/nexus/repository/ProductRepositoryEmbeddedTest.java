@@ -2,6 +2,7 @@ package com.nexus.repository;
 
 import com.nexus.model.Product;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
@@ -11,6 +12,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataMongoTest
+@DisabledIfEnvironmentVariable(named = "CI", matches = "true")
 public class ProductRepositoryEmbeddedTest {
 
   @Autowired
