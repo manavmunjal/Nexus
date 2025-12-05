@@ -256,18 +256,6 @@ vectorizer.setNormalizeDocLength(true); // Document length normalization
 vectorizer.setStemmer(new LovinsStemmer()); // Alternative stemmer
 ```
 
-### Modify Score Mapping
-In `ScoreMapper.java`, adjust the defaults:
-```java
-Map<String, Double> defaults = Map.of(
-    "very_negative", -1.0,
-    "negative", -0.5,
-    "neutral", 0.0,
-    "positive", 0.5,
-    "very_positive", 1.0
-);
-```
-
 ## Third-Party Client Development
 
 This section provides instructions for third-party developers who want to interact with the sentiment analysis service.
@@ -484,11 +472,6 @@ To add new features:
 2. Write comprehensive unit tests
 3. Update documentation
 4. Run full test suite
-
-
-## Authors
-- Development Team: Nexus Project Contributors - Manav, Sreenivas, Sindhu, Song
-  We used the [Trello](https://trello.com/b/GtJUzHHj/nexus) to keep track of our tasks and progress.
 
 ---
 
@@ -964,5 +947,8 @@ curl -X POST "http://localhost:8080/api/sentiment/train" \
 The Review Dashboard Client associated with this service is present in this repository:  
 [Review DashBoard Repository](https://github.com/manavmunjal/ReviewDashboard)
 
-
 ---
+
+## Authors
+- Development Team: Nexus Project Contributors - Manav, Sreenivas, Sindhu, Song
+  We used the [Trello](https://trello.com/b/GtJUzHHj/nexus) to keep track of our tasks and progress.
