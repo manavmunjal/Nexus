@@ -235,15 +235,15 @@ public final class ProductController {
                 () -> userRepository.save(review.getUser()));
       }
 
-      double score = 0.0;
+      double score = review.getRating();
       // Sentiment rating calculation
 
       if (!sentimentService.isTrained()) {
         if (!"ADMIN".equals(userId)) {
-          if (LOGGER.isInfoEnabled()) {
+          if (LOGGER.isWarnEnabled()) {
             LOGGER.warn("Sentiment model untrained. "
                 + "Only ADMIN can trigger training. "
-                + "Setting score to defualt 0.0.");
+                + "Using provided rating or default 0.0.");
           }
         } else {
           if (LOGGER.isInfoEnabled()) {
@@ -311,7 +311,9 @@ public final class ProductController {
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ise.getMessage());
 
     } catch (IllegalArgumentException iae) {
-      LOGGER.warn("Invalid request: {}", iae.getMessage());
+      if (LOGGER.isWarnEnabled()) {
+        LOGGER.warn("Invalid request: {}", iae.getMessage());
+      }
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body(iae.getMessage());
     } catch (DataAccessException dae) {
       LOGGER.error("Database error while posting review", dae);
@@ -360,7 +362,9 @@ public final class ProductController {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
           .body("Authentication failed: " + ise.getMessage());
     } catch (IllegalArgumentException iae) {
-      LOGGER.warn("Invalid request: {}", iae.getMessage());
+      if (LOGGER.isWarnEnabled()) {
+        LOGGER.warn("Invalid request: {}", iae.getMessage());
+      }
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body(iae.getMessage());
     } catch (Exception e) {
       LOGGER.error("Unexpected error while fetching reviews", e);
@@ -442,7 +446,9 @@ public final class ProductController {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
           .body("Authentication failed: " + ise.getMessage());
     } catch (IllegalArgumentException iae) {
-      LOGGER.warn("Invalid input while updating review: {}", iae.getMessage());
+      if (LOGGER.isWarnEnabled()) {
+        LOGGER.warn("Invalid input while updating review: {}", iae.getMessage());
+      }
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body(iae.getMessage());
     } catch (DataAccessException dae) {
       LOGGER.error("Database error while updating review", dae);

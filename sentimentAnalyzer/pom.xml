@@ -210,6 +210,9 @@
                                 <ruleset>/rulesets/java/quickstart.xml</ruleset>
                             </rulesets>
                             <failOnViolation>false</failOnViolation>
+                            <excludes>
+                                com/nexus/SentimentApplicationMain.java
+                            </excludes>
                         </configuration>
                     </execution>
                 </executions>

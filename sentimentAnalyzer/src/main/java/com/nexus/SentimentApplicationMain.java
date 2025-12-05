@@ -8,7 +8,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
   /**
    * Protected constructor to prevent instantiation.
    */
-  protected SentimentApplicationMain() { }
+  protected SentimentApplicationMain() {
+    //no-op
+  }
   /**
    * Main entry point for the Sentiment Analysis Spring Boot application.
    *

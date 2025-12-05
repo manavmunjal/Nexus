@@ -220,7 +220,7 @@ class ProductControllerTest {
   }
 
   @Test
-  void postReview_ShouldRunSentimentAnalysis_WhenRatingProvided() {
+  void postReview_ShouldPreserveRating_WhenSentimentUntrainedAndNotAdmin() {
     Review review = new Review();
     review.setRating(5); // original input rating
 
@@ -234,9 +234,9 @@ class ProductControllerTest {
 
     assertEquals(HttpStatus.CREATED, response.getStatusCode());
 
-    // Controller overwrites rating with sentiment score, which is 0.0 in current
-    // logic
-    assertEquals(0.0, ((Review) response.getBody()).getRating());
+    // Controller should preserve rating since sentiment model is untrained and user
+    // is not ADMIN
+    assertEquals(5.0, ((Review) response.getBody()).getRating());
   }
 
   @Test
@@ -398,8 +398,8 @@ class ProductControllerTest {
 
     assertEquals(HttpStatus.CREATED, response.getStatusCode());
 
-    // Rating is overwritten to 0.0 by sentimentService logic
-    assertEquals(0.0, company.getRating());
+    // Rating is preserved as 5.0 since sentiment model is untrained
+    assertEquals(5.0, company.getRating());
   }
 
   @Test
@@ -750,92 +750,92 @@ class ProductControllerTest {
 
   @Test
   void postReview_ShouldReturn401_WhenAuthenticationFails() {
-      Review review = new Review();
+    Review review = new Review();
 
-      doThrow(new IllegalStateException("User does not exist"))
-              .when(userAuthService).validateUser("bad-user");
+    doThrow(new IllegalStateException("User does not exist"))
+        .when(userAuthService).validateUser("bad-user");
 
-      ResponseEntity<?> response = controller.postReview("bad-user", "p1", review);
+    ResponseEntity<?> response = controller.postReview("bad-user", "p1", review);
 
-      assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
-      assertTrue(response.getBody().toString().contains("Authentication failed"));
+    assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    assertTrue(response.getBody().toString().contains("Authentication failed"));
   }
 
   @Test
   void postReview_ShouldReturn404_WhenProductNotFound() {
-      Review review = new Review();
+    Review review = new Review();
 
-      when(userAuthService.validateUser("user")).thenReturn(null); // no exception → auth succeeds
-      when(productRepository.findById("missing")).thenReturn(Optional.empty());
+    when(userAuthService.validateUser("user")).thenReturn(null); // no exception → auth succeeds
+    when(productRepository.findById("missing")).thenReturn(Optional.empty());
 
-      ResponseEntity<?> response = controller.postReview("user", "missing", review);
+    ResponseEntity<?> response = controller.postReview("user", "missing", review);
 
-      assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-      assertTrue(response.getBody().toString().contains("Product not found"));
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    assertTrue(response.getBody().toString().contains("Product not found"));
   }
 
   @Test
   void postReview_ShouldReturn500_WhenDatabaseErrorOccurs() {
-      Review review = new Review();
-      Product product = new Product();
-      product.setId("p1");
+    Review review = new Review();
+    Product product = new Product();
+    product.setId("p1");
 
-      when(userAuthService.validateUser("user")).thenReturn(null);
-      when(productRepository.findById("p1")).thenReturn(Optional.of(product));
-      when(reviewRepository.save(any(Review.class)))
-              .thenThrow(new org.springframework.dao.DataAccessResourceFailureException("DB down"));
+    when(userAuthService.validateUser("user")).thenReturn(null);
+    when(productRepository.findById("p1")).thenReturn(Optional.of(product));
+    when(reviewRepository.save(any(Review.class)))
+        .thenThrow(new org.springframework.dao.DataAccessResourceFailureException("DB down"));
 
-      ResponseEntity<?> response = controller.postReview("user", "p1", review);
+    ResponseEntity<?> response = controller.postReview("user", "p1", review);
 
-      assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-      assertTrue(response.getBody().toString().contains("Database error while posting review"));
+    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+    assertTrue(response.getBody().toString().contains("Database error while posting review"));
   }
 
   @Test
   void postReview_ShouldReturn500_WhenUnexpectedExceptionOccurs() {
-      Review review = new Review();
+    Review review = new Review();
 
-      when(userAuthService.validateUser("user")).thenReturn(null);
-      when(productRepository.findById("p1")).thenThrow(new RuntimeException("Unexpected failure"));
+    when(userAuthService.validateUser("user")).thenReturn(null);
+    when(productRepository.findById("p1")).thenThrow(new RuntimeException("Unexpected failure"));
 
-      ResponseEntity<?> response = controller.postReview("user", "p1", review);
+    ResponseEntity<?> response = controller.postReview("user", "p1", review);
 
-      assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-      assertTrue(response.getBody().toString().contains("Unexpected error"));
+    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+    assertTrue(response.getBody().toString().contains("Unexpected error"));
   }
 
   @Test
   void getAverageRating_ShouldReturn401_WhenAuthenticationFails() {
-      doThrow(new IllegalStateException("User does not exist"))
-              .when(userAuthService).validateUser("bad-user");
+    doThrow(new IllegalStateException("User does not exist"))
+        .when(userAuthService).validateUser("bad-user");
 
-      ResponseEntity<?> response = controller.getAverageRating("bad-user", "p1");
+    ResponseEntity<?> response = controller.getAverageRating("bad-user", "p1");
 
-      assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
-      assertTrue(response.getBody().toString().contains("Authentication failed"));
+    assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    assertTrue(response.getBody().toString().contains("Authentication failed"));
   }
 
   @Test
   void getAverageRating_ShouldReturn500_WhenProductNotFound() {
-      when(userAuthService.validateUser("user")).thenReturn(null);
-      when(productRepository.findById("missing")).thenThrow(new RuntimeException("Product not found"));
+    when(userAuthService.validateUser("user")).thenReturn(null);
+    when(productRepository.findById("missing")).thenThrow(new RuntimeException("Product not found"));
 
-      ResponseEntity<?> response = controller.getAverageRating("user", "missing");
+    ResponseEntity<?> response = controller.getAverageRating("user", "missing");
 
-      assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-      assertTrue(response.getBody().toString().contains("Unexpected error"));
+    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+    assertTrue(response.getBody().toString().contains("Unexpected error"));
   }
 
   @Test
   void getAverageRating_ShouldReturn500_WhenDatabaseErrorOccurs() {
-      when(userAuthService.validateUser("user")).thenReturn(null);
-      when(productRepository.findById("p1"))
-              .thenThrow(new org.springframework.dao.DataAccessResourceFailureException("DB down"));
+    when(userAuthService.validateUser("user")).thenReturn(null);
+    when(productRepository.findById("p1"))
+        .thenThrow(new org.springframework.dao.DataAccessResourceFailureException("DB down"));
 
-      ResponseEntity<?> response = controller.getAverageRating("user", "p1");
+    ResponseEntity<?> response = controller.getAverageRating("user", "p1");
 
-      assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-      assertTrue(response.getBody().toString().contains("Database error while fetching product"));
+    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+    assertTrue(response.getBody().toString().contains("Database error while fetching product"));
   }
 
   @Test

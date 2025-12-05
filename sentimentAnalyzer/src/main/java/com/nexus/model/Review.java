@@ -35,6 +35,7 @@ public class Review {
    * Required for frameworks and serialization.
    */
   public Review() {
+    // no-op
   }
 
   /**

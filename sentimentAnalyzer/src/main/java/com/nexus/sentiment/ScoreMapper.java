@@ -57,7 +57,7 @@ public final class ScoreMapper implements Serializable {
 
       final Map<String, Double> result = new HashMap<>();
       for (int i = 0; i < classAttribute.numValues(); i++) {
-          final String label = classAttribute.value(i).toLowerCase();
+          final String label = classAttribute.value(i).toLowerCase(Locale.ROOT);
           if (defaults.containsKey(label)) {
               result.put(label, defaults.get(label));
           }
@@ -69,7 +69,7 @@ public final class ScoreMapper implements Serializable {
 
       final List<String> missing = new ArrayList<>();
       for (int i = 0; i < classAttribute.numValues(); i++) {
-          final String label = classAttribute.value(i).toLowerCase();
+          final String label = classAttribute.value(i).toLowerCase(Locale.ROOT);
           if (!result.containsKey(label)) {
               missing.add(label);
           }
