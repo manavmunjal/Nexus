@@ -474,6 +474,37 @@ mvn checkstyle:check
 ```
 ![Checkstyle Report](static/img/checkstyle.png)
 
+## Continuous Integration (CI)
+
+This project uses GitHub Actions to automatically build, test, and generate code quality reports on every push or pull request to the `main` branch.
+
+### Workflow
+
+- **Workflow name:** `CI`
+- **Trigger:** Runs on `push` and `pull_request` events targeting `main`.
+- **Java version:** 17 (Temurin distribution)
+- **Build tool:** Maven
+
+### Steps performed
+
+1. Checks out the repository code.
+2. Sets up JDK 17.
+3. Runs Maven commands to:
+   - Clean previous builds: `mvn clean`
+   - Compile and verify the project: `mvn verify`
+   - Execute all unit and integration tests
+   - Generate code quality reports: `mvn site` (checkstyle, PMD, Jacoco)
+4. Uploads generated reports as artifacts for review.
+
+### Running CI locally
+
+To simulate the CI build locally:
+
+```bash
+cd sentimentAnalyzer
+mvn clean verify site
+```
+
 ## AI Usage
 1. We used Claude Code on Copilot to determine the hyper-parameter range for the
    `gamma` in the SVM implementations.
@@ -656,21 +687,21 @@ The project includes a full REST API for sentiment analysis, user management, an
 
 ## 5. Sentiment Analysis
 
-### Get Sentiment Score
-- **URL:** `GET /api/sentiment/score`
-- **Description:** Analyzes text and returns a sentiment score.
-- **Input Partitions:**
-  - **Valid:** Header `X-User-Id` (valid user), query param `text`.
-  - **Invalid:** Missing/Invalid `X-User-Id`, missing `text`.
-  - **Edge Cases:** Empty text, very long text, special characters.
-
 ### Train Model
 - **URL:** `POST /api/sentiment/train`
-- **Description:** Trains the sentiment model (Admin only).
+- **Description:** Trains the sentiment model (Admin only). The model must be trained at least once before requesting sentiment scores, so that predictions can be generated. Training saves the model for subsequent calls to `/api/sentiment/score`.
 - **Input Partitions:**
   - **Valid:** Header `X-User-Id: ADMIN`, optional query params (`datasetPath`, etc.).
   - **Invalid:** Non-admin user, invalid dataset path.
   - **Edge Cases:** Training with empty dataset, concurrent training requests.
+
+  ### Get Sentiment Score
+- **URL:** `GET /api/sentiment/score`
+- **Description:** Analyzes text and returns a sentiment score. NOTE: Get
+- **Input Partitions:**
+  - **Valid:** Header `X-User-Id` (valid user), query param `text`.
+  - **Invalid:** Missing/Invalid `X-User-Id`, missing `text`.
+  - **Edge Cases:** Empty text, very long text, special characters.
 
 ---
 
