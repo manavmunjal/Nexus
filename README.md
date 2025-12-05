@@ -35,39 +35,6 @@ A comprehensive Java-based sentiment analysis system using Weka's machine learni
 - **Statistical Summary**: Comprehensive metrics for each group (product/company)
 - **Distribution Smoothing**: Handles zero probabilities for robust KL-divergence
 
-## Project Structure
-
-```
-sentimentAnalyzer/
-├── src/
-│   ├── main/
-│   │   ├── java/com/nexus/sentiment/
-│   │   │   ├── Main.java                      # Entry point
-│   │   │   ├── DatasetLoader.java             # CSV data loading
-│   │   │   ├── DataSplitter.java              # Train/test splitting
-│   │   │   ├── SentimentModelTrainer.java     # TF-IDF + SVM training
-│   │   │   ├── SentimentPredictor.java        # Generate predictions
-│   │   │   ├── ScoreMapper.java               # Label→score mapping
-│   │   │   ├── SentimentStatistics.java       # Statistical computations
-│   │   │   ├── DistributionUtils.java         # KL-divergence, smoothing
-│   │   │   ├── PredictionResult.java          # Prediction data class
-│   │   │   └── ReportPrinter.java             # Console output formatting
-│   │   └── resources/data/
-│   │       └── sample_reviews.csv             # Sample dataset
-│   └── test/
-│       ├── java/com/nexus/sentiment/
-│       │   ├── DatasetLoaderTest.java         # 4 tests
-│       │   ├── DataSplitterTest.java          # 6 tests
-│       │   ├── SentimentModelTrainerTest.java # 14 NLP-focused tests
-│       │   ├── ScoreMapperTest.java           # 7 tests
-│       │   ├── DistributionUtilsTest.java     # 11 tests
-│       │   ├── SentimentStatisticsTest.java   # 11 tests
-│       │   └── SentimentPredictorTest.java    # 12 tests
-│       └── resources/data/
-│           └── test_reviews.csv               # Test dataset
-├── pom.xml                                    # Maven configuration
-└── TEST_DOCUMENTATION.md                      # Detailed test documentation
-
 ## Technologies Used
 
 - **Java 17**: Modern Java with records and text blocks
@@ -183,38 +150,56 @@ default test files provided in the `src/test/resources/data/` folder.
 mvn clean compile exec:java -Dexec.args="--dataset=src/main/resources/data/augmented_cleaned_data.csv --text-attr=review_text --class-attr=sentiment_label --train-ratio=0.8 --seed=42 --limit=5"
 ```
 
-## Test Suite
+## Project Structure
 
-### Test Coverage: **254 Unit Tests**
-
-### Logging Tests
-We have implemented specific tests to verify that our controllers log important events and errors correctly. These tests use Spring Boot's `OutputCaptureExtension` to capture console output and assert that the expected log messages are present.
-
-**Key Logging Tests:**
-- `ProductControllerLoggingTest`: Verifies logs for product creation and error handling.
-- `CompanyControllerLoggingTest`: Verifies logs for company creation and database errors.
-- `UserControllerLoggingTest`: Verifies logs for user profile creation.
-- `SentimentControllerLoggingTest`: Verifies logs for sentiment scoring requests and exceptions.
-
-**Run Logging Tests:**
-```bash
-mvn test -Dtest="*ControllerLoggingTest"
 ```
-
-### Heavy NLP Testing in `SentimentModelTrainerTest`:
-
-1. **Tokenization Tests**
-    - Mixed case handling (GREAT → great)
-    - Punctuation (!!!, ???, ...)
-    - Numbers (5 stars, 100%)
-    - Special characters (@, #, &)
-
-2. **Text Preprocessing**
-    - Stop word removal
-    - Stemming (running→run, breaks→break)
-    - Empty text handling
-    - Long text (100+ sentences)
-    - Unicode characters (★, café, ☹)
+sentimentAnalyzer/
+├── Dockerfile                       # Container build for service
+├── pom.xml                          # Maven build configuration
+├── src/
+│   ├── main/
+│   │   ├── java/com/nexus/
+│   │   │   ├── SentimentApplicationMain.java  # Spring Boot application entry
+│   │   │   ├── controller/
+│   │   │   │   ├── IndexController.java       # API root welcome and endpoints
+│   │   │   │   ├── SentimentController.java   # Score and train endpoints
+│   │   │   │   ├── CompanyController.java     # Company APIs and reviews aggregation
+│   │   │   │   ├── ProductController.java     # Products and reviews endpoints
+│   │   │   │   └── UserController.java        # Basic user CRUD APIs
+│   │   │   ├── auth/
+│   │   │   │   ├── controller/UserAuthController.java # Auth user management APIs
+│   │   │   │   ├── model/AuthUser.java        # Auth user entity
+│   │   │   │   ├── repository/AuthUserRepository.java # Auth user Mongo repository
+│   │   │   │   └── service/UserAuthService.java # Auth user business logic
+│   │   │   ├── config/
+│   │   │   │   └── GlobalExceptionHandler.java # Global REST exception mapping
+│   │   │   ├── model/
+│   │   │   │   ├── Company.java               # Company entity and rating helper
+│   │   │   │   ├── Product.java               # Product entity and rating helper
+│   │   │   │   ├── Review.java                # Review entity with user
+│   │   │   │   └── User.java                  # User profile entity
+│   │   │   ├── repository/
+│   │   │   │   ├── CompanyRepository.java     # Company Mongo repository
+│   │   │   │   ├── ProductRepository.java     # Product Mongo repository
+│   │   │   │   ├── ReviewRepository.java      # Review Mongo repository
+│   │   │   │   └── UserRepository.java        # User Mongo repository
+│   │   │   └── sentiment/
+│   │   │       ├── Main.java                  # CLI training and demo runner
+│   │   │       ├── DatasetLoader.java         # CSV loading and preprocessing
+│   │   │       ├── DataSplitter.java          # Train/test dataset splitting
+│   │   │       ├── SentimentModelTrainer.java # TF‑IDF + SVM training
+│   │   │       ├── SentimentPredictor.java    # Predictions and probabilities
+│   │   │       ├── ScoreMapper.java           # Label-to-score mapping
+│   │   │       ├── SentimentStatistics.java   # Statistics on predictions
+│   │   │       ├── DistributionUtils.java     # KL divergence and smoothing
+│   │   │       ├── PredictionResult.java      # Prediction result DTO
+│   │   │       └── ReportPrinter.java         # Console report formatting
+│   │   └── resources/
+│   │       ├── application.yaml               # Spring Boot configuration
+│   │       └── data/sample_reviews.csv        # Example dataset
+│   └── test/                                  # Unit and integration test suites
+└── TEST_DOCUMENTATION.md                      # Detailed test documentation
+```
 
 3. **TF-IDF Features**
     - Rare word weighting
@@ -269,18 +254,6 @@ vectorizer.setNormalizeDocLength(true); // Document length normalization
 ### Change Stemmer
 ```java
 vectorizer.setStemmer(new LovinsStemmer()); // Alternative stemmer
-```
-
-### Modify Score Mapping
-In `ScoreMapper.java`, adjust the defaults:
-```java
-Map<String, Double> defaults = Map.of(
-    "very_negative", -1.0,
-    "negative", -0.5,
-    "neutral", 0.0,
-    "positive", 0.5,
-    "very_positive", 1.0
-);
 ```
 
 ## Third-Party Client Development
@@ -499,11 +472,6 @@ To add new features:
 2. Write comprehensive unit tests
 3. Update documentation
 4. Run full test suite
-
-
-## Authors
-- Development Team: Nexus Project Contributors - Manav, Sreenivas, Sindhu, Song
-  We used the [Trello](https://trello.com/b/GtJUzHHj/nexus) to keep track of our tasks and progress.
 
 ---
 
@@ -979,5 +947,8 @@ curl -X POST "http://localhost:8080/api/sentiment/train" \
 The Review Dashboard Client associated with this service is present in this repository:  
 [Review DashBoard Repository](https://github.com/manavmunjal/ReviewDashboard)
 
-
 ---
+
+## Authors
+- Development Team: Nexus Project Contributors - Manav, Sreenivas, Sindhu, Song
+  We used the [Trello](https://trello.com/b/GtJUzHHj/nexus) to keep track of our tasks and progress.
