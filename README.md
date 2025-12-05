@@ -521,7 +521,7 @@ The project includes a full REST API for sentiment analysis, user management, an
 
 ### Post Review
 - **URL:** `POST /api/products/{productId}/reviews`
-- **Description:** Adds a review to a product. Auto-calculates sentiment if rating is 0.
+- **Description:** Adds a review to a product. Auto-calculates sentiment if rating is 0, if the model is already trained by the ADMIN user, otherwise sentiment score stays 0.
 - **Input Partitions:**
   - **Valid:** Header `X-User-Id` (valid user), existing `productId`, JSON with `comment` and/or `rating`.
   - **Invalid:** Missing/Invalid `X-User-Id`, non-existent `productId`, empty body.

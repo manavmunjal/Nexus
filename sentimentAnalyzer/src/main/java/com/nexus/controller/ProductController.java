@@ -33,8 +33,8 @@ public final class ProductController {
   /**
    * Logger instance for ProductController.
    */
-  private static final Logger LOGGER =
-  LoggerFactory.getLogger(ProductController.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(
+      ProductController.class);
 
   /**
    * Repository for Product entities.
@@ -69,18 +69,18 @@ public final class ProductController {
   /**
    * Constructs a ProductController with the given repositories and services.
    *
-   * @param productRepo      the repository for Product entities
-   * @param reviewRepo       the repository for Review entities
-   * @param userRepo         the repository for User entities
-   * @param companyRepo      the repository for Company entities
+   * @param productRepo         the repository for Product entities
+   * @param reviewRepo          the repository for Review entities
+   * @param userRepo            the repository for User entities
+   * @param companyRepo         the repository for Company entities
    * @param newSentimentService the service for sentiment analysis
    * @param newUserAuthService  the service for user authentication
    */
   public ProductController(final ProductRepository productRepo,
-                           final ReviewRepository reviewRepo,
-                           final UserRepository userRepo,
-                           final CompanyRepository companyRepo,
-                           final SentimentService newSentimentService,
+      final ReviewRepository reviewRepo,
+      final UserRepository userRepo,
+      final CompanyRepository companyRepo,
+      final SentimentService newSentimentService,
       final UserAuthService newUserAuthService) {
     this.productRepository = productRepo;
     this.reviewRepository = reviewRepo;
@@ -120,20 +120,20 @@ public final class ProductController {
       // Attach product to company if applicable
       if (saved.getCompanyName() != null && !saved.getCompanyName().isBlank()) {
         companyRepository.findByName(saved.getCompanyName())
-        .ifPresent(company -> {
-          if (LOGGER.isInfoEnabled()) {
-            LOGGER.info("Associating product {} with company {}",
-            saved.getId(), company.getName());
-          }
+            .ifPresent(company -> {
+              if (LOGGER.isInfoEnabled()) {
+                LOGGER.info("Associating product {} with company {}",
+                    saved.getId(), company.getName());
+              }
 
-          if (company.getProducts() == null) {
-            company.setProducts(new ArrayList<>());
-          }
-          if (!company.getProducts().contains(saved.getId())) {
-            company.getProducts().add(saved.getId());
-            companyRepository.save(company);
-          }
-        });
+              if (company.getProducts() == null) {
+                company.setProducts(new ArrayList<>());
+              }
+              if (!company.getProducts().contains(saved.getId())) {
+                company.getProducts().add(saved.getId());
+                companyRepository.save(company);
+              }
+            });
       }
 
       return ResponseEntity.status(HttpStatus.CREATED).body(saved);
@@ -205,11 +205,11 @@ public final class ProductController {
   public ResponseEntity<?> postReview(
       @RequestHeader("X-User-Id") final String userId,
       @PathVariable final String productId,
-                                      @RequestBody final Review review) {
+      @RequestBody final Review review) {
 
     if (LOGGER.isInfoEnabled()) {
       LOGGER.info("Posting review for productId={} review={}",
-      productId, review);
+          productId, review);
     }
 
     try {
@@ -218,12 +218,12 @@ public final class ProductController {
 
       Product product = productRepository.findById(productId)
           .orElseThrow(() -> new IllegalArgumentException(
-            "Product not found: " + productId));
+              "Product not found: " + productId));
 
       // Save user if needed
       if (review.getUser() != null
-      && (review.getUser().getId() == null
-          || review.getUser().getId().isBlank())) {
+          && (review.getUser().getId() == null
+              || review.getUser().getId().isBlank())) {
 
         if (LOGGER.isDebugEnabled()) {
           LOGGER.debug("Review contains new user: {}", review.getUser());
@@ -235,21 +235,30 @@ public final class ProductController {
                 () -> userRepository.save(review.getUser()));
       }
 
+      double score = 0.0;
       // Sentiment rating calculation
       if (review.getRating() == 0
-      &&
+          &&
           review.getComment() != null
-      &&
+          &&
           !review.getComment().isBlank()) {
 
         if (!sentimentService.isTrained()) {
-          if (LOGGER.isInfoEnabled()) {
-            LOGGER.info("Sentiment model not trained. Training...");
+          if (userId != "ADMIN") {
+            if (LOGGER.isInfoEnabled()) {
+              LOGGER.warn("Sentiment model untrained. "
+                  + "Only ADMIN can trigger training. "
+                  + "Setting score to defualt 0.0.");
+            }
+          } else {
+            if (LOGGER.isInfoEnabled()) {
+              LOGGER.info("Sentiment model not trained. Training...");
+            }
+            sentimentService.trainModel(null, null, null);
+            score = sentimentService.scoreFromText(review.getComment());
           }
-          sentimentService.trainModel(null, null, null);
         }
 
-        double score = sentimentService.scoreFromText(review.getComment());
         review.setRating(score);
       }
 
@@ -263,7 +272,7 @@ public final class ProductController {
 
       // Recalculate product rating
       List<Review> productReviews = reviewRepository
-      .findByIdIn(product.getReviewIds());
+          .findByIdIn(product.getReviewIds());
       double productAvgRating = productReviews.stream()
           .mapToDouble(Review::getRating)
           .average()
@@ -274,13 +283,13 @@ public final class ProductController {
 
       // Update company rating
       if (product.getCompanyName() != null
-      && !product.getCompanyName().isBlank()) {
+          && !product.getCompanyName().isBlank()) {
         List<Company> companies = companyRepository
-        .findByProductsContaining(productId);
+            .findByProductsContaining(productId);
 
         for (Company company : companies) {
           List<Product> companyProducts = productRepository
-          .findAllById(company.getProducts());
+              .findAllById(company.getProducts());
           double companyAvgRating = companyProducts.stream()
               .mapToDouble(Product::getRating)
               .average()
@@ -291,7 +300,7 @@ public final class ProductController {
 
           if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Updated company {} average rating to {}",
-            company.getName(), companyAvgRating);
+                company.getName(), companyAvgRating);
           }
         }
       }
@@ -341,14 +350,14 @@ public final class ProductController {
 
       Product product = productRepository.findById(productId)
           .orElseThrow(() -> new IllegalArgumentException(
-            "Product not found: " + productId));
+              "Product not found: " + productId));
 
       if (product.getReviewIds() == null || product.getReviewIds().isEmpty()) {
         return ResponseEntity.ok(List.of());
       }
 
       List<Review> reviews = reviewRepository
-      .findByIdIn(product.getReviewIds());
+          .findByIdIn(product.getReviewIds());
       return ResponseEntity.ok(reviews);
 
     } catch (IllegalStateException ise) {
@@ -377,8 +386,8 @@ public final class ProductController {
   public ResponseEntity<?> updateReview(
       @RequestHeader("X-User-Id") final String userId,
       @PathVariable final String productId,
-                                        @PathVariable final String reviewId,
-                                        @RequestBody final Review update) {
+      @PathVariable final String reviewId,
+      @RequestBody final Review update) {
 
     if (LOGGER.isInfoEnabled()) {
       LOGGER.info("Updating review {} for product {}", reviewId, productId);
@@ -390,11 +399,11 @@ public final class ProductController {
 
       Product product = productRepository.findById(productId)
           .orElseThrow(() -> new IllegalArgumentException(
-            "Product not found: " + productId));
+              "Product not found: " + productId));
 
       Review existing = reviewRepository.findById(reviewId)
           .orElseThrow(() -> new IllegalArgumentException(
-            "Review not found: " + reviewId));
+              "Review not found: " + reviewId));
 
       existing.setComment(update.getComment());
       existing.setRating(update.getRating());
@@ -406,7 +415,7 @@ public final class ProductController {
 
       // Recalculate product rating
       List<Review> productReviews = reviewRepository
-      .findByIdIn(product.getReviewIds());
+          .findByIdIn(product.getReviewIds());
       double productAvgRating = productReviews.stream()
           .mapToDouble(Review::getRating)
           .average()
@@ -416,12 +425,12 @@ public final class ProductController {
       productRepository.save(product);
 
       if (product.getCompanyName() != null
-      && !product.getCompanyName().isBlank()) {
+          && !product.getCompanyName().isBlank()) {
         List<Company> companies = companyRepository
-        .findByProductsContaining(productId);
+            .findByProductsContaining(productId);
         for (Company company : companies) {
           List<Product> companyProducts = productRepository
-          .findAllById(company.getProducts());
+              .findAllById(company.getProducts());
           double companyAvgRating = companyProducts.stream()
               .mapToDouble(Product::getRating)
               .average()

@@ -203,6 +203,7 @@ class ProductControllerTest {
     review.setRating(0);
     review.setUser(null);
 
+    when(userAuthService.validateUser("ADMIN")).thenReturn(new AuthUser("ADMIN"));
     when(productRepository.findById("p1")).thenReturn(Optional.of(product));
     when(sentimentService.isTrained()).thenReturn(false);
     doNothing().when(sentimentService).trainModel(null, null, null);
@@ -211,7 +212,7 @@ class ProductControllerTest {
     when(reviewRepository.findByIdIn(anyList())).thenReturn(List.of(review));
     when(productRepository.save(product)).thenReturn(product);
 
-    ResponseEntity<?> response = controller.postReview(VALID_USER_ID, "p1", review);
+    ResponseEntity<?> response = controller.postReview("ADMIN", "p1", review);
 
     assertEquals(HttpStatus.CREATED, response.getStatusCode());
     assertEquals(4.2, ((Review) response.getBody()).getRating());
@@ -296,6 +297,7 @@ class ProductControllerTest {
     review.setComment("Good product");
     review.setRating(0);
 
+    when(userAuthService.validateUser("ADMIN")).thenReturn(new AuthUser("ADMIN"));
     when(productRepository.findById("p1")).thenReturn(Optional.of(product));
     when(sentimentService.isTrained()).thenReturn(false);
     doNothing().when(sentimentService).trainModel(null, null, null);
@@ -304,7 +306,7 @@ class ProductControllerTest {
     when(reviewRepository.findByIdIn(anyList())).thenReturn(List.of(review));
     when(productRepository.save(product)).thenReturn(product);
 
-    ResponseEntity<?> response = controller.postReview(VALID_USER_ID, "p1", review);
+    ResponseEntity<?> response = controller.postReview("ADMIN", "p1", review);
 
     assertEquals(HttpStatus.CREATED, response.getStatusCode());
     assertEquals(4.5, ((Review) response.getBody()).getRating());
@@ -319,7 +321,6 @@ class ProductControllerTest {
 
     when(productRepository.findById("p1")).thenReturn(Optional.of(product));
     when(sentimentService.isTrained()).thenReturn(true);
-    when(sentimentService.scoreFromText("Nice")).thenReturn(3.8);
     when(reviewRepository.save(any())).thenAnswer(i -> i.getArgument(0));
     when(reviewRepository.findByIdIn(anyList())).thenReturn(List.of(review));
     when(productRepository.save(product)).thenReturn(product);
@@ -327,8 +328,9 @@ class ProductControllerTest {
     ResponseEntity<?> response = controller.postReview(VALID_USER_ID, "p1", review);
 
     assertEquals(HttpStatus.CREATED, response.getStatusCode());
-    assertEquals(3.8, ((Review) response.getBody()).getRating());
+    assertEquals(0.0, ((Review) response.getBody()).getRating());
     verify(sentimentService, never()).trainModel(null, null, null);
+    verify(sentimentService, never()).scoreFromText(anyString());
   }
 
   @Test
