@@ -690,21 +690,21 @@ The project includes a full REST API for sentiment analysis, user management, an
 
 ## 5. Sentiment Analysis
 
-### Get Sentiment Score
-- **URL:** `GET /api/sentiment/score`
-- **Description:** Analyzes text and returns a sentiment score.
-- **Input Partitions:**
-  - **Valid:** Header `X-User-Id` (valid user), query param `text`.
-  - **Invalid:** Missing/Invalid `X-User-Id`, missing `text`.
-  - **Edge Cases:** Empty text, very long text, special characters.
-
 ### Train Model
 - **URL:** `POST /api/sentiment/train`
-- **Description:** Trains the sentiment model (Admin only).
+- **Description:** Trains the sentiment model (Admin only). The model must be trained at least once before requesting sentiment scores, so that predictions can be generated. Training saves the model for subsequent calls to `/api/sentiment/score`.
 - **Input Partitions:**
   - **Valid:** Header `X-User-Id: ADMIN`, optional query params (`datasetPath`, etc.).
   - **Invalid:** Non-admin user, invalid dataset path.
   - **Edge Cases:** Training with empty dataset, concurrent training requests.
+
+  ### Get Sentiment Score
+- **URL:** `GET /api/sentiment/score`
+- **Description:** Analyzes text and returns a sentiment score. NOTE: Get
+- **Input Partitions:**
+  - **Valid:** Header `X-User-Id` (valid user), query param `text`.
+  - **Invalid:** Missing/Invalid `X-User-Id`, missing `text`.
+  - **Edge Cases:** Empty text, very long text, special characters.
 
 ---
 
