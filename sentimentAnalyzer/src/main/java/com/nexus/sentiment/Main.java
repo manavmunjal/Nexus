@@ -139,7 +139,7 @@ public final class Main {
       ReportPrinter.printEvaluation(eval, classValues);
 
       int limit = Math.max(0, cfg.getSampleLimit()); // clamp negative to 0
-      limit = Math.min(limit, predictions.size());   // ensure not exceeding prediction count
+      limit = Math.min(limit, predictions.size()); // don't exceed prediction count
 
       ReportPrinter.printPredictions(
               predictions,
