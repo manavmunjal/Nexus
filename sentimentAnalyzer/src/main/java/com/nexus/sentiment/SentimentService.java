@@ -7,6 +7,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -21,25 +23,27 @@ import weka.core.SerializationHelper;
 @Service
 public final class SentimentService {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(SentimentService.class);
+
   /**
    * Classifier used for sentiment prediction.
    */
-  private volatile FilteredClassifier classifier;
+  private FilteredClassifier classifier;
 
   /**
    * Mapper to convert sentiment labels to scores.
    */
-  private volatile ScoreMapper scoreMapper;
+  private ScoreMapper scoreMapper;
 
   /**
    * Header schema captured from the training dataset (zero instances).
    */
-  private volatile Instances trainedHeader;
+  private Instances trainedHeader;
 
   /**
    * Names used during training, needed for inference schema.
    */
-  private volatile String trainedTextAttr = "review_text";
+  private String trainedTextAttr = "review_text";
 
   /**
    * Trainer used to build the sentiment model.
@@ -211,13 +215,13 @@ public final class SentimentService {
       final String classAttr,
       final String textAttr
   ) {
-  final String ds = (datasetPath == null || datasetPath.isBlank())
-    ? "data/augmented_cleaned_data.csv"
+    final String ds = datasetPath == null || datasetPath.isBlank()
+        ? "data/augmented_cleaned_data.csv"
         : datasetPath;
-    final String cls = (classAttr == null || classAttr.isBlank())
+    final String cls = classAttr == null || classAttr.isBlank()
         ? "sentiment_label"
         : classAttr;
-    final String txt = (textAttr == null || textAttr.isBlank())
+    final String txt = textAttr == null || textAttr.isBlank()
         ? "review_text"
         : textAttr;
 
@@ -240,7 +244,9 @@ public final class SentimentService {
       if (tmpToDelete != null) {
         try {
           Files.deleteIfExists(tmpToDelete);
-        } catch (Exception ignore) { }
+        } catch (Exception e) {
+          LOGGER.warn("Failed to delete temporary file: {}", tmpToDelete, e);
+        }
       }
     }
   }
@@ -334,11 +340,14 @@ public final class SentimentService {
       double expected = 0.0;
       for (int i = 0; i < dist.length; i++) {
         String label = header.classAttribute().value(i);
-        System.out.println("Label: " + label + ", Probability: "
-                        + dist[i] + ", Score: " + scoreMapper.scoreFor(label));
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("Label: {}, Probability: {}, Score: {}", label, dist[i], scoreMapper.scoreFor(label));
+        }
         expected += dist[i] * scoreMapper.scoreFor(label);
       }
-      System.out.println("Expected score (raw): " + expected);
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Expected score (raw): {}", expected);
+      }
 
       return expected;
     } catch (Exception e) {

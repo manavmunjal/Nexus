@@ -42,6 +42,7 @@ public class Product {
    * Required for frameworks and serialization.
    */
   public Product() {
+    // no-op
   }
 
   /**

@@ -3,12 +3,19 @@ package com.nexus;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+/**
+ * Main entry point for the Sentiment Analysis Spring Boot application.
+ * This class is designed as a utility class and is not meant to be instantiated.
+ */
 @SpringBootApplication
- public class SentimentApplicationMain {
+public final class SentimentApplicationMain {
+
   /**
-   * Protected constructor to prevent instantiation.
+   * Private constructor to prevent instantiation of this utility class.
    */
-  protected SentimentApplicationMain() { }
+  private SentimentApplicationMain() {
+  }
+
   /**
    * Main entry point for the Sentiment Analysis Spring Boot application.
    *
@@ -17,4 +24,4 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
   public static void main(final String[] args) {
     SpringApplication.run(SentimentApplicationMain.class, args);
   }
- }
+}
