@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import org.junit.jupiter.api.AfterEach;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,6 +19,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import org.mockito.MockedStatic;
 import static org.mockito.Mockito.*;
+import org.slf4j.LoggerFactory;
 
 import weka.classifiers.meta.FilteredClassifier;
 import weka.core.Attribute;
@@ -200,6 +203,31 @@ public class SentimentServiceTest {
   }
 
   @Test
+  void testScoreFromText_withDebugLoggingEnabled() throws Exception {
+    // Enable DEBUG logging for SentimentService
+    Logger logger = (Logger) LoggerFactory.getLogger(SentimentService.class);
+    Level originalLevel = logger.getLevel();
+    logger.setLevel(Level.DEBUG);
+
+    try {
+      double[] dist = {0.33, 0.34, 0.33};
+      when(mockClassifier.distributionForInstance(any())).thenReturn(dist);
+      when(mockMapper.scoreFor("negative")).thenReturn(-1.0);
+      when(mockMapper.scoreFor("neutral")).thenReturn(0.0);
+      when(mockMapper.scoreFor("positive")).thenReturn(1.0);
+
+      // Should execute debug logging branches
+      double score = sentimentService.scoreFromText("Test text for debug logging");
+
+      // Just verify it completes without exception - debug logging branches are covered
+      assertTrue(score >= -1.0 && score <= 1.0);
+    } finally {
+      // Restore original logging level
+      logger.setLevel(originalLevel);
+    }
+  }
+
+  @Test
   void testScoreFromText_withNonStringTextAttribute_skipsSetValue() throws Exception {
     // Create header with text attribute as numeric (not string)
     ArrayList<Attribute> attributes = new ArrayList<>();
@@ -375,6 +403,38 @@ public class SentimentServiceTest {
     }
   }
 
+  @Test
+  void loadModel_missingHeaderFile_throwsRuntimeException() throws Exception {
+    // Create only classifier and scores files, but not header file
+    String classifierPath = new File(tmpDir, "sentiment_classifier.model").getAbsolutePath();
+    String scoresPath = new File(tmpDir, "sentiment_scores.model").getAbsolutePath();
+
+    new File(classifierPath).createNewFile();
+    new File(scoresPath).createNewFile();
+    // header file is NOT created
+
+    SentimentService service = new SentimentService(stubTrainer, tmpDir.getAbsolutePath() + "/");
+
+    RuntimeException ex = assertThrows(RuntimeException.class, service::loadModel);
+    assertTrue(ex.getCause().getMessage().contains("Saved model files not found"));
+  }
+
+  @Test
+  void loadModel_missingScoresFile_throwsRuntimeException() throws Exception {
+    // Create only classifier and header files, but not scores file
+    String classifierPath = new File(tmpDir, "sentiment_classifier.model").getAbsolutePath();
+    String headerPath = new File(tmpDir, "sentiment_header.model").getAbsolutePath();
+
+    new File(classifierPath).createNewFile();
+    new File(headerPath).createNewFile();
+    // scores file is NOT created
+
+    SentimentService service = new SentimentService(stubTrainer, tmpDir.getAbsolutePath() + "/");
+
+    RuntimeException ex = assertThrows(RuntimeException.class, service::loadModel);
+    assertTrue(ex.getCause().getMessage().contains("Saved model files not found"));
+  }
+
   // ---- ensureReady ----
 
   @Test
@@ -398,6 +458,51 @@ public class SentimentServiceTest {
 
     // Call and assert no exception thrown
     assertDoesNotThrow(() -> m.invoke(sentimentService));
+  }
+
+  @Test
+  void ensureReady_throwsWhenOnlyClassifierIsNull() throws Exception {
+    Method m = SentimentService.class.getDeclaredMethod("ensureReady");
+    m.setAccessible(true);
+
+    blankService.setScoreMapper(mockMapper);
+    blankService.setTrainedHeader(mockInstances);
+    // classifier is still null
+
+    InvocationTargetException ex = assertThrows(InvocationTargetException.class,
+            () -> m.invoke(blankService));
+
+    assertTrue(ex.getCause() instanceof IllegalStateException);
+  }
+
+  @Test
+  void ensureReady_throwsWhenOnlyTrainedHeaderIsNull() throws Exception {
+    Method m = SentimentService.class.getDeclaredMethod("ensureReady");
+    m.setAccessible(true);
+
+    blankService.setClassifier(mockClassifier);
+    blankService.setScoreMapper(mockMapper);
+    // trainedHeader is still null
+
+    InvocationTargetException ex = assertThrows(InvocationTargetException.class,
+            () -> m.invoke(blankService));
+
+    assertTrue(ex.getCause() instanceof IllegalStateException);
+  }
+
+  @Test
+  void ensureReady_throwsWhenOnlyScoreMapperIsNull() throws Exception {
+    Method m = SentimentService.class.getDeclaredMethod("ensureReady");
+    m.setAccessible(true);
+
+    blankService.setClassifier(mockClassifier);
+    blankService.setTrainedHeader(mockInstances);
+    // scoreMapper is still null
+
+    InvocationTargetException ex = assertThrows(InvocationTargetException.class,
+            () -> m.invoke(blankService));
+
+    assertTrue(ex.getCause() instanceof IllegalStateException);
   }
 
   //  isTrained 
@@ -463,7 +568,25 @@ public class SentimentServiceTest {
             "Expected isTrained() to be false when classifier is null");
   }
 
-  //  trainModel 
+  // ---- Constructors ----
+
+  @Test
+  void constructor_withTrainerOnly_usesDefaultModelDir() {
+    SentimentModelTrainer trainer = new SentimentModelTrainer();
+    SentimentService service = new SentimentService(trainer);
+
+    assertEquals("saved_models/", service.getModelDir());
+  }
+
+  @Test
+  void constructor_default_createsServiceWithDefaultTrainerAndModelDir() {
+    SentimentService service = new SentimentService();
+
+    assertEquals("saved_models/", service.getModelDir());
+    assertFalse(service.isTrained());
+  }
+
+  //  trainModel
 
   @Test
   void trainModel_withNullParameters_usesDefaults() throws Exception {

@@ -447,7 +447,8 @@ public final class ProductController {
           .body("Authentication failed: " + ise.getMessage());
     } catch (IllegalArgumentException iae) {
       if (LOGGER.isWarnEnabled()) {
-        LOGGER.warn("Invalid input while updating review: {}", iae.getMessage());
+        LOGGER.warn("Invalid input while updating review: {}",
+        iae.getMessage());
       }
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body(iae.getMessage());
     } catch (DataAccessException dae) {
