@@ -6,6 +6,7 @@ import com.nexus.model.Review;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
@@ -15,6 +16,11 @@ public class ReviewRepositoryEmbeddedTest {
 
   @Autowired
   private ReviewRepository reviewRepository;
+
+  @BeforeEach
+  void setUp() {
+    reviewRepository.deleteAll();
+  }
 
   @Test
   public void testSaveAndFindById() {

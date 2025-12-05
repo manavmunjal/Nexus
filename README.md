@@ -202,7 +202,7 @@ mvn test -Dtest="*ControllerLoggingTest"
 ```
 
 ### Repository Integration Testing with Embedded MongoDB
-We use `de.flapdoodle.embed.mongo` to run repository tests against an in-memory MongoDB instance, ensuring isolation from the external database.
+We use `de.flapdoodle.embed.mongo` to run repository tests against an in-memory MongoDB instance, ensuring isolation from the external database. The embedded MongoDB is pinned to version 4.0.2 to ensure stability and compatibility across different environments (including CI).
 
 **Run Repository Tests:**
 ```bash

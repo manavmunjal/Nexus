@@ -1,6 +1,7 @@
 package com.nexus.repository;
 
 import com.nexus.model.User;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
@@ -14,6 +15,11 @@ public class UserRepositoryEmbeddedTest {
 
   @Autowired
   private UserRepository userRepository;
+
+  @BeforeEach
+  void setUp() {
+    userRepository.deleteAll();
+  }
 
   @Test
   public void testSaveAndFindByUsername() {
