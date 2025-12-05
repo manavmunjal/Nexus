@@ -250,6 +250,61 @@ Tests the **Main** class for sentiment analysis CLI — not related to or used b
 | **PredictionResult key – valid** | Non-null, non-empty, non-blank string used for grouping. | `groupByGroupsCorrectly` |
 | **PredictionResult key – null/empty/blank** | Null, empty, or whitespace string triggers fallback key. | `groupByUsesFallbackWhenKeyIsNullOrBlank` |
 
+---
+
+### 10. Controller Tests
+
+Tests the REST API endpoints, request validation, and interaction with services/repositories.
+
+#### ProductControllerTest
+
+| Partition | Description | Tests Targeting Partition |
+|-----------|-------------|--------------------------|
+| **Valid Product Creation** | Valid product data with authenticated user. | `createProduct_ShouldReturnCreatedProduct` |
+| **Product with Company** | Product associated with an existing company. | `createProduct_ShouldAddProductToCompany_WhenCompanyExists` |
+| **Product with Blank Company** | Product with blank company name; association skipped. | `createProduct_ShouldSkipCompanyUpdate_WhenCompanyNameBlank` |
+| **Invalid User Auth** | User ID invalid or user not found. | `createProduct_ShouldReturnUnauthorized_WhenUserDoesNotExist`, `getAllProducts_ShouldReturnUnauthorized_WhenUserDoesNotExist` |
+| **Post Review - Untrained Model** | Model untrained, user not ADMIN; preserves user rating. | `postReview_ShouldPreserveRating_WhenSentimentUntrainedAndNotAdmin` |
+| **Post Review - Auto-Train** | Model untrained, user is ADMIN; triggers training. | `postReview_ShouldTrainSentiment_WhenNotTrainedAndCommentPresent` |
+| **Post Review - Trained Model** | Model trained; calculates sentiment score. | `postReview_ShouldCalculateScore_WhenSentimentAlreadyTrained` |
+| **Post Review - New User** | Review contains new user data; user created. | `postReview_ShouldSaveUser_WhenUserDoesNotExist` |
+| **Update Review** | Valid update to existing review. | `updateReview_ShouldUpdateReviewWithoutUser`, `updateReview_ShouldUpdateReviewWithUser` |
+| **Update Review - Company Rating** | Updating review updates associated company rating. | `updateReview_ShouldUpdateCompanyAverageRating_WhenProductHasCompany` |
+| **Error Handling** | Database errors, product not found, review not found. | `createProduct_ShouldReturnInternalServerError_OnDatabaseException`, `postReview_ShouldReturnNotFound_WhenProductMissing`, `updateReview_ShouldReturnNotFound_WhenReviewMissing` |
+
+#### CompanyControllerTest
+
+| Partition | Description | Tests Targeting Partition |
+|-----------|-------------|--------------------------|
+| **Valid Company Creation** | Valid company data with authenticated user. | `createCompany_ShouldReturnCreated_WhenValidCompany` |
+| **Invalid Company Data** | Null company or empty name. | `createCompany_ShouldReturnBadRequest_WhenCompanyIsNull`, `createCompany_ShouldReturnBadRequest_WhenCompanyNameIsEmpty` |
+| **Get Reviews - No Products** | Company has no associated products. | `getAllReviews_ShouldReturnEmptyList_WhenCompanyHasNoProducts` |
+| **Get Reviews - With Data** | Company has products with reviews. | `getAllReviews_ShouldReturnReviews_WhenProductsHaveReviews` |
+| **Get Average Rating** | Company exists with rating. | `getAverageRating_ShouldReturnRating_WhenCompanyExists` |
+| **Get Average Rating - Default** | Company exists with default (0.0) rating. | `getAverageRating_ShouldReturnZero_WhenCompanyHasDefaultRating` |
+| **Unauthorized Access** | Authentication failure or invalid user ID. | `createCompany_ShouldReturnUnauthorized_WhenUserAuthFails`, `getAllReviews_ShouldReturnBadRequest_WhenUserIdIsInvalid` |
+
+#### UserControllerTest
+
+| Partition | Description | Tests Targeting Partition |
+|-----------|-------------|--------------------------|
+| **Valid User Creation** | Valid user data. | `createUser_ShouldReturnCreated_WhenValidUser` |
+| **Invalid User Data** | Null user or blank username. | `createUser_ShouldReturnBadRequest_WhenUserIsNull`, `createUser_ShouldReturnBadRequest_WhenUsernameIsBlank` |
+| **Get All Users** | Retrieve list of users. | `getAllUsers_ShouldReturnUsers_WhenRepositoryHasData` |
+| **Multiple Users** | Handling multiple distinct users. | `createMultipleUsers_ShouldDistinguishBetweenThem` |
+| **Error Handling** | Database or runtime exceptions. | `createUser_ShouldReturnInternalServerError_OnDatabaseException`, `getAllUsers_ShouldReturnEmptyList_OnException` |
+
+#### SentimentControllerTest
+
+| Partition | Description | Tests Targeting Partition |
+|-----------|-------------|--------------------------|
+| **Score - Trained Model** | Valid text input with trained model. | `scoreShouldNotRetrainIfAlreadyTrained` |
+| **Score - Untrained/Missing** | Model not trained and cannot be loaded. | `scoreShouldReturnBadRequestWhenNoSavedModelAvailable` |
+| **Score - Invalid Input** | Empty text input. | `scoreShouldReturnBadRequestOnIllegalArgumentException` |
+| **Train - Admin User** | Admin user triggers training. | `trainEndpointShouldInvokeServiceAndReturnOk_WhenAdminUser` |
+| **Train - Non-Admin User** | Regular user attempts training (Forbidden). | `trainEndpointShouldReturnForbidden_WhenNonAdminUser` |
+| **Unauthorized Access** | User does not exist. | `scoreShouldReturnUnauthorized_WhenUserDoesNotExist`, `trainEndpointShouldReturnUnauthorized_WhenUserDoesNotExist` |
+
 ## Running Tests
 
 ### Run all tests:
