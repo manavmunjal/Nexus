@@ -44,6 +44,7 @@ public class AuthUser {
      * Default constructor required for MongoDB deserialization.
      */
     public AuthUser() {
+        // no-op
     }
 
     /**

@@ -27,7 +27,9 @@ public class User {
    * Default constructor for User.
    * Required for frameworks and serialization.
    */
-  public User() { }
+  public User() {
+    // no-op
+  }
 
   /**
    * Constructs a User with the specified id, username, and email.

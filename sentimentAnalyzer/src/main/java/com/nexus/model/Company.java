@@ -33,6 +33,7 @@ public class Company {
    * Required for frameworks and serialization.
    */
   public Company() {
+    // no-op
   }
 
   /**

@@ -39,11 +39,6 @@ public final class DatasetLoader {
       throw new IOException("CSV file does not exist: " + csvPath);
     }
 
-    // First, read the CSV content as a string
-    String content = new String(Files.readAllBytes(csvPath), "UTF-8");
-
-    // Print the raw CSV content before processing
-
     CSVLoader loader = new CSVLoader();
     loader.setFieldSeparator(",");
 
