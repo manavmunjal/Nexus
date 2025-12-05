@@ -237,30 +237,26 @@ public final class ProductController {
 
       double score = 0.0;
       // Sentiment rating calculation
-      if (review.getRating() == 0
-          &&
-          review.getComment() != null
-          &&
-          !review.getComment().isBlank()) {
 
-        if (!sentimentService.isTrained()) {
-          if (userId != "ADMIN") {
-            if (LOGGER.isInfoEnabled()) {
-              LOGGER.warn("Sentiment model untrained. "
-                  + "Only ADMIN can trigger training. "
-                  + "Setting score to defualt 0.0.");
-            }
-          } else {
-            if (LOGGER.isInfoEnabled()) {
-              LOGGER.info("Sentiment model not trained. Training...");
-            }
-            sentimentService.trainModel(null, null, null);
-            score = sentimentService.scoreFromText(review.getComment());
+      if (!sentimentService.isTrained()) {
+        if (!"ADMIN".equals(userId)) {
+          if (LOGGER.isInfoEnabled()) {
+            LOGGER.warn("Sentiment model untrained. "
+                + "Only ADMIN can trigger training. "
+                + "Setting score to defualt 0.0.");
           }
+        } else {
+          if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("Sentiment model not trained. Training...");
+          }
+          sentimentService.trainModel(null, null, null);
+          score = sentimentService.scoreFromText(review.getComment());
         }
-
-        review.setRating(score);
+      } else {
+        score = sentimentService.scoreFromText(review.getComment());
       }
+
+      review.setRating(score);
 
       Review saved = reviewRepository.save(review);
 

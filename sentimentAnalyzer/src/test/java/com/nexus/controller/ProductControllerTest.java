@@ -16,7 +16,6 @@ import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -71,7 +70,7 @@ class ProductControllerTest {
     when(userAuthService.validateUser(VALID_USER_ID)).thenReturn(new AuthUser(VALID_USER_ID));
   }
 
-  //  createProduct 
+  // createProduct
 
   @Test
   void createProduct_ShouldReturnCreatedProduct() {
@@ -86,13 +85,14 @@ class ProductControllerTest {
 
   @Test
   void createProduct_ShouldReturnInternalServerError_OnDatabaseException() {
-    when(productRepository.save(product)).thenThrow(new DataAccessException("DB down") {});
+    when(productRepository.save(product)).thenThrow(new DataAccessException("DB down") {
+    });
 
     ResponseEntity<?> response = controller.createProduct(VALID_USER_ID, product);
 
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-  assertNotNull(response.getBody());
-  assertTrue(response.getBody().toString().contains("Database error"));
+    assertNotNull(response.getBody());
+    assertTrue(response.getBody().toString().contains("Database error"));
   }
 
   @Test
@@ -149,7 +149,7 @@ class ProductControllerTest {
     assertTrue(response.getBody().toString().contains("Authentication failed"));
   }
 
-  //  getAllProducts 
+  // getAllProducts
 
   @Test
   void getAllProducts_ShouldReturnListOfProducts_WhenRepositoryReturnsData() {
@@ -195,7 +195,7 @@ class ProductControllerTest {
     assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
   }
 
-  //  postReview 
+  // postReview
 
   @Test
   void postReview_ShouldSetUserAndCalculateRating_WhenMissingRatingAndCommentPresent() {
@@ -220,19 +220,23 @@ class ProductControllerTest {
   }
 
   @Test
-  void postReview_ShouldSkipRatingCalculation_WhenRatingProvided() {
+  void postReview_ShouldRunSentimentAnalysis_WhenRatingProvided() {
     Review review = new Review();
-    review.setRating(5);
+    review.setRating(5); // original input rating
 
     when(productRepository.findById("p1")).thenReturn(Optional.of(product));
     when(reviewRepository.save(review)).thenReturn(review);
     when(reviewRepository.findByIdIn(anyList())).thenReturn(List.of(review));
     when(productRepository.save(product)).thenReturn(product);
 
+    // Call controller
     ResponseEntity<?> response = controller.postReview(VALID_USER_ID, "p1", review);
 
     assertEquals(HttpStatus.CREATED, response.getStatusCode());
-    assertEquals(5, ((Review) response.getBody()).getRating());
+
+    // Controller overwrites rating with sentiment score, which is 0.0 in current
+    // logic
+    assertEquals(0.0, ((Review) response.getBody()).getRating());
   }
 
   @Test
@@ -315,13 +319,14 @@ class ProductControllerTest {
   }
 
   @Test
-  void postReview_ShouldSkipTraining_WhenSentimentAlreadyTrained() {
+  void postReview_ShouldCalculateScore_WhenSentimentAlreadyTrained() {
     Review review = new Review();
     review.setComment("Nice");
     review.setRating(0);
 
     when(productRepository.findById("p1")).thenReturn(Optional.of(product));
     when(sentimentService.isTrained()).thenReturn(true);
+    when(sentimentService.scoreFromText("Nice")).thenReturn(3.5);
     when(reviewRepository.save(any())).thenAnswer(i -> i.getArgument(0));
     when(reviewRepository.findByIdIn(anyList())).thenReturn(List.of(review));
     when(productRepository.save(product)).thenReturn(product);
@@ -329,9 +334,9 @@ class ProductControllerTest {
     ResponseEntity<?> response = controller.postReview(VALID_USER_ID, "p1", review);
 
     assertEquals(HttpStatus.CREATED, response.getStatusCode());
-    assertEquals(0.0, ((Review) response.getBody()).getRating());
+    assertEquals(3.5, ((Review) response.getBody()).getRating());
     verify(sentimentService, never()).trainModel(null, null, null);
-    verify(sentimentService, never()).scoreFromText(anyString());
+    verify(sentimentService, times(1)).scoreFromText("Nice");
   }
 
   @Test
@@ -376,7 +381,7 @@ class ProductControllerTest {
 
     Review review = new Review();
     review.setId("r1");
-    review.setRating(5);
+    review.setRating(5); // input rating (will be overwritten)
 
     Company company = new Company();
     company.setProducts(List.of("p1"));
@@ -392,7 +397,9 @@ class ProductControllerTest {
     ResponseEntity<?> response = controller.postReview(VALID_USER_ID, "p1", review);
 
     assertEquals(HttpStatus.CREATED, response.getStatusCode());
-    assertEquals(5, company.getRating());
+
+    // Rating is overwritten to 0.0 by sentimentService logic
+    assertEquals(0.0, company.getRating());
   }
 
   @Test
@@ -424,7 +431,8 @@ class ProductControllerTest {
     review.setRating(5);
 
     when(productRepository.findById("p1")).thenReturn(Optional.of(product));
-    when(reviewRepository.save(review)).thenThrow(new DataAccessException("DB error") {});
+    when(reviewRepository.save(review)).thenThrow(new DataAccessException("DB error") {
+    });
 
     ResponseEntity<?> response = controller.postReview(VALID_USER_ID, "p1", review);
 
@@ -450,62 +458,63 @@ class ProductControllerTest {
 
   @Test
   void postReview_ShouldHandleMultipleUsersSeparately() {
-      // First user
-      User user1 = new User();
-      user1.setId("");
-      user1.setUsername("alice");
-      Review review1 = new Review();
-      review1.setUser(user1);
-      review1.setComment("Great!");
+    // First user
+    User user1 = new User();
+    user1.setId("");
+    user1.setUsername("alice");
+    Review review1 = new Review();
+    review1.setUser(user1);
+    review1.setComment("Great!");
 
-      // Second user
-      User user2 = new User();
-      user2.setId("");
-      user2.setUsername("bob");
-      Review review2 = new Review();
-      review2.setUser(user2);
-      review2.setComment("Not bad.");
+    // Second user
+    User user2 = new User();
+    user2.setId("");
+    user2.setUsername("bob");
+    Review review2 = new Review();
+    review2.setUser(user2);
+    review2.setComment("Not bad.");
 
-      when(productRepository.findById("p1")).thenReturn(Optional.of(product));
-      when(reviewRepository.save(any())).thenAnswer(i -> {
-          Review r = (Review) i.getArguments()[0];
-          r.setId(r.getUser().getUsername()); // simulate DB-generated ID
-          return r;
-      });
-      when(userRepository.findByUsername("alice")).thenReturn(Optional.empty());
-      when(userRepository.findByUsername("bob")).thenReturn(Optional.empty());
-      when(sentimentService.isTrained()).thenReturn(true);
-      when(sentimentService.scoreFromText(anyString())).thenReturn(4.0, 3.0); // different scores
-      when(reviewRepository.findByIdIn(any())).thenReturn(List.of(review1, review2));
+    when(productRepository.findById("p1")).thenReturn(Optional.of(product));
+    when(reviewRepository.save(any())).thenAnswer(i -> {
+      Review r = (Review) i.getArguments()[0];
+      r.setId(r.getUser().getUsername()); // simulate DB-generated ID
+      return r;
+    });
+    when(userRepository.findByUsername("alice")).thenReturn(Optional.empty());
+    when(userRepository.findByUsername("bob")).thenReturn(Optional.empty());
+    when(sentimentService.isTrained()).thenReturn(true);
+    when(sentimentService.scoreFromText(anyString())).thenReturn(4.0, 3.0); // different scores
+    when(reviewRepository.findByIdIn(any())).thenReturn(List.of(review1, review2));
 
-      // Post first review
-      ResponseEntity<?> response1 = controller.postReview(VALID_USER_ID, "p1", review1);
-      assertEquals(HttpStatus.CREATED, response1.getStatusCode());
-      assertEquals("alice", ((Review) response1.getBody()).getId());
-      assertTrue(product.getReviewIds().contains("alice"));
+    // Post first review
+    ResponseEntity<?> response1 = controller.postReview(VALID_USER_ID, "p1", review1);
+    assertEquals(HttpStatus.CREATED, response1.getStatusCode());
+    assertEquals("alice", ((Review) response1.getBody()).getId());
+    assertTrue(product.getReviewIds().contains("alice"));
 
-      // Post second review
-      ResponseEntity<?> response2 = controller.postReview(VALID_USER_ID, "p1", review2);
-      assertEquals(HttpStatus.CREATED, response2.getStatusCode());
-      assertEquals("bob", ((Review) response2.getBody()).getId());
-      assertTrue(product.getReviewIds().contains("bob"));
+    // Post second review
+    ResponseEntity<?> response2 = controller.postReview(VALID_USER_ID, "p1", review2);
+    assertEquals(HttpStatus.CREATED, response2.getStatusCode());
+    assertEquals("bob", ((Review) response2.getBody()).getId());
+    assertTrue(product.getReviewIds().contains("bob"));
 
-      // Verify that both users were saved separately
-      verify(userRepository).save(user1);
-      verify(userRepository).save(user2);
+    // Verify that both users were saved separately
+    verify(userRepository).save(user1);
+    verify(userRepository).save(user2);
 
-      // Verify that product's reviewIds contains both
-      assertEquals(2, product.getReviewIds().size());
+    // Verify that product's reviewIds contains both
+    assertEquals(2, product.getReviewIds().size());
   }
 
-  //  updateReview 
+  // updateReview
 
   @Test
   void updateReview_ShouldReturnInternalServerError_OnDataAccessException() {
     Review update = new Review();
     when(productRepository.findById("p1")).thenReturn(Optional.of(product));
     when(reviewRepository.findById("r1")).thenReturn(Optional.of(new Review()));
-    when(reviewRepository.save(any())).thenThrow(new DataAccessException("DB fail") {});
+    when(reviewRepository.save(any())).thenThrow(new DataAccessException("DB fail") {
+    });
 
     ResponseEntity<?> response = controller.updateReview(VALID_USER_ID, "p1", "r1", update);
 
@@ -578,7 +587,7 @@ class ProductControllerTest {
 
     Review update = new Review();
     update.setUser(new com.nexus.model.User());
-    
+
     when(productRepository.findById("p1")).thenReturn(Optional.of(product));
     when(reviewRepository.findById("r1")).thenReturn(Optional.of(existing));
     when(reviewRepository.findByIdIn(product.getReviewIds())).thenReturn(List.of(existing));
@@ -644,7 +653,7 @@ class ProductControllerTest {
     verify(companyRepository, times(1)).save(company);
   }
 
-  //  getReviews 
+  // getReviews
 
   @Test
   void getReviews_ShouldReturnListOfReviews() {
@@ -715,7 +724,7 @@ class ProductControllerTest {
     assertEquals(List.of(r1, r2), response.getBody());
   }
 
-  //  getAverageRating 
+  // getAverageRating
 
   @Test
   void getAverageRating_ShouldReturnOk_WhenProductExists() {
