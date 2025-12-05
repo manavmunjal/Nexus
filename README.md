@@ -478,6 +478,8 @@ mvn checkstyle:check
 
 This project uses GitHub Actions to automatically build, test, and generate code quality reports on every push or pull request to the `main` branch.
 
+Our CI reports are provided in the reports/ folder.
+
 ### Workflow
 
 - **Workflow name:** `CI`
