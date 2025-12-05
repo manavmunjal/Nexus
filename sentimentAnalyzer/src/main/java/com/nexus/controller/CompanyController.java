@@ -84,15 +84,15 @@ public final class CompanyController {
       @RequestHeader("X-User-Id") final String userId,
       @RequestBody final Company company) {
 
-    if (LOGGER.isInfoEnabled()) {
-      // Validate user exists
-      userAuthService.validateUser(userId);
-
-      LOGGER.info("Received request to create company: {}",
-          company != null ? company.getName() : "null");
-    }
-
     try {
+      if (LOGGER.isInfoEnabled()) {
+      // Validate user exists
+        userAuthService.validateUser(userId);
+
+        LOGGER.info("Received request to create company: {}",
+            company != null ? company.getName() : "null");
+      }
+
       if (company == null || company.getName() == null
       || company.getName().isBlank()) {
         if (LOGGER.isWarnEnabled()) {
@@ -166,22 +166,21 @@ public final class CompanyController {
 
       return ResponseEntity.ok(company.getRating());
     } catch (IllegalStateException ise) {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-          .body("Authentication failed: " + ise.getMessage());
+    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+        .body("Authentication failed: " + ise.getMessage());
+    } catch (IllegalArgumentException iae) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body("Invalid user ID: " + iae.getMessage());
 
     } catch (DataAccessException dae) {
-      LOGGER.error(
-        "Database error while fetching company rating for companyId={}",
-        companyId, dae);
-      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .body("Database error while fetching company: " + dae.getMessage());
+        LOGGER.error("Database error while fetching company rating for companyId={}", companyId, dae);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body("Database error while fetching company: " + dae.getMessage());
 
     } catch (Exception e) {
-      LOGGER.error(
-        "Unexpected error fetching company rating for companyId={}",
-        companyId, e);
-      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .body("Unexpected error occurred: " + e.getMessage());
+        LOGGER.error("Unexpected error fetching company rating for companyId={}", companyId, e);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body("Unexpected error occurred: " + e.getMessage());
     }
   }
 
@@ -238,21 +237,22 @@ public final class CompanyController {
 
       return ResponseEntity.ok(reviews);
     } catch (IllegalStateException ise) {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-          .body("Authentication failed: " + ise.getMessage());
+    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+        .body("Authentication failed: " + ise.getMessage());
+
+    } catch (IllegalArgumentException iae) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body("Invalid user ID: " + iae.getMessage());
 
     } catch (DataAccessException dae) {
-      LOGGER.error(
-        "Database error while fetching company reviews for companyId={}",
-        companyId, dae);
-      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .body("Database error while fetching company: " + dae.getMessage());
+        LOGGER.error("Database error while fetching company reviews for companyId={}", companyId, dae);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body("Database error while fetching company: " + dae.getMessage());
 
     } catch (Exception e) {
-      LOGGER.error("Unexpected error fetching reviews for companyId={}",
-      companyId, e);
-      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .body("Unexpected error occurred: " + e.getMessage());
+        LOGGER.error("Unexpected error fetching reviews for companyId={}", companyId, e);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body("Unexpected error occurred: " + e.getMessage());
     }
   }
 }

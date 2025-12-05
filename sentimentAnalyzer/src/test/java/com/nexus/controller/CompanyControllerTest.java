@@ -389,4 +389,98 @@ class CompanyControllerTest {
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
     assertTrue(response.getBody().toString().contains("Unexpected error occurred"));
   }
+
+  @Test
+  void createCompany_ShouldReturnUnauthorized_WhenUserAuthFails() {
+      // Arrange
+      Company company = new Company();
+      company.setName("AuthFailCorp");
+
+      // Simulate authentication failure
+      when(userAuthService.validateUser(VALID_USER_ID))
+          .thenThrow(new IllegalStateException("User not authenticated"));
+
+      // Act
+      ResponseEntity<?> response = companyController.createCompany(VALID_USER_ID, company);
+
+      // Assert
+      assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+      assertTrue(response.getBody().toString().contains("Authentication failed"));
+      verify(companyRepository, never()).save(any());
+  }
+
+  @Test
+  void createCompany_ShouldReturnBadRequest_WhenUserIdIsInvalid() {
+      // Arrange
+      Company company = new Company();
+      company.setName("InvalidUserCorp");
+
+      // Simulate invalid user ID
+      when(userAuthService.validateUser(VALID_USER_ID))
+          .thenThrow(new IllegalArgumentException("User ID is invalid"));
+
+      // Act
+      ResponseEntity<?> response = companyController.createCompany(VALID_USER_ID, company);
+
+      // Assert
+      assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+      assertTrue(response.getBody().toString().contains("Invalid user ID"));
+      verify(companyRepository, never()).save(any());
+  }
+
+  @Test
+  void getAllReviews_ShouldReturnUnauthorized_WhenUserAuthFails() {
+      // Arrange
+      when(userAuthService.validateUser(VALID_USER_ID))
+          .thenThrow(new IllegalStateException("User not authenticated"));
+
+      // Act
+      ResponseEntity<?> response = companyController.getAllReviews(VALID_USER_ID, "c1");
+
+      // Assert
+      assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+      assertTrue(response.getBody().toString().contains("Authentication failed"));
+  }
+
+  @Test
+  void getAllReviews_ShouldReturnBadRequest_WhenUserIdIsInvalid() {
+      // Arrange
+      when(userAuthService.validateUser(VALID_USER_ID))
+          .thenThrow(new IllegalArgumentException("User ID is invalid"));
+
+      // Act
+      ResponseEntity<?> response = companyController.getAllReviews(VALID_USER_ID, "c1");
+
+      // Assert
+      assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+      assertTrue(response.getBody().toString().contains("Invalid user ID"));
+  }
+
+  @Test
+  void getAverageRating_ShouldReturnUnauthorized_WhenUserAuthFails() {
+      // Arrange
+      when(userAuthService.validateUser(VALID_USER_ID))
+          .thenThrow(new IllegalStateException("User not authenticated"));
+
+      // Act
+      ResponseEntity<?> response = companyController.getAverageRating(VALID_USER_ID, "c1");
+
+      // Assert
+      assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+      assertTrue(response.getBody().toString().contains("Authentication failed"));
+  }
+
+  @Test
+  void getAverageRating_ShouldReturnBadRequest_WhenUserIdIsInvalid() {
+      // Arrange
+      when(userAuthService.validateUser(VALID_USER_ID))
+          .thenThrow(new IllegalArgumentException("User ID is invalid"));
+
+      // Act
+      ResponseEntity<?> response = companyController.getAverageRating(VALID_USER_ID, "c1");
+
+      // Assert
+      assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+      assertTrue(response.getBody().toString().contains("Invalid user ID"));
+  }
 }
