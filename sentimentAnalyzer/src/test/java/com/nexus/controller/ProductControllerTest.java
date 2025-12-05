@@ -837,4 +837,70 @@ class ProductControllerTest {
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
     assertTrue(response.getBody().toString().contains("Database error while fetching product"));
   }
+
+  @Test
+  void createProduct_ShouldReturn401_WhenAuthenticationFails() {
+      Product product = new Product();
+
+      doThrow(new IllegalStateException("User does not exist"))
+              .when(userAuthService).validateUser("bad-user");
+
+      ResponseEntity<?> response = controller.createProduct("bad-user", product);
+
+      assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+      assertTrue(response.getBody().toString().contains("Authentication failed"));
+  }
+
+  @Test
+  void createProduct_ShouldReturn400_WhenUserIdInvalid() {
+      Product product = new Product();
+
+      doThrow(new IllegalArgumentException("Invalid format"))
+              .when(userAuthService).validateUser("invalid-user");
+
+      ResponseEntity<?> response = controller.createProduct("invalid-user", product);
+
+      assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+      assertTrue(response.getBody().toString().contains("Invalid user ID"));
+  }
+
+  @Test
+  void createProduct_ShouldReturn500_WhenUnexpectedErrorOccurs() {
+      Product product = new Product();
+
+      doThrow(new RuntimeException("Unexpected error"))
+              .when(userAuthService).validateUser("user");
+
+      ResponseEntity<?> response = controller.createProduct("user", product);
+
+      assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+      assertTrue(response.getBody().toString().contains("Unexpected error"));
+  }
+
+  @Test
+  void getAllProducts_ShouldReturn400_WhenUserIdInvalid() {
+      doThrow(new IllegalArgumentException("Invalid format"))
+              .when(userAuthService).validateUser("invalid-user");
+
+      // Act
+      ResponseEntity<?> response = controller.getAllProducts("invalid-user");
+
+      // Assert
+      assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+      assertNotNull(response.getBody());
+      assertTrue(response.getBody().toString().contains("Invalid user ID"));
+  }
+
+  @Test
+    void getReviews_ShouldReturn401_WhenAuthenticationFails() {
+        // Simulate authentication failure
+        doThrow(new IllegalStateException("User does not exist"))
+                .when(userAuthService).validateUser("bad-user");
+
+        ResponseEntity<?> response = controller.getReviews("bad-user", "p1");
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().toString().contains("Authentication failed"));
+    }
 }

@@ -173,12 +173,16 @@ public final class CompanyController {
             .body("Invalid user ID: " + iae.getMessage());
 
     } catch (DataAccessException dae) {
-        LOGGER.error("Database error while fetching company rating for companyId={}", companyId, dae);
+        LOGGER.error(
+          "Database error while fetching company rating for companyId={}",
+          companyId, dae);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
             .body("Database error while fetching company: " + dae.getMessage());
 
     } catch (Exception e) {
-        LOGGER.error("Unexpected error fetching company rating for companyId={}", companyId, e);
+        LOGGER.error(
+          "Unexpected error fetching company rating for companyId={}",
+          companyId, e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
             .body("Unexpected error occurred: " + e.getMessage());
     }
@@ -245,12 +249,15 @@ public final class CompanyController {
             .body("Invalid user ID: " + iae.getMessage());
 
     } catch (DataAccessException dae) {
-        LOGGER.error("Database error while fetching company reviews for companyId={}", companyId, dae);
+        LOGGER.error(
+          "Database error while fetching company reviews for companyId={}",
+        companyId, dae);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
             .body("Database error while fetching company: " + dae.getMessage());
 
     } catch (Exception e) {
-        LOGGER.error("Unexpected error fetching reviews for companyId={}", companyId, e);
+        LOGGER.error("Unexpected error fetching reviews for companyId={}",
+        companyId, e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
             .body("Unexpected error occurred: " + e.getMessage());
     }

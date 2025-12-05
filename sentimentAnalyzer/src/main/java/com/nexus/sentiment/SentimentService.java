@@ -23,7 +23,9 @@ import weka.core.SerializationHelper;
 @Service
 public final class SentimentService {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(SentimentService.class);
+  /** Logger instance for the class. */
+  private static final Logger LOGGER = LoggerFactory
+  .getLogger(SentimentService.class);
 
   /**
    * Classifier used for sentiment prediction.
@@ -341,7 +343,8 @@ public final class SentimentService {
       for (int i = 0; i < dist.length; i++) {
         String label = header.classAttribute().value(i);
         if (LOGGER.isDebugEnabled()) {
-          LOGGER.debug("Label: {}, Probability: {}, Score: {}", label, dist[i], scoreMapper.scoreFor(label));
+          LOGGER.debug("Label: {}, Probability: {}, Score: {}",
+          label, dist[i], scoreMapper.scoreFor(label));
         }
         expected += dist[i] * scoreMapper.scoreFor(label);
       }

@@ -460,8 +460,8 @@ mvn clean test jacoco:report
 To see the index.html report, open:
 `target/site/jacoco/index.html`.
 
-Rightnow, our test coverage is 69% in total with 86 unit tests.
-![Jacoco Report](static/img/jacoco.png)
+Rightnow, our test coverage is 81% in total with 334 unit tests.
+![Jacoco Report](static/img/jacoco.jpg)
 
 ## External Documentation
 We did not use any external third-party codes.
