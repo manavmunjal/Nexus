@@ -14,6 +14,7 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyList;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -745,5 +746,95 @@ class ProductControllerTest {
 
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
     assertTrue(response.getBody().toString().contains("Unexpected error"));
+  }
+
+  @Test
+  void postReview_ShouldReturn401_WhenAuthenticationFails() {
+      Review review = new Review();
+
+      doThrow(new IllegalStateException("User does not exist"))
+              .when(userAuthService).validateUser("bad-user");
+
+      ResponseEntity<?> response = controller.postReview("bad-user", "p1", review);
+
+      assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+      assertTrue(response.getBody().toString().contains("Authentication failed"));
+  }
+
+  @Test
+  void postReview_ShouldReturn404_WhenProductNotFound() {
+      Review review = new Review();
+
+      when(userAuthService.validateUser("user")).thenReturn(null); // no exception → auth succeeds
+      when(productRepository.findById("missing")).thenReturn(Optional.empty());
+
+      ResponseEntity<?> response = controller.postReview("user", "missing", review);
+
+      assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+      assertTrue(response.getBody().toString().contains("Product not found"));
+  }
+
+  @Test
+  void postReview_ShouldReturn500_WhenDatabaseErrorOccurs() {
+      Review review = new Review();
+      Product product = new Product();
+      product.setId("p1");
+
+      when(userAuthService.validateUser("user")).thenReturn(null);
+      when(productRepository.findById("p1")).thenReturn(Optional.of(product));
+      when(reviewRepository.save(any(Review.class)))
+              .thenThrow(new org.springframework.dao.DataAccessResourceFailureException("DB down"));
+
+      ResponseEntity<?> response = controller.postReview("user", "p1", review);
+
+      assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+      assertTrue(response.getBody().toString().contains("Database error while posting review"));
+  }
+
+  @Test
+  void postReview_ShouldReturn500_WhenUnexpectedExceptionOccurs() {
+      Review review = new Review();
+
+      when(userAuthService.validateUser("user")).thenReturn(null);
+      when(productRepository.findById("p1")).thenThrow(new RuntimeException("Unexpected failure"));
+
+      ResponseEntity<?> response = controller.postReview("user", "p1", review);
+
+      assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+      assertTrue(response.getBody().toString().contains("Unexpected error"));
+  }
+
+  @Test
+  void getAverageRating_ShouldReturn401_WhenAuthenticationFails() {
+      doThrow(new IllegalStateException("User does not exist"))
+              .when(userAuthService).validateUser("bad-user");
+
+      ResponseEntity<?> response = controller.getAverageRating("bad-user", "p1");
+
+      assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+      assertTrue(response.getBody().toString().contains("Authentication failed"));
+  }
+
+  @Test
+  void getAverageRating_ShouldReturn500_WhenProductNotFound() {
+      when(userAuthService.validateUser("user")).thenReturn(null);
+      when(productRepository.findById("missing")).thenThrow(new RuntimeException("Product not found"));
+
+      ResponseEntity<?> response = controller.getAverageRating("user", "missing");
+
+      assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+      assertTrue(response.getBody().toString().contains("Unexpected error"));
+  }
+
+  @Test
+  void getAverageRating_ShouldReturn500_WhenDatabaseErrorOccurs() {
+      when(userAuthService.validateUser("user")).thenReturn(null);
+      when(productRepository.findById("p1"))
+              .thenThrow(new org.springframework.dao.DataAccessResourceFailureException("DB down"));
+
+      ResponseEntity<?> response = controller.getAverageRating("user", "p1");
+
+      assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+      assertTrue(response.getBody().toString().contains("Database error while fetching product"));
   }
 }
