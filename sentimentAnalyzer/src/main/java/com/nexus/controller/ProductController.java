@@ -235,7 +235,7 @@ public final class ProductController {
                 () -> userRepository.save(review.getUser()));
       }
 
-      double score = 0.0;
+      double score = review.getRating();
       // Sentiment rating calculation
 
       if (!sentimentService.isTrained()) {
@@ -243,7 +243,7 @@ public final class ProductController {
           if (LOGGER.isInfoEnabled()) {
             LOGGER.warn("Sentiment model untrained. "
                 + "Only ADMIN can trigger training. "
-                + "Setting score to defualt 0.0.");
+                + "Using provided rating or default 0.0.");
           }
         } else {
           if (LOGGER.isInfoEnabled()) {
