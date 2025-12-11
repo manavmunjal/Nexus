@@ -3,7 +3,7 @@
 {
 	"name": "mvn-runner",
 	"build": {
-		"dockerfile": "../Dockerfile",
+		"dockerfile": "../sentimentAnalyzer/Dockerfile",
 		"target": "build"
 	},
 	"workspaceFolder": "/app",
