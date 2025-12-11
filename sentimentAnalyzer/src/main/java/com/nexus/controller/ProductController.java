@@ -220,19 +220,51 @@ public final class ProductController {
           .orElseThrow(() -> new IllegalArgumentException(
               "Product not found: " + productId));
 
-      // Save user if needed
+      // Ensure review user is persisted and enriched with latest details
       if (review.getUser() != null
           && (review.getUser().getId() == null
               || review.getUser().getId().isBlank())) {
 
         if (LOGGER.isDebugEnabled()) {
-          LOGGER.debug("Review contains new user: {}", review.getUser());
+          LOGGER.debug("Review contains user details: {}", review.getUser());
         }
 
         userRepository.findByUsername(review.getUser().getUsername())
-            .ifPresentOrElse(
-                review::setUser,
-                () -> userRepository.save(review.getUser()));
+            .ifPresentOrElse(existing -> {
+              // If an existing user is found but the incoming payload
+              // provides a non-empty email while the existing one is empty,
+              // update and persist the email.
+              String incomingEmail = review.getUser().getEmail();
+              if (incomingEmail != null && !incomingEmail.isBlank()
+                  && (existing.getEmail() == null
+                      || existing.getEmail().isBlank())) {
+                existing.setEmail(incomingEmail);
+                userRepository.save(existing);
+                if (LOGGER.isInfoEnabled()) {
+                  LOGGER.info("Updated email for existing user: {}",
+                      existing.getUsername());
+                }
+              }
+              review.setUser(existing);
+            }, () -> {
+              // Persist new user and ensure the saved entity (with id)
+              // is attached to the review before saving the review.
+              var savedUser = userRepository.save(review.getUser());
+              if (savedUser != null) {
+                review.setUser(savedUser);
+                if (LOGGER.isInfoEnabled()) {
+                  LOGGER.info("Created new user for review: {}",
+                      savedUser.getUsername());
+                }
+              } else {
+                // In some test contexts, repository may be mocked without stub
+                // and return null; keep incoming user attached to avoid NPEs.
+                if (LOGGER.isWarnEnabled()) {
+                  LOGGER.warn("UserRepository.save returned null; "
+                      + "using incoming user object for review");
+                }
+              }
+            });
       }
 
       double score = review.getRating();
