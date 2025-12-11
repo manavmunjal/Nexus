@@ -287,11 +287,8 @@ public final class ProductController {
       } else {
         score = sentimentService.scoreFromText(review.getComment());
       }
-
       review.setRating(score);
-
       Review saved = reviewRepository.save(review);
-
       // Update product review list
       if (product.getReviewIds() == null) {
         product.setReviewIds(new ArrayList<>());
